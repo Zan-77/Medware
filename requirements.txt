@@ -3,4 +3,4 @@ djangorestFramework
 djangorestFramework-simplejwt
 django-cors-headers
 dotenv
-psycopg2-binary
+psycopg2-binarydjangorestframework
