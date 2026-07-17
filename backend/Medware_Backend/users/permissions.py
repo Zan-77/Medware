@@ -13,7 +13,6 @@ class HasRole(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
-            and not getattr(request.user, 'requires_relogin', False)
             and request.user.role in self.allowed_roles
         )
 
