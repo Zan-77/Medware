@@ -1,19 +1,21 @@
 from django.urls import path, include
-from rest_framework.routers import SimpleRouter
-
+from rest_framework.routers import DefaultRouter
 from .views import (
-    CategoryViewSet, SupplierViewSet, SupplierCategoryViewSet,
-    ProductViewSet, BillViewSet, BillItemViewSet, InventoryViewSet
+    SupplierViewSet, ProductViewSet, BillViewSet,
+    ArchiveViewSet, OrderViewSet, OrderProductViewSet,
+    ProductSupplierViewSet, VoucherViewSet, OrderVoucherViewSet
 )
 
-router = SimpleRouter()
-router.register(r'categories', CategoryViewSet, basename='category')
-router.register(r'suppliers', SupplierViewSet, basename='supplier')
-router.register(r'supplier-categories', SupplierCategoryViewSet, basename='supplier-category')
-router.register(r'products', ProductViewSet, basename='product')
-router.register(r'bills', BillViewSet, basename='bill')
-router.register(r'bill-items', BillItemViewSet, basename='bill-item')
-router.register(r'inventory', InventoryViewSet, basename='inventory')
+router = DefaultRouter()
+router.register(r'suppliers', SupplierViewSet)
+router.register(r'products', ProductViewSet)
+router.register(r'bills', BillViewSet)
+router.register(r'archives', ArchiveViewSet)
+router.register(r'orders', OrderViewSet)
+router.register(r'order-products', OrderProductViewSet)
+router.register(r'product-suppliers', ProductSupplierViewSet)
+router.register(r'vouchers', VoucherViewSet)
+router.register(r'order-vouchers', OrderVoucherViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
