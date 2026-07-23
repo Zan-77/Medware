@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+
+
+
+@theme {
+
+    --font-inter: "Tajawal", sans-serif;
+
+    /*     dark-background-colors     */
+    --color-dark-background-light: oklch(0.19 0.0016 197);
+    --color-dark-background-medium: oklch(0.17 0.0016 197);
+    --color-dark-background-dark: oklch(0.12 0.0016 197);
+
+    /*   dark-text-colors     */
+    --color-dark-text: oklch(1 0 0);
+    --color-dark-text-muted: oklch(0.4126 0.0036 264.52);
+    
+
+    /*     light-background-colors     */
+    --color-light-background-light: oklch(1 0 0);
+    --color-light-background-medium: oklch(0.99 0.0013 286.38);
+    --color-light-background-dark: oklch(0.96 0.0013 286.38);
+
+    /*   light-text-colors     */
+    --color-light-text: oklch(0.3099 0.0035 286.19);
+    --color-light-text-muted: oklch(0.479 0.0032 286.28);
+
+    
+    /*! work in progress  */
+    
+
+
+
+    /*   accent-colors     */
+    --color-accent-extraLight: oklch(0.7325 0.0985 271.48);
+    --color-accent-light: oklch(0.6463 0.1309 274.74);
+    --color-accent-medium: oklch(0.5433 0.1646 276.26);
+    --color-accent-dark: oklch(0.4892 0.154 276.9);
+    --color-accent-extraDark: oklch(0.4313 0.1231 277.08);
+
+
+    /*   status-colors     */
+    --color-ok: oklch(0.5232 0.1348 152.45);
+    --color-warning: oklch(0.6799 0.1847 48.15);
+    --color-error: oklch(0.60 0.2002 26.41);
+
+
+    /*    button-colors     */
+    --color-button-bg-light: oklch(0.25 0.002 286.21);
+    --color-button-bg-dark: oklch(0.22 0.002 286.21);
+    --color-button-bg-accent-light: oklch(0.5433 0.1646 276.26);
+
+    --color-button-hover-light: oklch(0.30 0.0019 286.26);
+    --color-button-hover-dark: oklch(0.27 0.0019 286.25);
+    --color-button-hover-accent: oklch(0.4892 0.154 276.9);
+
+
+
+    /*   table-colors   */
+    --color-table-row: oklch(0.2186 0.0038 286.08);
+
+
+
+
+
+}
