@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions
-from .models import User, Supplier, Product, Bill, Archive, Order, OrderProduct, ProductSupplier, Voucher, OrderVoucher, Notification
+from .models import Supplier, Product, Bill, Archive, Order, OrderProduct, ProductSupplier, Voucher, OrderVoucher
 from .serializers import (
     SupplierSerializer, ProductSerializer, BillSerializer,
     ArchiveSerializer, OrderSerializer, OrderProductSerializer,
