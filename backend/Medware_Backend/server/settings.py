@@ -40,6 +40,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'products',
+    'orders',
+    'inventory',
+    'finance',
+    'audit',
+    'website',
 ]
 
 MIDDLEWARE = [
