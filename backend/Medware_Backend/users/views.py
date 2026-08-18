@@ -116,6 +116,7 @@ class RegisterView(APIView):
 
     def get_tokens_for_user(self, user):
         refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role.lower()
         return {
             'access': str(refresh.access_token),
             'refresh': str(refresh),

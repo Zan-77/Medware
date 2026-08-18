@@ -32,6 +32,7 @@ class EmailOrUsernameTokenObtainPairSerializer(serializers.Serializer):
             raise serializers.ValidationError({'detail': 'Invalid credentials.'})
 
         refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role.lower()
         return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
