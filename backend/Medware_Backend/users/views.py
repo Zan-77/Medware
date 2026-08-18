@@ -40,8 +40,14 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         refresh_token = response.data.get('refresh')
+        access_token = response.data.get('access')
+        status_code = getattr(response, 'status_code', 200)
+
         if refresh_token:
-            response.set_cookie(
+            # store refresh token in a secure httpOnly cookie
+            # and return only the access token in the response body
+            resp = Response({'access': access_token}, status=status_code)
+            resp.set_cookie(
                 key='refresh',
                 value=refresh_token,
                 httponly=True,
@@ -49,6 +55,9 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 samesite='Lax',
                 path='/',
             )
+            return resp
+
+        # fallback: no refresh present, return whatever the superclass returned
         return response
 
 
@@ -67,8 +76,12 @@ class CookieTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         refresh_token = response.data.get('refresh')
+        access_token = response.data.get('access')
+        status_code = getattr(response, 'status_code', 200)
+
         if refresh_token:
-            response.set_cookie(
+            resp = Response({'access': access_token}, status=status_code)
+            resp.set_cookie(
                 key='refresh',
                 value=refresh_token,
                 httponly=True,
@@ -76,6 +89,8 @@ class CookieTokenRefreshView(TokenRefreshView):
                 samesite='Lax',
                 path='/',
             )
+            return resp
+
         return response
 
 
@@ -91,18 +106,15 @@ class LogoutView(APIView):
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request):     
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         tokens = self.get_tokens_for_user(user)
 
         response_data = {
-            'message': 'User registered successfully.',
-            'user': UserSerializer(user).data,
+            'access': tokens["access"],
         }
-        response_data.update(tokens)
-
         response = Response(response_data, status=status.HTTP_201_CREATED)
         response.set_cookie(
             key='refresh',
@@ -116,7 +128,7 @@ class RegisterView(APIView):
 
     def get_tokens_for_user(self, user):
         refresh = RefreshToken.for_user(user)
-        refresh["role"] = user.role.lower()
+        refresh["role"] = user.role
         return {
             'access': str(refresh.access_token),
             'refresh': str(refresh),
@@ -132,7 +144,7 @@ def get_available_roles(request):
     })
 
 
-@role_required('MANAGER')
+@role_required('manager')
 def manager_access(request):
     return JsonResponse({
         'detail': 'Manager/Admin access granted.',
@@ -140,7 +152,7 @@ def manager_access(request):
     })
 
 
-@role_required('ACCOUNTANT')
+@role_required('accountent')
 def accountant_access(request):
     return JsonResponse({
         'detail': 'Accountant access granted.',
@@ -148,7 +160,7 @@ def accountant_access(request):
     })
 
 
-@role_required('SALESMAN')
+@role_required('salesman')
 def salesman_access(request):
     return JsonResponse({
         'detail': 'Salesman access granted.',
@@ -156,7 +168,7 @@ def salesman_access(request):
     })
 
 
-@role_required('CUSTOMER')
+@role_required('customer')
 def customer_access(request):
     return JsonResponse({
         'detail': 'Customer access granted.',
