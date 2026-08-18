@@ -144,7 +144,7 @@ def get_available_roles(request):
     })
 
 
-@role_required('manager')
+@role_required('MANAGER')
 def manager_access(request):
     return JsonResponse({
         'detail': 'Manager/Admin access granted.',
@@ -152,7 +152,7 @@ def manager_access(request):
     })
 
 
-@role_required('accountent')
+@role_required('ACCOUNTANT')
 def accountant_access(request):
     return JsonResponse({
         'detail': 'Accountant access granted.',
@@ -160,7 +160,7 @@ def accountant_access(request):
     })
 
 
-@role_required('salesman')
+@role_required('SALESMAN')
 def salesman_access(request):
     return JsonResponse({
         'detail': 'Salesman access granted.',
@@ -168,7 +168,7 @@ def salesman_access(request):
     })
 
 
-@role_required('customer')
+@role_required('CUSTOMER')
 def customer_access(request):
     return JsonResponse({
         'detail': 'Customer access granted.',

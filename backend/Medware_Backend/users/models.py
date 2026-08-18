@@ -5,12 +5,12 @@ from django.db import models
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        GUEST = "guest", "Guest"
-        MANAGER = "manager", "Manager"
-        ACCOUNTANT = "accountent", "Accountant"
-        SALESMAN = "salesman", "Salesman"
-        WAREHOUSE_WORKER = "warehouse_worker", "Warehouse Worker"
-        CUSTOMER = "customer", "Customer"
+        GUEST = "GUEST", "Guest"
+        MANAGER = "MANAGER", "Manager"
+        ACCOUNTANT = "ACCOUNTANT", "Accountant"
+        SALESMAN = "SALESMAN", "Salesman"
+        WAREHOUSE_WORKER = "WAREHOUSE_WORKER", "Warehouse Worker"
+        CUSTOMER = "CUSTOMER", "Customer"
 
     role = models.CharField(
         max_length=30,
