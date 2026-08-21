@@ -32,7 +32,7 @@ export const Step1 = () => {
   })
   const [inApp, setInApp] = useState(url.pathname.startsWith("/app"))
   const onSubmit = (data: Step1FieldValues) => {
-    setRegisterformData({ password: "", password2: "", ...data })
+    setRegisterformData({ password: "", confirmPassword: "", ...data })
     navigate("step2")
   }
   inApp && setValue("role", "MANAGER")
@@ -56,7 +56,7 @@ return (
             <Link to="/tos">{t("register.step1.dpaLink")}</Link>
           </div>
         </div>
-        {!  inApp && <div className="*:mx-px text-center">
+        {!inApp && <div className="*:mx-px text-center">
           <Text muted={true}>{t("register.step1.registerBusiness")}</Text>
           <Link to={inApp ? "/store/auth/register" : "/app/auth/register"}>{t("register.step1.registerBusinessLink")}</Link>
         </div>}
