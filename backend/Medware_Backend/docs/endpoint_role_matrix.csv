@@ -1,0 +1,46 @@
+endpoint,method,allowed_roles,notes
+/api/users/roles/,GET,MANAGER,Returns available roles
+/api/users/access/manager/,GET,MANAGER,Manager-access test endpoint
+/api/users/access/accountant/,GET,ACCOUNTANT,Accountant-access test endpoint
+/api/users/access/salesman/,GET,SALESMAN,Salesman-access test endpoint
+/api/users/access/customer/,GET,CUSTOMER,Customer-access test endpoint
+/api/products/suppliers/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER,View suppliers
+/api/products/suppliers/,POST,MANAGER,Create supplier
+/api/products/products/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER|CUSTOMER,View products
+/api/products/products/,POST,MANAGER,Create product
+/api/orders/order-requests/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER|CUSTOMER,List requests
+/api/orders/order-requests/,POST,SALESMAN|MANAGER|CUSTOMER,Create request
+/api/orders/order-requests/{id}/,PUT,MANAGER|ACCOUNTANT|SALESMAN|CUSTOMER,Modify pre-shipment
+/api/orders/order-items/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER|CUSTOMER,View order items
+/api/orders/order-items/,POST,MANAGER|ACCOUNTANT,Create order items (internal)
+/api/orders/reviews/,GET,MANAGER|ACCOUNTANT,View reviews
+/api/orders/reviews/,POST,MANAGER,Manager reviews/approvals
+/api/orders/finalizations/,GET,ACCOUNTANT|MANAGER,View finalizations
+/api/orders/finalizations/,POST,ACCOUNTANT,Finalize orders
+/api/orders/packaging/,GET,WAREHOUSE_WORKER|MANAGER|ACCOUNTANT,View packaging tasks
+/api/orders/packaging/,POST,WAREHOUSE_WORKER,Create packaging task (pack)
+/api/orders/return-requests/,GET,MANAGER|ACCOUNTANT|WAREHOUSE_WORKER|SALESMAN|CUSTOMER,View return requests
+/api/orders/return-requests/,POST,CUSTOMER|SALESMAN,Submit return request
+/api/orders/return-assessments/,POST,WAREHOUSE_WORKER,Warehouse assesses returns
+/api/orders/return-approvals/,POST,MANAGER,Manager approves/rejects returns
+/api/inventory/categories/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER,View categories
+/api/inventory/categories/,POST,MANAGER,Create category
+/api/inventory/items/,GET,MANAGER|ACCOUNTANT|SALESMAN|WAREHOUSE_WORKER|CUSTOMER,View inventory items
+/api/inventory/items/,POST,MANAGER,Create inventory item
+/api/inventory/bills/,GET,MANAGER|ACCOUNTANT,View supplier bills
+/api/inventory/bills/,POST,MANAGER,Enter supplier bill (fills stock)
+/api/inventory/bill-lines/,POST,MANAGER,Add bill line items
+/api/inventory/stock-entries/,GET,MANAGER|ACCOUNTANT|WAREHOUSE_WORKER,View stock entries
+/api/inventory/stock-entries/,POST,MANAGER,Create stock entry
+/api/finance/vouchers/,GET,MANAGER|ACCOUNTANT|SALESMAN,View vouchers
+/api/finance/vouchers/,POST,SALESMAN|ACCOUNTANT,Record voucher/payment
+/api/finance/payments/,GET,MANAGER|ACCOUNTANT,View payments
+/api/finance/payments/,POST,SALESMAN|ACCOUNTANT,Record payment
+/api/finance/commissions/,GET,MANAGER|ACCOUNTANT|SALESMAN,View commission records
+/api/finance/balances/,GET,MANAGER|ACCOUNTANT,View customer balances
+/api/audit/audit-logs/,GET,MANAGER|ACCOUNTANT,View audit logs
+/api/audit/request-transitions/,GET,MANAGER|ACCOUNTANT,View request transition history
+/api/website/catalogs/,GET,ALLOW_ANY,Public catalog browsing
+/api/website/catalogs/,POST,MANAGER,Create/modify catalogs (manager only)
+/api/website/catalog-items/,GET,ALLOW_ANY,Public catalog item browsing
+/api/website/catalog-items/,POST,MANAGER,Create/modify catalog items

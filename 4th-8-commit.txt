@@ -1,0 +1,18 @@
+What added:
+Email-based login support on the token endpoint, while keeping username compatibility.
+refresh token cookies on login/register with HttpOnly protection.
+A cookie-based refresh flow so the frontend can obtain a new access token without storing the refresh token in client-side JS.
+A logout endpoint that clears the refresh cookie.
+What I changed:
+
+what changed:
+The token serializer now resolves the user by email or username.
+The auth views now set and rotate refresh cookies for browser-style web clients.
+The refresh route now reads the cookie automatically instead of relying on raw request-body refresh tokens.
+Added regression tests to confirm the flow works end-to-end.
+Security posture:
+
+Security posture:
+The refresh cookie is HttpOnly.
+The cookie is SameSite=Lax.
+Secure is enabled outside debug mode, which is the correct production setup.

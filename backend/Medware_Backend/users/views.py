@@ -1,14 +1,22 @@
+from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .decorators import role_required
 from .models import User
 from .permissions import IsManager, IsAccountant, IsSalesman, IsCustomer
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import (
+    CookieTokenRefreshSerializer,
+    EmailOrUsernameTokenObtainPairSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 
 
 def get_current_user(request):
@@ -26,30 +34,101 @@ def get_current_user(request):
     })
 
 
-class RegisterView(APIView):
+class CookieTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        refresh_token = response.data.get('refresh')
+        access_token = response.data.get('access')
+        status_code = getattr(response, 'status_code', 200)
+
+        if refresh_token:
+            # store refresh token in a secure httpOnly cookie
+            # and return only the access token in the response body
+            resp = Response({'access': access_token}, status=status_code)
+            resp.set_cookie(
+                key='refresh',
+                value=refresh_token,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Lax',
+                path='/',
+            )
+            return resp
+
+        # fallback: no refresh present, return whatever the superclass returned
+        return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    serializer_class = CookieTokenRefreshSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        data = kwargs.get('data', {})
+        if isinstance(data, dict):
+            refresh_token = self.request.COOKIES.get('refresh')
+            if refresh_token and 'refresh' not in data:
+                data = {**data, 'refresh': refresh_token}
+                kwargs['data'] = data
+        return super().get_serializer(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        refresh_token = response.data.get('refresh')
+        access_token = response.data.get('access')
+        status_code = getattr(response, 'status_code', 200)
+
+        if refresh_token:
+            resp = Response({'access': access_token}, status=status_code)
+            resp.set_cookie(
+                key='refresh',
+                value=refresh_token,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Lax',
+                path='/',
+            )
+            return resp
+
+        return response
+
+
+class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        response = Response({'detail': 'Logged out successfully.'}, status=status.HTTP_200_OK)
+        response.delete_cookie('refresh', path='/')
+        return response
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):     
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         tokens = self.get_tokens_for_user(user)
 
         response_data = {
-            'message': 'User registered successfully.',
-            'user': UserSerializer(user).data,
+            'access': tokens["access"],
         }
-        response_data.update(tokens)
-
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        response = Response(response_data, status=status.HTTP_201_CREATED)
+        response.set_cookie(
+            key='refresh',
+            value=tokens['refresh'],
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite='Lax',
+            path='/',
+        )
+        return response
 
     def get_tokens_for_user(self, user):
-        try:
-            from rest_framework_simplejwt.tokens import RefreshToken
-        except ImportError:
-            return {}
-
         refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role
         return {
             'access': str(refresh.access_token),
             'refresh': str(refresh),

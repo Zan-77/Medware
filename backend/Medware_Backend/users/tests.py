@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
@@ -7,16 +9,28 @@ class UserRoleAccessTest(TestCase):
         self.User = get_user_model()
         self.client = Client()
         self.manager = self.User.objects.create_user(
-            username='manager', password='managerpass', role=self.User.Role.MANAGER
+            username='manager',
+            email='manager@example.com',
+            password='managerpass',
+            role=self.User.Role.MANAGER,
         )
         self.accountant = self.User.objects.create_user(
-            username='accountant', password='accountantpass', role=self.User.Role.ACCOUNTANT
+            username='accountant',
+            email='accountant@example.com',
+            password='accountantpass',
+            role=self.User.Role.ACCOUNTANT,
         )
         self.salesman = self.User.objects.create_user(
-            username='salesman', password='salesmanpass', role=self.User.Role.SALESMAN
+            username='salesman',
+            email='salesman@example.com',
+            password='salesmanpass',
+            role=self.User.Role.SALESMAN,
         )
         self.customer = self.User.objects.create_user(
-            username='customer', password='customerpass', role=self.User.Role.CUSTOMER
+            username='customer',
+            email='customer@example.com',
+            password='customerpass',
+            role=self.User.Role.CUSTOMER,
         )
 
     def test_unauthenticated_me_returns_401(self):
@@ -51,3 +65,37 @@ class UserRoleAccessTest(TestCase):
         self.client.login(username='salesman', password='salesmanpass')
         response = self.client.get('/api/users/access/manager/')
         self.assertEqual(response.status_code, 403)
+
+    def test_login_by_email_sets_refresh_cookie(self):
+        response = self.client.post(
+            '/api/auth/token/',
+            data=json.dumps({'email': 'manager@example.com', 'password': 'managerpass'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access', response.json())
+        self.assertIn('refresh', response.cookies)
+        self.assertTrue(response.cookies['refresh']['httponly'])
+
+    def test_refresh_uses_refresh_cookie(self):
+        login_response = self.client.post(
+            '/api/auth/token/',
+            data=json.dumps({'email': 'manager@example.com', 'password': 'managerpass'}),
+            content_type='application/json',
+        )
+        self.assertEqual(login_response.status_code, 200)
+
+        refresh_response = self.client.post('/api/auth/token/refresh/', content_type='application/json')
+        self.assertEqual(refresh_response.status_code, 200)
+        self.assertIn('access', refresh_response.json())
+
+    def test_logout_clears_refresh_cookie(self):
+        self.client.post(
+            '/api/auth/token/',
+            data=json.dumps({'email': 'manager@example.com', 'password': 'managerpass'}),
+            content_type='application/json',
+        )
+
+        logout_response = self.client.post('/api/auth/logout/', content_type='application/json')
+        self.assertEqual(logout_response.status_code, 200)
+        self.assertEqual(logout_response.cookies['refresh']['max-age'], 0)
