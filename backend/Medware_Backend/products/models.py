@@ -20,7 +20,7 @@ class Product(models.Model):
 
 class Bill(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='bills')
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"Bill {self.id} - {self.supplier.name}"
