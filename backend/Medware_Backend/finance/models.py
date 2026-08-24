@@ -1,9 +1,10 @@
 from django.db import models
 from django.conf import settings
+from orders.models import OrderRequest
 
 
 class Voucher(models.Model):
-    order = models.ForeignKey('orders.OrderRequest', on_delete=models.CASCADE, related_name='vouchers')
+    order = models.ForeignKey(OrderRequest, on_delete=models.CASCADE, related_name='vouchers')
     salesman = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='vouchers')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateField(auto_now_add=True)
@@ -11,7 +12,7 @@ class Voucher(models.Model):
 
 
 class PaymentRecord(models.Model):
-    order = models.ForeignKey('orders.OrderRequest', on_delete=models.CASCADE, related_name='payments')
+    order = models.ForeignKey(OrderRequest, on_delete=models.CASCADE, related_name='payments')
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='payments_recorded')
@@ -19,7 +20,7 @@ class PaymentRecord(models.Model):
 
 
 class CommissionRecord(models.Model):
-    order = models.ForeignKey('orders.OrderRequest', on_delete=models.CASCADE, related_name='commissions')
+    order = models.ForeignKey(OrderRequest, on_delete=models.CASCADE, related_name='commissions')
     salesman = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='commissions')
     percentage = models.DecimalField(max_digits=5, decimal_places=2)
     earned_amount = models.DecimalField(max_digits=12, decimal_places=2)

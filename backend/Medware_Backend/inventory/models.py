@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from products.models import ProductSupplier
 
 
 class InventoryCategory(models.Model):
@@ -23,7 +24,7 @@ class InventoryItem(models.Model):
 
 
 class SupplierBill(models.Model):
-    supplier = models.ForeignKey('products.Supplier', on_delete=models.CASCADE, related_name='inventory_bills')
+    supplier = models.ForeignKey(ProductSupplier, on_delete=models.CASCADE, related_name='inventory_bills')
     manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='supplier_bills')
     date = models.DateField()
     notes = models.TextField(blank=True)
