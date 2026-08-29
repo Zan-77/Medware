@@ -131,6 +131,9 @@ class RegisterView(APIView):
     def get_tokens_for_user(self, user):
         refresh = RefreshToken.for_user(user)
         refresh["role"] = user.role
+        refresh["first_name"] = user.first_name
+        refresh["last_name"] = user.last_name
+        refresh["email"] = user.email
         return {
             'access': str(refresh.access_token),
             'refresh': str(refresh),

@@ -33,6 +33,9 @@ class EmailOrUsernameTokenObtainPairSerializer(serializers.Serializer):
 
         refresh = RefreshToken.for_user(user)
         refresh["role"] = user.role
+        refresh["first_name"] = user.first_name
+        refresh["last_name"] = user.last_name
+        refresh["email"] = user.email
         return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
