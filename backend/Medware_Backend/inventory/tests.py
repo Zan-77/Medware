@@ -1,7 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from users.models import User
-from inventory.models import InventoryCategory
+from products.models import Product, ProductSupplier
+from inventory.models import InventoryCategory, InventoryItem, SupplierBill, SupplierBillLine
 
 
 class InventoryPermissionTests(TestCase):
@@ -39,3 +40,47 @@ class InventoryPermissionTests(TestCase):
         self.client.force_authenticate(user=self.warehouse)
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, 200)
+
+    def test_manager_can_delete_category_by_detail_url(self):
+        category = InventoryCategory.objects.create(name='Temporary')
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.delete(f'{self.list_url}{category.pk}/')
+
+        self.assertEqual(resp.status_code, 204)
+        self.assertFalse(InventoryCategory.objects.filter(pk=category.pk).exists())
+
+    def test_product_is_imported_as_inventory_item(self):
+        product = Product.objects.create(name='Gloves', whole_price='2.00', retail_price='3.00')
+
+        item = InventoryItem.objects.get(product=product)
+
+        self.assertEqual(item.name, product.name)
+        self.assertEqual(item.quantity, 0)
+
+    def test_supplier_bill_line_adds_quantity_to_inventory(self):
+        product = Product.objects.create(name='Masks')
+        item = InventoryItem.objects.get(product=product)
+        supplier = ProductSupplier.objects.create(product=product)
+        bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
+
+        SupplierBillLine.objects.create(bill=bill, item=item, quantity=25, category=item.category)
+
+        item.refresh_from_db()
+        self.assertEqual(item.quantity, 25)
+
+    def test_supplier_bill_line_updates_and_removes_quantity(self):
+        product = Product.objects.create(name='Bandages')
+        item = InventoryItem.objects.get(product=product)
+        supplier = ProductSupplier.objects.create(product=product)
+        bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
+        line = SupplierBillLine.objects.create(bill=bill, item=item, quantity=10, category=item.category)
+
+        line.quantity = 4
+        line.save()
+        item.refresh_from_db()
+        self.assertEqual(item.quantity, 4)
+
+        line.delete()
+        item.refresh_from_db()
+        self.assertEqual(item.quantity, 0)

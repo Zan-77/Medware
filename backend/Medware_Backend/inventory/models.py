@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from products.models import ProductSupplier
+from products.models import Product, ProductSupplier
 
 
 class InventoryCategory(models.Model):
@@ -12,12 +12,17 @@ class InventoryCategory(models.Model):
 
 
 class InventoryItem(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='inventory_item', null=True, blank=True)
     category = models.ForeignKey(InventoryCategory, on_delete=models.CASCADE, related_name='items')
     name = models.CharField(max_length=200)
     sku = models.CharField(max_length=100, blank=True, null=True)
     whole_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     retail_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image_url = models.URLField(blank=True)
+
+    @property
+    def quantity(self):
+        return sum(entry.quantity for entry in self.stock_entries.all())
 
     def __str__(self):
         return f"{self.name} ({self.category.name})"

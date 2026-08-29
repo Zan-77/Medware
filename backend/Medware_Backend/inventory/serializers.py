@@ -9,9 +9,17 @@ class InventoryCategorySerializer(serializers.ModelSerializer):
 
 
 class InventoryItemSerializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(read_only=True)
+    quantity = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = InventoryItem
         fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['quantity'] = instance.quantity
+        return data
 
 
 class SupplierBillSerializer(serializers.ModelSerializer):

@@ -62,6 +62,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = [
             'username',
             'email',
+            'first_name',
+            'last_name',
             'password',
             'password2',
             'role',
@@ -92,6 +94,8 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
+            'first_name',
+            'last_name',
             'role',
             'role_display',
             'is_staff',

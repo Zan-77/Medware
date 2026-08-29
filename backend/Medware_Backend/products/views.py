@@ -17,5 +17,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class ProductSupplierViewSet(viewsets.ModelViewSet):
     queryset = ProductSupplier.objects.all()
+    
     serializer_class = ProductSupplierSerializer
     permission_classes = [permissions.AllowAny]

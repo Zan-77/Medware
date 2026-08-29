@@ -99,3 +99,23 @@ class UserRoleAccessTest(TestCase):
         logout_response = self.client.post('/api/auth/logout/', content_type='application/json')
         self.assertEqual(logout_response.status_code, 200)
         self.assertEqual(logout_response.cookies['refresh']['max-age'], 0)
+
+    def test_register_saves_first_and_last_name(self):
+        response = self.client.post(
+            '/api/auth/register/',
+            data=json.dumps({
+                'username': 'newuser',
+                'email': 'newuser@example.com',
+                'first_name': 'Ada',
+                'last_name': 'Lovelace',
+                'password': 'Newuserpass123!',
+                'password2': 'Newuserpass123!',
+                'role': self.User.Role.CUSTOMER,
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        user = self.User.objects.get(username='newuser')
+        self.assertEqual(user.first_name, 'Ada')
+        self.assertEqual(user.last_name, 'Lovelace')

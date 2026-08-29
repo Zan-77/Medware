@@ -27,6 +27,8 @@ def get_current_user(request):
         'id': request.user.id,
         'username': request.user.username,
         'email': request.user.email,
+        'first_name': request.user.first_name,
+        'last_name': request.user.last_name,
         'role': request.user.role,
         'role_display': request.user.get_role_display(),
         'is_staff': request.user.is_staff,

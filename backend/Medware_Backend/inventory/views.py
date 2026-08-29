@@ -68,4 +68,5 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         'POST': ['MANAGER'],
         'PUT': ['MANAGER'],
         'PATCH': ['MANAGER'],
+        'DELETE': ['MANAGER'],
     }
