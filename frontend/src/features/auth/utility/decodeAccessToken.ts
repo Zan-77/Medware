@@ -8,6 +8,9 @@ jti:string
 role: Roles
 token_type: string
 user_id: string
+first_name:string
+last_name:string
+email:string
 }
 
 export const decodeAccessToken = (token: string): JwtPayload | null => {

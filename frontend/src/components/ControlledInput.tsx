@@ -40,10 +40,17 @@ const ControlledInput = <TFieldValues extends FieldValues>({ className,autoCompl
     const { field, fieldState, formState } = useController({ ...props })
     const state = fieldState.error || formState.errors.root?.server ? "error" : "normal"
 
+    const errorMessage = fieldState.error?.message
+    let renderedError = ""
+    if (errorMessage) {
+        const translated = t(String(errorMessage))
+        renderedError = translated === String(errorMessage) ? String(errorMessage) : translated
+    }
+
     return (
         <div className={baseControlledInputStyle({ state, className })}>
-            <Input autoComplete={autoComplete} onClick={onClick} {...field} state={state} type={type} buttonIcon={buttonIcon} legend={t(props.name)} />
-            <Text color={state} className="ml-4.5 rtl:mr-4.5 select-none">{fieldState.error?.message}</Text>
+            <Input autoComplete={autoComplete} onClick={onClick} {...field} state={state} type={type} buttonIcon={buttonIcon} legend={t(String(props.name))} />
+            <Text color={state} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>
         </div>
     )
 }

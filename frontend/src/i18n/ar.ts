@@ -1,10 +1,18 @@
 export const ar = {
+    logout:"تسجيل الخروج",
     email: "حساب الإلكتروني",
     password: "كلمة المرور",
-    username:"اسم",
-    continue:"التالي",
-    confirmPassword:"اعد كتابة كلمة المرور",
-    back:"عودة",
+    username: "اسم",
+    first_name: "الاسم الأول",
+    last_name: "اسم العائلة",
+    phone:"رقم الهاتف",
+    continue: "التالي",
+    name:"اسم",
+    whole_price:"سعر الجملة",
+    retail_price:"سعر المفرق",
+    confirmPassword: "اعد كتابة كلمة المرور",
+    back: "عودة",
+    welcome:"مرحباً يا",
     submit: "تسجيل",
     inputErrorMessages: {
         emailRequiredMessage: "لم تدخل حسابك",
@@ -13,8 +21,12 @@ export const ar = {
         passwordWeakMessage: "كلمة المرور ضعيفة.",
         passwordMediumMessage: "كلمة المرور متوسطة.",
         passwordMismatchMessage: "كلمتا المرور غير متطابقتين.",
-        usernameMinMessage:"يجب ان يكون بطول ثلاثة أحرف على الاقل",
-        usernameRequiredMessage:"لم تدخل اسمك",
+        usernameMinMessage: "يجب ان يكون بطول ثلاثة أحرف على الاقل",
+        usernameRequiredMessage: "لم تدخل اسمك",
+        firstNameRequiredMessage: "لم تدخل الاسم الأول",
+        firstNameMinMessage: "يجب أن يكون الاسم الأول حرفين على الأقل",
+        lastNameRequiredMessage: "لم تدخل اسم العائلة",
+        lastNameMinMessage: "يجب أن يكون اسم العائلة حرفين على الأقل",
     },
     login: {
         title: "تسجيل دخول",
@@ -28,8 +40,8 @@ export const ar = {
         registerLink: "أنشئ واحداً"
     },
     register: {
-        step1:{
-            businessTitle:"إنشاء حساب عمل",
+        step1: {
+            businessTitle: "إنشاء حساب عمل",
             title: "إنشاء حساب",
             subtitle: "ادخل اسمك و حسابك الإلكتروني",
             login: "لديك حساب ؟",
@@ -38,11 +50,52 @@ export const ar = {
             tosLink: "شروط الخدمة",
             dpa: "و",
             dpaLink: "اتفاقيات معالجة البيانات",
-            registerBusiness:"تريد إدارة عملك ؟",
-            registerBusinessLink:"أنشىء حساب عمل",
+            registerBusiness: "تريد إدارة عملك ؟",
+            registerBusinessLink: "أنشىء حساب عمل",
         },
-        step2:{
-            subtitle:"ادخل كلمة المرور"
+        step2: {
+            subtitle: "ادخل كلمة المرور"
         }
+    },
+    Products: "بضائع",
+    Supplier:"موردون",
+    categories: "الفئات",
+    items: "العناصر",
+    bills: "الفواتير",
+    Suppliers: {
+        newSuppliers: "إضافة مورد جديد",
+        addSupplier: "أضف المورد",
+        deleteTitle: "حذف مورد",
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذا المورد؟",
+        confirm: "تأكيد",
+        cancel: "إلغاء"
+    },
+    SuppliersMessages: {
+        nameRequired: "اسم المورد مطلوب.",
+        phoneRequired: "رقم الهاتف مطلوب.",
+        phoneMin: "رقم الهاتف غير صالح.",
+        serverError: "حدث خطأ أثناء إضافة المورد.",
+        successMessage: "تمت إضافة مورد جديد"
+    },
+    inventory: "مستودع",
+    Orders: "طلبات",
+    finance: "مالية",
+    id:"رقم",
+    actions:"إجراءات",
+    products:{
+         serverErrorMessages: {
+            500: "خطأ في المخدم"
+        },
+        newProduct:"إضافة منتج جديد",
+        addProduct:"أضف المنتج",
+        productNameRequired: "اسم المنتج مطلوب.",
+        retailPriceRequired: "سعر البيع مطلوب.",
+        retailPriceMin: "لا يمكن أن يكون سعر البيع سالبًا.",
+        wholePriceRequired: "سعر الجملة مطلوب.",
+        wholePriceMin: "لا يمكن أن يكون سعر الجملة سالبًا.",
+        serverError: "حدث خطأ أثناء إضافة المنتج.",
+        deleteTitle: "حذف منتج",
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذا المنتج؟",
+        successMessage: "تمت إضافة منتج جديد"
     }
 }

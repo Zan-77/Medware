@@ -1,1 +1,1 @@
-export type Roles = "MANAGER" | "ACCOUNTENT" | "SALESMAN" | "CUSTOMMER" | "GUEST"
+export type Roles = "MANAGER" | "ACCOUNTANT" | "SALESMAN" | "CUSTOMER" | "WAREHOUSE_WORKER" | "GUEST"

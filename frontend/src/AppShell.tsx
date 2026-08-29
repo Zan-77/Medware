@@ -1,12 +1,15 @@
 import { useEffect } from "react"
 import { Outlet } from "react-router"
+import { Relogin } from "./features/auth"
 
 const AppShell = () => {
+
+
     if (import.meta.env.VITE_DEV)
         useEffect(() => {
             const html = document.documentElement
-            html.classList.add("dark")
-            
+            html.classList.add("light")
+
             const onKeyDown = (e: KeyboardEvent) => {
                 const key = e.key
 
@@ -26,7 +29,9 @@ const AppShell = () => {
         }, [])
 
     return (
-        <Outlet />
+        <Relogin>
+            <Outlet />
+        </Relogin>
     )
 }
 

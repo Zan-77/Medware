@@ -1,6 +1,9 @@
 import { createBrowserRouter } from "react-router";
 import AppShell from "./AppShell";
 import { authRoutes } from "./features/auth";
+import { inventoryRoutes } from "./features/inventory";
+import { appLayout } from "./layouts/appLayout";
+import { peoductsRoutes } from "./features/products";
 
 export const router = createBrowserRouter([
     {
@@ -9,22 +12,22 @@ export const router = createBrowserRouter([
         children: [
             ...authRoutes,
             {
-                path: "app",
-                children: [
+                path: "/app",
+                Component:appLayout,
+                children:[
+                    ...inventoryRoutes,
+                    ...peoductsRoutes
+                ]
+            },
+            {
+                path: "/store"
 
-                ]
             },
             {
-                path: "store",
-                children: [
-                 
-                ]
+                path: "dpa"
             },
             {
-                path:"dpa"
-            },
-            {
-                path:"tos"
+                path: "tos"
             }
         ]
     },

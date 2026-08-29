@@ -5,7 +5,7 @@ import ControlledInput from "../../../../components/ControlledInput"
 import Form from "../../../../components/Form"
 import Text from "../../../../components/Text"
 import Button from "../../../../components/Button"
-import { useBoundStore } from "../../../../useBoundStore"
+import { useBoundStore } from "../../../../store/useBoundStore"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ViewIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons"
 import { useState } from "react"
@@ -55,7 +55,7 @@ export const Step2 = () => {
     const onSubmit = (data: RegisterFieldsValues) => {
         if (isPending) return
         //@ts-ignore
-        mutate({...registerformData,password:data.password ,password2:data.confirmPassword}, {
+        mutate({...registerformData,password:data.password ,password2:data.confirmPassword , is_verified:true}, {
             onError: () => {
                 setError("root.server", { type: "server", message: t("login.serverErrorMessages.400") })
             },
@@ -65,12 +65,12 @@ export const Step2 = () => {
                     setAuthHeader(data.access)
                     setIsGuest(false)
                     setAuthenticated(true)
-                    setUser({ id: accessPayload.user_id, role: accessPayload.role, email: "", username: "" })
+                    setUser({ id: accessPayload.user_id, role: accessPayload.role, email: accessPayload.email, username: "" ,first_name:accessPayload.first_name,last_name:accessPayload.last_name})
                     resetRegisterformData()
-                    if (accessPayload.role === "CUSTOMMER")
-                        navigate("/store")
+                    if (accessPayload.role === "CUSTOMER")
+                        navigate("/store/")
                     else
-                        navigate("/app")
+                        navigate("/app/inventory", { state: { location: "inventory" } })
                     
                 }
             }
@@ -79,18 +79,15 @@ export const Step2 = () => {
 
 
     return (
-        <Form onSubmit={handleSubmit(onSubmit)}
+        <Form className="w-2xs" onSubmit={handleSubmit(onSubmit)}
          ServerError={errors.root?.server}
             Buttons={
                 <div className="*:mb-8">
                     <div className="flex gap-x-8">
-                        <Button className="w-full mt-4">{t("continue")}</Button>
+                        <Button className="w-full mt-4">{t("submit")}</Button>
                         <Button type="button" onClick={() => { navigate("..") }} variants="secondary" className="w-full mt-4">{t("back")}</Button>
                     </div>
-                    <div className="*:mx-px text-center">
-                        <Text muted={true}>{t('register.step1.registerBusiness')}</Text>
-                        <Link to="">{t('register.step1.registerBusinessLink')}</Link>
-                    </div>
+                    
                 </div>
             }
         >

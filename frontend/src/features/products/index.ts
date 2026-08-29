@@ -1,0 +1,1 @@
+export {peoductsRoutes} from "./products.routes"

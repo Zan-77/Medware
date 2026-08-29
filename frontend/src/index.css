@@ -34,9 +34,10 @@
 
 
   /*   dark-border-colors     */
-  --color-dark-border-primary: oklch(0.21 0.002 286.2);
-  --color-dark-border-primary-hover: oklch(0.23 0.002 286.2);
+  --color-dark-border-primary: oklch(0.25 0.002 286.2);
+  --color-dark-border-primary-hover: oklch(0.24 0.002 286.2);
   --color-dark-border-secondary: oklch(0.225 0.0025 247.95);
+  --color-dark-border-tertiary: oklch(0.23 0.0025 247.95);
   --color-dark-border-ok: oklch(0.4318 0.0522 152.45);
   --color-dark-border-ok-hover: oklch(0.4618 0.0522 152.45);
   --color-dark-border-error: oklch(0.5119 0.1257 21.9);
@@ -47,7 +48,7 @@
   --color-dark-button-background-primary: oklch(0.5674 0.1585 275.21);
   --color-dark-button-background-primary-hover: oklch(0.6074 0.1585 275.21);
   --color-dark-button-background-secondary: oklch(0.21 0.0016 197);
-  --color-dark-button-background-secondary-hover: oklch(0.225 0.0016 197);
+  --color-dark-button-background-secondary-hover: oklch(0.3 0.0016 197);
 
   /*   dark-button-border-colors     */
   --color-dark-button-border-primary: oklch(0.225 0.002 286.2);
@@ -58,15 +59,15 @@
 
 
   /*     light-background-colors     */
-  --color-light-background-primary: oklch(0.96 0.0013 286.38);
-  --color-light-background-secondar y: oklch(0.99 0.0013 286.38);
+  --color-light-background-primary: oklch(0.93 0.0013 286.38);
+  --color-light-background-secondary: oklch(0.98 0.0013 286.38);
   --color-light-background-tertiary: oklch(1 0 0);
 
   /*   light-button-background-colors     */
-  --color-light-button-background-primary: oklch(0.5674 0.1585 275.21);
-  --color-light-button-background-primary-hover: oklch(0.5474 0.1585 275.21);
-  --color-light-button-background-secondary: oklch(0.92 0.0016 197);
-  --color-light-button-background-secondary-hover: oklch(0.88 0.0016 197);
+  --color-light-button-background-primary: oklch(0.5874 0.1585 275.21);
+  --color-light-button-background-primary-hover: oklch(0.5674 0.1585 275.21);
+  --color-light-button-background-secondary: oklch(0.98 0.0016 197);
+  --color-light-button-background-secondary-hover: oklch(0.96 0.0016 197);
 
 
   /*   light-text-colors     */
@@ -78,13 +79,13 @@
 
 
   /*   light-border-colors     */
-  --color-light-border-primary: oklch(0.4 0.002 286.2);
-  --color-light-border-primary-hover: oklch(0.37 0.002 286.2);
-  --color-light-border-secondary: oklch(0.2 0.002 286.2);
+  --color-light-border-primary: oklch(0.88 0.002 286.2);
+  --color-light-border-primary-hover: oklch(0.85 0.002 286.2);
+  --color-light-border-secondary: oklch(0.90 0.002 286.2);
   --color-light-border-ok: oklch(0.5232 0.0807 152.45);
   --color-light-border-ok: oklch(0.4832 0.0807 152.45);
-  --color-light-border-error:oklch(0.6068 0.1257 21.9);
-  --color-light-border-error:oklch(0.5668 0.1257 21.9);
+  --color-light-border-error: oklch(0.6068 0.1257 21.9);
+  --color-light-border-error: oklch(0.5668 0.1257 21.9);
 
 
 
@@ -124,11 +125,9 @@
 
 
 
-
-
 }
 
-a{
+a {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
