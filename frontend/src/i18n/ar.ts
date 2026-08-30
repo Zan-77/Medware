@@ -75,6 +75,10 @@ export const ar = {
         phoneRequired: "رقم الهاتف مطلوب.",
         phoneMin: "رقم الهاتف غير صالح.",
         serverError: "حدث خطأ أثناء إضافة المورد.",
+        createSuccess: "تمت إضافة مورد جديد",
+        updateSuccess: "تم تحديث المورد بنجاح",
+        editSuccess: "تم تحديث المورد بنجاح",
+        deleteSuccess: "تم حذف المورد بنجاح",
         successMessage: "تمت إضافة مورد جديد"
     },
     inventory: "مستودع",
@@ -96,6 +100,9 @@ export const ar = {
         serverError: "حدث خطأ أثناء إضافة المنتج.",
         deleteTitle: "حذف منتج",
         deleteConfirm: "هل أنت متأكد أنك تريد حذف هذا المنتج؟",
+        createSuccess: "تمت إضافة منتج جديد",
+        updateSuccess: "تم تحديث المنتج بنجاح",
+        deleteSuccess: "تم حذف المنتج بنجاح",
         successMessage: "تمت إضافة منتج جديد"
     }
 }

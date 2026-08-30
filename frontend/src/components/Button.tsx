@@ -9,7 +9,7 @@ const baseButtonStyle = tv({
         variants: {
             primary: "dark:bg-dark-button-background-primary dark:hover:bg-dark-button-background-primary-hover bg-light-button-background-primary hover:bg-light-button-background-primary-hover dark:text-dark-text-primary dark:hover:text-dark-text-primary text-dark-text-primary hover:text-dark-text-primary",
             secondary: "dark:bg-dark-button-background-secondary dark:hover:bg-dark-button-background-secondary-hover/50 bg-light-button-background-secondary hover:bg-light-button-background-secondary-hover border-2 border-light-border-secondary dark:border-dark-border-primary dark:hover:border-dark-border-primary-hover",
-            border: "border-2 dark:border-dark-border-primary dark:hover:border-dark-border-primary-hover dark:hover:bg-dark-button-background-secondary-hover/20 dark:border-dark-border- hover:bg-light-button-background-secondary/90 border-light-border-primary hover:border-light-border-primary-hover",
+            border: "border-2 dark:border-dark-border-primary dark:hover:border-dark-border-primary-hover dark:hover:bg-dark-button-background-secondary-hover/20  border-light-border-primary hover:border-light-border-primary-hover",
             ghost: "dark:hover:bg-dark-button-background-secondary-hover hover:dark:bg-dark-button-background-secondary-hover/50 hover:bg-dark-button-background-secondary-hover/10"
         },
         active:{

@@ -6,7 +6,7 @@ import CheckBox from "../../../components/CheckBox"
 
 
 
-export const InventoryPage = () => {
+export const InventoryBillPage = () => {
   const columns: Array<ColumnDef<TableFeatures, InventoryData>> = [
     {
       header: "Name",

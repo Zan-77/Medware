@@ -1,6 +1,6 @@
 
 export type Products = {
-    id:number
+    id:string
     whole_price:number | null
     retail_price:number | null
     name:string

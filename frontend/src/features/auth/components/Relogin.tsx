@@ -39,7 +39,7 @@ export const Relogin = ({ children }: ReloginProps) => {
                 if (accessPayload.role === "CUSTOMER" || (accessPayload.role === "GUEST" && !isAuthenticated))
                     navigate("/store/")
                 else
-                    navigate("/app/inventory", { state: { location: "inventory" } })
+                    navigate("/app/inventory/bills", { state: { location: "inventory/bills" } })
             }
         }
     })

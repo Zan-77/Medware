@@ -17,6 +17,7 @@ import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
+import TableSettingsButton from "../../../components/TableSettingsButton"
 
 type NewProductFieldsValueState = Omit<Products, "id">
 
@@ -38,27 +39,28 @@ export const ProductsPage = () => {
     })
     const queryClient = useQueryClient()
 
-    const { mutate: addProducts, isSuccess } = useMutation({
+    const { mutate: addProducts } = useMutation({
         mutationKey: ["products", "new"],
         mutationFn: postProducts
     })
 
     const updateProduct = useMutation({
         mutationKey: ["products", "update"],
-        mutationFn: ({ id, data }: { id: number, data: Omit<NewProductFieldsValueState, "id"> }) => putProduct(id, data),
+        mutationFn: ({ id, data }: { id: string, data: Omit<NewProductFieldsValueState, "id"> }) => putProduct(id, data),
     })
 
     const deleteProductMutation = useMutation({
         mutationKey: ["products", "delete"],
-        mutationFn: (id: number) => deleteProduct(id),
+        mutationFn: (id: string) => deleteProduct(id),
     })
 
     const { control, handleSubmit, reset, setError, clearErrors, formState: { errors } } = useForm<NewProductFieldsValueState>({
         defaultValues: defaultProductValues,
         mode: "all"
     })
-    const [editingProductId, setEditingProductId] = useState<number | null>(null)
+    const [editingProductId, setEditingProductId] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<null | Products>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const { t } = useTranslation()
 
     useEffect(() => {
@@ -73,10 +75,11 @@ export const ProductsPage = () => {
 
         const timeoutId = window.setTimeout(() => {
             setIsOpenToast(false)
+            setSuccessMessage(null)
         }, 3000)
 
         return () => window.clearTimeout(timeoutId)
-    }, [isOpenToast, setIsOpenToast])
+    }, [isOpenToast, setIsOpenToast, setSuccessMessage])
 
     const onSubmit = (data: NewProductFieldsValueState) => {
         clearErrors("root.server")
@@ -91,6 +94,7 @@ export const ProductsPage = () => {
                     clearErrors()
                     setEditingProductId(null)
                     setIsOpenAddModel(false)
+                    setSuccessMessage(t("products.updateSuccess"))
                     setIsOpenToast(true)
                     //@ts-ignore
                     queryClient.invalidateQueries(["products"])
@@ -109,6 +113,7 @@ export const ProductsPage = () => {
                 reset(defaultProductValues)
                 clearErrors()
                 setIsOpenAddModel(false)
+                setSuccessMessage(t("products.createSuccess"))
                 setIsOpenToast(true)
                 //@ts-ignore
                 queryClient.invalidateQueries(["products"])
@@ -226,23 +231,28 @@ export const ProductsPage = () => {
                                 onSuccess() {
                                     setIsOpenDeleteModel(false)
                                     setDeleteTarget(null)
+                                    setSuccessMessage(t("products.deleteSuccess"))
                                     setIsOpenToast(true)
+                                    // remove deleted item from cached query so UI updates immediately
                                     //@ts-ignore
-                                    queryClient.invalidateQueries(["products"])
+                                    queryClient.setQueryData(["products"], (old: Products[] | undefined) => {
+                                        if (!old) return old
+                                        return old.filter(item => item.id !== deleteTarget?.id)
+                                    })
                                 }
                             })
                         }}>{t("Suppliers.confirm")}</Button>
                     </div>
                 </div>
             </Model>
-            <Toast onClick={() => { setIsOpenToast(false) }} isOpen={isOpenToast} ref={toastRef}>
-                {isSuccess && <div className="flex items-center gap-x-2 "><HugeiconsIcon className="*:fill-ok *:stroke-white" size={24} icon={CheckmarkCircle01Icon} /> <Text>{t("products.successMessage")}</Text></div>}
+            <Toast onClick={() => { setIsOpenToast(false); setSuccessMessage(null) }} isOpen={isOpenToast} ref={toastRef}>
+                {successMessage && <div className="flex items-center gap-x-2 "><HugeiconsIcon className="*:fill-ok *:stroke-transparent" size={24} icon={CheckmarkCircle01Icon} /> <Text>{successMessage}</Text></div>}
             </Toast>
             <div>
                 <div className="flex gap-x-3 mb-8">
                     {hasPermission(user, "products", "create") && <Button onClick={() => { setIsOpenAddModel(true) }} variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={Plus} />} />}
                     <Button variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={FilterHorizontalIcon} />} />
-                    <Button variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={FilterMailIcon} />} />
+                    <TableSettingsButton columns={columns}/>
                 </div>
                 <Table<Products> columns={columns} data={data as any ?? []} tableKey="products" />
             </div>

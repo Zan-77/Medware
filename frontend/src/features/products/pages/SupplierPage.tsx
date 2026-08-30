@@ -18,7 +18,6 @@ import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import CheckBox from "../../../components/CheckBox"
 
 type NewSupplierFieldsValueState = Omit<Suppliers, "id">
 
@@ -38,7 +37,7 @@ export const SupplierPage = () => {
     })
     const queryClient = useQueryClient()
 
-    const { mutate: addSupplier, isSuccess } = useMutation({
+    const { mutate: addSupplier } = useMutation({
         mutationKey: ["supplers", "new"],
         mutationFn: postSuppliers
     })
@@ -59,6 +58,7 @@ export const SupplierPage = () => {
     })
     const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<null | Suppliers>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const { t } = useTranslation()
 
     useEffect(() => {
@@ -73,10 +73,11 @@ export const SupplierPage = () => {
 
         const timeoutId = window.setTimeout(() => {
             setIsOpenToast(false)
+            setSuccessMessage(null)
         }, 3000)
 
         return () => window.clearTimeout(timeoutId)
-    }, [isOpenToast, setIsOpenToast])
+    }, [isOpenToast, setIsOpenToast, setSuccessMessage])
 
     const onSubmit = (data: NewSupplierFieldsValueState) => {
         clearErrors("root.server")
@@ -91,9 +92,10 @@ export const SupplierPage = () => {
                     clearErrors()
                     setEditingSupplierId(null)
                     setIsOpenAddModel(false)
+                    setSuccessMessage(t("SuppliersMessages.updateSuccess"))
                     setIsOpenToast(true)
                     //@ts-ignore
-                    queryClient.invalidateQueries(["suppliers"])
+                    queryClient.invalidateQueries(["supplers"])
                 }
             })
             return
@@ -109,9 +111,10 @@ export const SupplierPage = () => {
                 reset(defaultProductValues)
                 clearErrors()
                 setIsOpenAddModel(false)
+                setSuccessMessage(t("SuppliersMessages.createSuccess"))
                 setIsOpenToast(true)
                 //@ts-ignore
-                queryClient.invalidateQueries(["suppliers"])
+                queryClient.invalidateQueries(["supplers"])
             },
         })
     }
@@ -142,7 +145,7 @@ export const SupplierPage = () => {
             header: t("id"),
             accessorKey: "id",
         },
-        {
+        /*{
             id: "select-col",
             enableColumnFilter: false,
             enableCellSelection: false,
@@ -169,7 +172,7 @@ export const SupplierPage = () => {
                 </div>
             ),
 
-        },
+        },*/
     ]
 
     return (
@@ -213,18 +216,24 @@ export const SupplierPage = () => {
                                 },
                                 onSuccess() {
                                     setIsOpenDeleteModel(false)
+                                    const deletedId = deleteTarget?.id
                                     setDeleteTarget(null)
+                                    setSuccessMessage(t("SuppliersMessages.deleteSuccess"))
                                     setIsOpenToast(true)
+                                    // remove the deleted item from the queued/cache data so UI updates immediately
                                     //@ts-ignore
-                                    queryClient.invalidateQueries(["products"])
+                                    queryClient.setQueryData(["supplers"], (old: Suppliers[] | undefined) => {
+                                        if (!old) return old
+                                        return old.filter(item => item.id !== deletedId)
+                                    })
                                 }
                             })
                         }}>{t("Suppliers.confirm")}</Button>
                     </div>
                 </div>
             </Model>
-            <Toast onClick={() => { setIsOpenToast(false) }} isOpen={isOpenToast} ref={toastRef}>
-                {isSuccess && <div className="flex items-center gap-x-2 "><HugeiconsIcon className="*:fill-ok *:stroke-white" size={24} icon={CheckmarkCircle01Icon} /> <Text>{t("SuppliersMessages.successMessage")}</Text></div>}
+            <Toast onClick={() => { setIsOpenToast(false); setSuccessMessage(null) }} isOpen={isOpenToast} ref={toastRef}>
+                {successMessage && <div className="flex items-center gap-x-2 "><HugeiconsIcon className="*:fill-ok *:stroke-white" size={24} icon={CheckmarkCircle01Icon} /> <Text>{successMessage}</Text></div>}
             </Toast>
             <div>
                 <div className="flex gap-x-3 mb-8">

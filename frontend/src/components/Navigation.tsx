@@ -2,7 +2,7 @@
 import { forwardRef } from 'react'
 import Button from './Button'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDown01Icon,  BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, RightToLeftListDashIcon, SquareIcon, Trolley02Icon } from '@hugeicons/core-free-icons'
+import { ArrowDown01Icon,  BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, RightToLeftListDashIcon, Trolley02Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import Dropdown from './Dropdown'
@@ -140,7 +140,7 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               variants='ghost'
               active={location.pathname.includes("inventory/bills")}
               leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "inventory" } }); }}
+              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "inventory_bills" } }); }}
             >
               {t('bills')}
             </Button>
