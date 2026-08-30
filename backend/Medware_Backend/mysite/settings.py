@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -183,9 +184,19 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Simple JWT settings (optional overrides)
+# Simple JWT settings
+#
+# These were previously all commented out, which left simplejwt's defaults in
+# force - a 5 minute access token. Combined with a frontend that had no
+# refresh-on-401 path, every request started failing with 401 about five
+# minutes after signing in, regardless of the user's role. The frontend now
+# refreshes and retries (see services/api.ts); these are stated explicitly so
+# the lifetime is a decision rather than an inherited default.
 SIMPLE_JWT = {
-    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    # Each refresh returns a new refresh token, so an idle-but-active session
+    # keeps working while a stolen refresh token has a bounded life.
+    'ROTATE_REFRESH_TOKENS': True,
 }
 

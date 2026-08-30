@@ -5,10 +5,11 @@ the fix, so a failure means the hole is back. Picked up automatically by
 `python manage.py test`.
 """
 
-import json
+from datetime import timedelta
 
 from django.test import TestCase
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import User
 from orders.models import OrderRequest
@@ -138,6 +139,49 @@ class SecurityRegressionTests(TestCase):
 
     def test_users_me_unauthenticated_is_401(self):
         self.assertEqual(APIClient().get('/api/users/me/').status_code, 401)
+
+    # --- token lifetime / expiry behaviour ---------------------------------
+    def test_access_token_lifetime_is_configured_not_inherited(self):
+        """Guards the bug where SIMPLE_JWT was empty.
+
+        With no explicit setting, simplejwt defaulted to a 5 minute access
+        token; combined with a frontend that had no refresh-on-401 path this
+        made every request fail with 401 a few minutes after signing in,
+        whatever the user's role. Keep this explicit.
+        """
+        from django.conf import settings
+        lifetime = settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME')
+        self.assertIsNotNone(
+            lifetime, 'ACCESS_TOKEN_LIFETIME must be set explicitly, not inherited')
+        self.assertGreaterEqual(lifetime, timedelta(minutes=10))
+
+    def test_expired_access_token_is_rejected_regardless_of_role(self):
+        """An expired token must 401 - the frontend relies on that to refresh."""
+        refresh = RefreshToken.for_user(self.manager)
+        refresh['role'] = self.manager.role
+        access = refresh.access_token
+        access.set_exp(lifetime=timedelta(seconds=-10))
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        self.assertEqual(client.get('/api/users/me/').status_code, 401)
+
+    def test_refresh_cookie_issues_a_working_access_token(self):
+        """The recovery path the frontend retries with must actually work."""
+        client = APIClient()
+        login = client.post('/api/auth/token/', {
+            'email': 'sec_mgr@example.com', 'password': 'pass1234',
+        }, format='json')
+        self.assertEqual(login.status_code, 200)
+
+        refreshed = client.post('/api/auth/token/refresh/', {}, format='json')
+        self.assertEqual(refreshed.status_code, 200)
+
+        fresh = APIClient()
+        fresh.credentials(HTTP_AUTHORIZATION=f"Bearer {refreshed.json()['access']}")
+        me = fresh.get('/api/users/me/')
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(me.json()['role'], 'MANAGER')
 
     # --- F9: case-insensitive email uniqueness -----------------------------
     def test_duplicate_email_differing_only_in_case_is_rejected(self):

@@ -1,0 +1,968 @@
+{
+  ".vscode/settings.json": {
+    "mtime": 1788081025.4134226,
+    "seen": 1788132476.7281823,
+    "ast_hash": "a78585d3c5060ed8c3a39cc262bd1a29",
+    "semantic_hash": "a78585d3c5060ed8c3a39cc262bd1a29"
+  },
+  "backend/Medware_Backend/audit/__init__.py": {
+    "mtime": 1786052621.1430893,
+    "seen": 1788132476.7281866,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/audit/admin.py": {
+    "mtime": 1786052735.2471962,
+    "seen": 1788132476.7281888,
+    "ast_hash": "dfa80e7dbb38591b78067c9d29994f30",
+    "semantic_hash": "dfa80e7dbb38591b78067c9d29994f30"
+  },
+  "backend/Medware_Backend/audit/apps.py": {
+    "mtime": 1787441290.5255158,
+    "seen": 1788132476.7281897,
+    "ast_hash": "5eda5f87c70d23083988d623814e7f7f",
+    "semantic_hash": "5eda5f87c70d23083988d623814e7f7f"
+  },
+  "backend/Medware_Backend/audit/migrations/0001_initial.py": {
+    "mtime": 1788082622.2886724,
+    "seen": 1788132476.7281907,
+    "ast_hash": "bd483b75d61fad6e6502a39047428b24",
+    "semantic_hash": "bd483b75d61fad6e6502a39047428b24"
+  },
+  "backend/Medware_Backend/audit/migrations/__init__.py": {
+    "mtime": 1788082622.2886724,
+    "seen": 1788132476.7281919,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/audit/models.py": {
+    "mtime": 1787441293.6963696,
+    "seen": 1788132476.728193,
+    "ast_hash": "0df38a5e6d658861571ce261cbb444fe",
+    "semantic_hash": "0df38a5e6d658861571ce261cbb444fe"
+  },
+  "backend/Medware_Backend/audit/serializers.py": {
+    "mtime": 1786052699.8206806,
+    "seen": 1788132476.7281938,
+    "ast_hash": "5356b8be4fc8ab97e0bfdac9e1c09f81",
+    "semantic_hash": "5356b8be4fc8ab97e0bfdac9e1c09f81"
+  },
+  "backend/Medware_Backend/audit/urls.py": {
+    "mtime": 1786855951.45321,
+    "seen": 1788132476.7281945,
+    "ast_hash": "3b409a0476081867cd1df4624ac4a5bd",
+    "semantic_hash": "3b409a0476081867cd1df4624ac4a5bd"
+  },
+  "backend/Medware_Backend/audit/views.py": {
+    "mtime": 1788114129.3913276,
+    "seen": 1788132476.7281954,
+    "ast_hash": "58cb4cc44dafd16f14d0bffabc11d74e",
+    "semantic_hash": "58cb4cc44dafd16f14d0bffabc11d74e"
+  },
+  "backend/Medware_Backend/finance/__init__.py": {
+    "mtime": 1786052600.3448563,
+    "seen": 1788132476.7281961,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/finance/admin.py": {
+    "mtime": 1786052729.584741,
+    "seen": 1788132476.728197,
+    "ast_hash": "df5f9cca8867f3cac662c425261ab1f3",
+    "semantic_hash": "df5f9cca8867f3cac662c425261ab1f3"
+  },
+  "backend/Medware_Backend/finance/apps.py": {
+    "mtime": 1786052606.1358168,
+    "seen": 1788132476.7281978,
+    "ast_hash": "89199660b1ca13bb7dfb0d398e0adea5",
+    "semantic_hash": "89199660b1ca13bb7dfb0d398e0adea5"
+  },
+  "backend/Medware_Backend/finance/migrations/0001_initial.py": {
+    "mtime": 1788082616.167174,
+    "seen": 1788132476.728199,
+    "ast_hash": "ab3ebbfe10776b1d89ee2f08b1b6fcd6",
+    "semantic_hash": "ab3ebbfe10776b1d89ee2f08b1b6fcd6"
+  },
+  "backend/Medware_Backend/finance/migrations/__init__.py": {
+    "mtime": 1788082616.1616902,
+    "seen": 1788132476.7281997,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/finance/models.py": {
+    "mtime": 1787614541.822594,
+    "seen": 1788132476.7282004,
+    "ast_hash": "b10f6c5361536298541401690ce087c0",
+    "semantic_hash": "b10f6c5361536298541401690ce087c0"
+  },
+  "backend/Medware_Backend/finance/serializers.py": {
+    "mtime": 1786052693.7502077,
+    "seen": 1788132476.7282012,
+    "ast_hash": "f8dcf260a31bba0884cfedf335832844",
+    "semantic_hash": "f8dcf260a31bba0884cfedf335832844"
+  },
+  "backend/Medware_Backend/finance/urls.py": {
+    "mtime": 1786855942.3953097,
+    "seen": 1788132476.7282019,
+    "ast_hash": "b5d61b37f6bcda6bf002ba1477af384d",
+    "semantic_hash": "b5d61b37f6bcda6bf002ba1477af384d"
+  },
+  "backend/Medware_Backend/finance/views.py": {
+    "mtime": 1788114115.3303726,
+    "seen": 1788132476.728203,
+    "ast_hash": "b039bc5d04f002a8c64826ab77a56ece",
+    "semantic_hash": "b039bc5d04f002a8c64826ab77a56ece"
+  },
+  "backend/Medware_Backend/inventory/__init__.py": {
+    "mtime": 1786052579.8502562,
+    "seen": 1788132476.7282038,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/inventory/admin.py": {
+    "mtime": 1786052720.5055878,
+    "seen": 1788132476.7282045,
+    "ast_hash": "729d3e6d2927f0fc817e0e92d62467bb",
+    "semantic_hash": "729d3e6d2927f0fc817e0e92d62467bb"
+  },
+  "backend/Medware_Backend/inventory/apps.py": {
+    "mtime": 1787954294.1588807,
+    "seen": 1788132476.7282052,
+    "ast_hash": "500a87d7858851058845fdb5642b69e1",
+    "semantic_hash": "500a87d7858851058845fdb5642b69e1"
+  },
+  "backend/Medware_Backend/inventory/migrations/0001_initial.py": {
+    "mtime": 1788082480.4897275,
+    "seen": 1788132476.7282064,
+    "ast_hash": "0547ec57ab68e24b78ac78a9951d95bb",
+    "semantic_hash": "0547ec57ab68e24b78ac78a9951d95bb"
+  },
+  "backend/Medware_Backend/inventory/migrations/0002_alter_supplierbill_supplier.py": {
+    "mtime": 1788114392.4208958,
+    "seen": 1788132476.7282073,
+    "ast_hash": "ccc0beb09e12d326fa4368a3f0e9d0ba",
+    "semantic_hash": "ccc0beb09e12d326fa4368a3f0e9d0ba"
+  },
+  "backend/Medware_Backend/inventory/migrations/__init__.py": {
+    "mtime": 1788082480.4860842,
+    "seen": 1788132476.728208,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/inventory/models.py": {
+    "mtime": 1788114252.0372787,
+    "seen": 1788132476.7282088,
+    "ast_hash": "5131b1fa2cb2020d4f4f77167a5feb60",
+    "semantic_hash": "5131b1fa2cb2020d4f4f77167a5feb60"
+  },
+  "backend/Medware_Backend/inventory/serializers.py": {
+    "mtime": 1787954294.1678548,
+    "seen": 1788132476.7282097,
+    "ast_hash": "0b933d7becbc8f3df44356b2d2ed6735",
+    "semantic_hash": "0b933d7becbc8f3df44356b2d2ed6735"
+  },
+  "backend/Medware_Backend/inventory/signals.py": {
+    "mtime": 1787954485.0641363,
+    "seen": 1788132476.7282104,
+    "ast_hash": "02bc06e2347bb61c5655209997c851e5",
+    "semantic_hash": "02bc06e2347bb61c5655209997c851e5"
+  },
+  "backend/Medware_Backend/inventory/tests.py": {
+    "mtime": 1788114573.3503711,
+    "seen": 1788132476.7282112,
+    "ast_hash": "92906241db7993de9d74bb61e484faa2",
+    "semantic_hash": "92906241db7993de9d74bb61e484faa2"
+  },
+  "backend/Medware_Backend/inventory/urls.py": {
+    "mtime": 1786855886.086957,
+    "seen": 1788132476.728212,
+    "ast_hash": "888f073fdd0229da40754f0bcdd3cd98",
+    "semantic_hash": "888f073fdd0229da40754f0bcdd3cd98"
+  },
+  "backend/Medware_Backend/inventory/views.py": {
+    "mtime": 1788115702.0065632,
+    "seen": 1788132476.728213,
+    "ast_hash": "00d85cedd2aebd2244df73244c5690d3",
+    "semantic_hash": "00d85cedd2aebd2244df73244c5690d3"
+  },
+  "backend/Medware_Backend/manage.py": {
+    "mtime": 1788128886.5023556,
+    "seen": 1788132476.7282138,
+    "ast_hash": "1e11e4e05e0f10d377d30f4a234edf40",
+    "semantic_hash": "1e11e4e05e0f10d377d30f4a234edf40"
+  },
+  "backend/Medware_Backend/mysite/__init__.py": {
+    "mtime": 1784327217.9214828,
+    "seen": 1788132476.7282145,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/mysite/asgi.py": {
+    "mtime": 1784327217.9244847,
+    "seen": 1788132476.7282152,
+    "ast_hash": "17e4c1d7eca2f539768557ed63a5b6d2",
+    "semantic_hash": "17e4c1d7eca2f539768557ed63a5b6d2"
+  },
+  "backend/Medware_Backend/mysite/exception_handlers.py": {
+    "mtime": 1788114703.4747784,
+    "seen": 1788132476.7282164,
+    "ast_hash": "c33f8b5943a6a65729c51554cdd3d517",
+    "semantic_hash": "c33f8b5943a6a65729c51554cdd3d517"
+  },
+  "backend/Medware_Backend/mysite/settings.py": {
+    "mtime": 1788114709.1109362,
+    "seen": 1788132476.7282171,
+    "ast_hash": "9f02ae0dfea801625bc0b7290da1a533",
+    "semantic_hash": "9f02ae0dfea801625bc0b7290da1a533"
+  },
+  "backend/Medware_Backend/mysite/urls.py": {
+    "mtime": 1786855972.766267,
+    "seen": 1788132476.7282178,
+    "ast_hash": "569c4756a4d0cf54dc7b518861c23222",
+    "semantic_hash": "569c4756a4d0cf54dc7b518861c23222"
+  },
+  "backend/Medware_Backend/mysite/wsgi.py": {
+    "mtime": 1784327217.926495,
+    "seen": 1788132476.7282186,
+    "ast_hash": "66f02e0c4cc4f4ab1a08b0f2663fb2e1",
+    "semantic_hash": "66f02e0c4cc4f4ab1a08b0f2663fb2e1"
+  },
+  "backend/Medware_Backend/orders/__init__.py": {
+    "mtime": 1786052404.1654572,
+    "seen": 1788132476.7282197,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/orders/admin.py": {
+    "mtime": 1786052714.4768288,
+    "seen": 1788132476.7282207,
+    "ast_hash": "7d2646f5745e6bb0a570694b91031b2d",
+    "semantic_hash": "7d2646f5745e6bb0a570694b91031b2d"
+  },
+  "backend/Medware_Backend/orders/apps.py": {
+    "mtime": 1786052429.067801,
+    "seen": 1788132476.7282214,
+    "ast_hash": "289dd9578bdd59e9ff81b541a4a4220a",
+    "semantic_hash": "289dd9578bdd59e9ff81b541a4a4220a"
+  },
+  "backend/Medware_Backend/orders/migrations/0001_initial.py": {
+    "mtime": 1788082471.0491219,
+    "seen": 1788132476.7282224,
+    "ast_hash": "a58d74c2cb4860b1c4ff6934aaefe205",
+    "semantic_hash": "a58d74c2cb4860b1c4ff6934aaefe205"
+  },
+  "backend/Medware_Backend/orders/migrations/__init__.py": {
+    "mtime": 1788082471.043068,
+    "seen": 1788132476.7282233,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/orders/models.py": {
+    "mtime": 1787614541.822594,
+    "seen": 1788132476.7282245,
+    "ast_hash": "c165d3250cb33922540e8a04e91fd80a",
+    "semantic_hash": "c165d3250cb33922540e8a04e91fd80a"
+  },
+  "backend/Medware_Backend/orders/serializers.py": {
+    "mtime": 1786052680.1318521,
+    "seen": 1788132476.7282252,
+    "ast_hash": "77f889172e62c43a57d4c58859dd7147",
+    "semantic_hash": "77f889172e62c43a57d4c58859dd7147"
+  },
+  "backend/Medware_Backend/orders/tests.py": {
+    "mtime": 1786856528.738893,
+    "seen": 1788132476.7282262,
+    "ast_hash": "b3ccc10d34bc931a4c71dc727bb3ffb8",
+    "semantic_hash": "b3ccc10d34bc931a4c71dc727bb3ffb8"
+  },
+  "backend/Medware_Backend/orders/urls.py": {
+    "mtime": 1786855827.639722,
+    "seen": 1788132476.7282271,
+    "ast_hash": "89b86df18874b60e30fd6305f808f03d",
+    "semantic_hash": "89b86df18874b60e30fd6305f808f03d"
+  },
+  "backend/Medware_Backend/orders/views.py": {
+    "mtime": 1788114103.6698818,
+    "seen": 1788132476.7282279,
+    "ast_hash": "be6648bb66310336f647e9cde8884722",
+    "semantic_hash": "be6648bb66310336f647e9cde8884722"
+  },
+  "backend/Medware_Backend/products/__init__.py": {
+    "mtime": 1784327217.9448264,
+    "seen": 1788132476.7282286,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/products/admin.py": {
+    "mtime": 1784327217.9607744,
+    "seen": 1788132476.7282293,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "backend/Medware_Backend/products/apps.py": {
+    "mtime": 1784327217.9607744,
+    "seen": 1788132476.7282305,
+    "ast_hash": "d75e75f846335c240d02b27064246407",
+    "semantic_hash": "d75e75f846335c240d02b27064246407"
+  },
+  "backend/Medware_Backend/products/migrations/0001_initial.py": {
+    "mtime": 1788082461.9098735,
+    "seen": 1788132476.7282312,
+    "ast_hash": "46a11c1379c4c8d5578bc09ff3d5204f",
+    "semantic_hash": "46a11c1379c4c8d5578bc09ff3d5204f"
+  },
+  "backend/Medware_Backend/products/migrations/0002_productsupplier_supplier_and_more.py": {
+    "mtime": 1788114392.4208958,
+    "seen": 1788132476.728232,
+    "ast_hash": "9e9931a2bd4e32cc8b4f5bd0e7c8b8e4",
+    "semantic_hash": "9e9931a2bd4e32cc8b4f5bd0e7c8b8e4"
+  },
+  "backend/Medware_Backend/products/migrations/__init__.py": {
+    "mtime": 1788082461.904798,
+    "seen": 1788132476.7282329,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/products/models.py": {
+    "mtime": 1788114243.9061265,
+    "seen": 1788132476.7282338,
+    "ast_hash": "2874bc49db91eeeff717ded5c04e4919",
+    "semantic_hash": "2874bc49db91eeeff717ded5c04e4919"
+  },
+  "backend/Medware_Backend/products/serializers.py": {
+    "mtime": 1788114727.5085773,
+    "seen": 1788132476.7282345,
+    "ast_hash": "0d523f0781864c630052fc63007d29ec",
+    "semantic_hash": "0d523f0781864c630052fc63007d29ec"
+  },
+  "backend/Medware_Backend/products/tests.py": {
+    "mtime": 1784327217.9607744,
+    "seen": 1788132476.7282355,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "backend/Medware_Backend/products/urls.py": {
+    "mtime": 1787891544.056981,
+    "seen": 1788132476.7282362,
+    "ast_hash": "7364413414c74caff692f4956d24703b",
+    "semantic_hash": "7364413414c74caff692f4956d24703b"
+  },
+  "backend/Medware_Backend/products/views.py": {
+    "mtime": 1788114140.153608,
+    "seen": 1788132476.7282372,
+    "ast_hash": "2466336952cf6cb20df9a80e9b9c23ce",
+    "semantic_hash": "2466336952cf6cb20df9a80e9b9c23ce"
+  },
+  "backend/Medware_Backend/scripts/__init__.py": {
+    "mtime": 1788114683.106401,
+    "seen": 1788132476.7282379,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/scripts/method_matrix.py": {
+    "mtime": 1788114778.8052802,
+    "seen": 1788132476.7282386,
+    "ast_hash": "416f1a0ad2a7c5937a2bedb43a8e59f3",
+    "semantic_hash": "416f1a0ad2a7c5937a2bedb43a8e59f3"
+  },
+  "backend/Medware_Backend/scripts/smoke_auth.py": {
+    "mtime": 1784327217.938738,
+    "seen": 1788132476.7282395,
+    "ast_hash": "677e5462c968a6abc9879edd012c4e17",
+    "semantic_hash": "677e5462c968a6abc9879edd012c4e17"
+  },
+  "backend/Medware_Backend/users/__init__.py": {
+    "mtime": 1781315489.3446271,
+    "seen": 1788132476.7282405,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/users/admin.py": {
+    "mtime": 1781315489.3228633,
+    "seen": 1788132476.7282412,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "backend/Medware_Backend/users/apps.py": {
+    "mtime": 1781339649.0480092,
+    "seen": 1788132476.728242,
+    "ast_hash": "b58a3d79b02f68089b3ab907f861310d",
+    "semantic_hash": "b58a3d79b02f68089b3ab907f861310d"
+  },
+  "backend/Medware_Backend/users/decorators.py": {
+    "mtime": 1781343192.398991,
+    "seen": 1788132476.7282426,
+    "ast_hash": "c5899e1ed7b0bb60486b6284215bdce5",
+    "semantic_hash": "c5899e1ed7b0bb60486b6284215bdce5"
+  },
+  "backend/Medware_Backend/users/migrations/0001_initial.py": {
+    "mtime": 1788078509.4939916,
+    "seen": 1788132476.7282438,
+    "ast_hash": "b34cda4cf71ec9f0588403feb705dd1d",
+    "semantic_hash": "b34cda4cf71ec9f0588403feb705dd1d"
+  },
+  "backend/Medware_Backend/users/migrations/0002_alter_user_options_user_users_user_unique_email_ci.py": {
+    "mtime": 1788114482.627421,
+    "seen": 1788132476.7282445,
+    "ast_hash": "404c0c6997a9db33ca9c6b62c17c66df",
+    "semantic_hash": "404c0c6997a9db33ca9c6b62c17c66df"
+  },
+  "backend/Medware_Backend/users/migrations/__init__.py": {
+    "mtime": 1788078509.4939916,
+    "seen": 1788132476.7282455,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/users/mixins.py": {
+    "mtime": 1781343192.398991,
+    "seen": 1788132476.7282462,
+    "ast_hash": "0d0e1427b000a5684c29a543916006e0",
+    "semantic_hash": "0d0e1427b000a5684c29a543916006e0"
+  },
+  "backend/Medware_Backend/users/models.py": {
+    "mtime": 1788114468.3273318,
+    "seen": 1788132476.728247,
+    "ast_hash": "29a34596fc30c8fa5af4d5c1a82732e8",
+    "semantic_hash": "29a34596fc30c8fa5af4d5c1a82732e8"
+  },
+  "backend/Medware_Backend/users/permissions.py": {
+    "mtime": 1788114150.3343213,
+    "seen": 1788132476.728248,
+    "ast_hash": "12786fc3ccb3c20368617d242a9c7b59",
+    "semantic_hash": "12786fc3ccb3c20368617d242a9c7b59"
+  },
+  "backend/Medware_Backend/users/serializers.py": {
+    "mtime": 1788117860.4905617,
+    "seen": 1788132476.7282486,
+    "ast_hash": "73af07d68f27a45b727e4c7f39d5a462",
+    "semantic_hash": "73af07d68f27a45b727e4c7f39d5a462"
+  },
+  "backend/Medware_Backend/users/tests.py": {
+    "mtime": 1787957559.5928495,
+    "seen": 1788132476.7282495,
+    "ast_hash": "bf0928e7a8fe62d8e5350020f595b462",
+    "semantic_hash": "bf0928e7a8fe62d8e5350020f595b462"
+  },
+  "backend/Medware_Backend/users/tests_security.py": {
+    "mtime": 1788117584.215852,
+    "seen": 1788132476.7282503,
+    "ast_hash": "3398c7200ee72078f153dfeb87959a9a",
+    "semantic_hash": "3398c7200ee72078f153dfeb87959a9a"
+  },
+  "backend/Medware_Backend/users/urls.py": {
+    "mtime": 1785868384.9938464,
+    "seen": 1788132476.7282512,
+    "ast_hash": "9c2c1715e9e6decd841515b21f8afcab",
+    "semantic_hash": "9c2c1715e9e6decd841515b21f8afcab"
+  },
+  "backend/Medware_Backend/users/views.py": {
+    "mtime": 1788114237.3802934,
+    "seen": 1788132476.728252,
+    "ast_hash": "934e1022a50d34363b8c58e1ce461479",
+    "semantic_hash": "934e1022a50d34363b8c58e1ce461479"
+  },
+  "backend/Medware_Backend/website/__init__.py": {
+    "mtime": 1786052642.447621,
+    "seen": 1788132476.728253,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/website/admin.py": {
+    "mtime": 1786052742.7066505,
+    "seen": 1788132476.7282538,
+    "ast_hash": "ced172339449cfbed2a8ec82bafa16b3",
+    "semantic_hash": "ced172339449cfbed2a8ec82bafa16b3"
+  },
+  "backend/Medware_Backend/website/apps.py": {
+    "mtime": 1787441295.4985797,
+    "seen": 1788132476.7282548,
+    "ast_hash": "915dd40d2dbb7597ce134333ce26493e",
+    "semantic_hash": "915dd40d2dbb7597ce134333ce26493e"
+  },
+  "backend/Medware_Backend/website/migrations/0001_initial.py": {
+    "mtime": 1788082628.1668365,
+    "seen": 1788132476.7282557,
+    "ast_hash": "78437a94bd35226630c64dfc2c4f3cdd",
+    "semantic_hash": "78437a94bd35226630c64dfc2c4f3cdd"
+  },
+  "backend/Medware_Backend/website/migrations/__init__.py": {
+    "mtime": 1788082628.1615183,
+    "seen": 1788132476.7282565,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/Medware_Backend/website/models.py": {
+    "mtime": 1787441346.5024097,
+    "seen": 1788132476.7282574,
+    "ast_hash": "707de9bd644a1b469aa8b1838c72b8e2",
+    "semantic_hash": "707de9bd644a1b469aa8b1838c72b8e2"
+  },
+  "backend/Medware_Backend/website/serializers.py": {
+    "mtime": 1788114168.137079,
+    "seen": 1788132476.7282584,
+    "ast_hash": "dda79909a1e346e3b3eade2847eeda76",
+    "semantic_hash": "dda79909a1e346e3b3eade2847eeda76"
+  },
+  "backend/Medware_Backend/website/urls.py": {
+    "mtime": 1786855959.8543582,
+    "seen": 1788132476.728259,
+    "ast_hash": "e8bc20ecf580f0bbc509b8f915ee43c4",
+    "semantic_hash": "e8bc20ecf580f0bbc509b8f915ee43c4"
+  },
+  "backend/Medware_Backend/website/views.py": {
+    "mtime": 1788114161.7893379,
+    "seen": 1788132476.72826,
+    "ast_hash": "b3e732d3b78004660df1dc33c9d7baca",
+    "semantic_hash": "b3e732d3b78004660df1dc33c9d7baca"
+  },
+  "backend/manage.py": {
+    "mtime": 1784327217.9448264,
+    "seen": 1788132476.7282617,
+    "ast_hash": "cd827c519235065978514a4dedd4ed3c",
+    "semantic_hash": "cd827c519235065978514a4dedd4ed3c"
+  },
+  "frontemd/frontend/eslint.config.js": {
+    "mtime": 1787892879.5395267,
+    "seen": 1788132476.7282624,
+    "ast_hash": "75a0286de267d5393020e4439ed72f6a",
+    "semantic_hash": "75a0286de267d5393020e4439ed72f6a"
+  },
+  "frontemd/frontend/package.json": {
+    "mtime": 1788047485.5733004,
+    "seen": 1788132476.7282634,
+    "ast_hash": "881842c61d47e832359e36ea2af00f55",
+    "semantic_hash": "881842c61d47e832359e36ea2af00f55"
+  },
+  "frontemd/frontend/src/AppShell.tsx": {
+    "mtime": 1788047485.5738225,
+    "seen": 1788132476.728267,
+    "ast_hash": "70d1c68b565935d17fe9a84e87df612c",
+    "semantic_hash": "70d1c68b565935d17fe9a84e87df612c"
+  },
+  "frontemd/frontend/src/components/Button.tsx": {
+    "mtime": 1788047485.5748622,
+    "seen": 1788132476.7282677,
+    "ast_hash": "5467dce6b14f423c72801aa33d4e1295",
+    "semantic_hash": "5467dce6b14f423c72801aa33d4e1295"
+  },
+  "frontemd/frontend/src/components/CheckBox.tsx": {
+    "mtime": 1788047485.5752509,
+    "seen": 1788132476.7282686,
+    "ast_hash": "e32a8f49c258dd134897d5a14df76813",
+    "semantic_hash": "e32a8f49c258dd134897d5a14df76813"
+  },
+  "frontemd/frontend/src/components/ControlledInput.tsx": {
+    "mtime": 1788047485.5757258,
+    "seen": 1788132476.7282693,
+    "ast_hash": "b61e0ec23f4cd53649b05e1551582515",
+    "semantic_hash": "b61e0ec23f4cd53649b05e1551582515"
+  },
+  "frontemd/frontend/src/components/Dropdown.tsx": {
+    "mtime": 1788047485.5762427,
+    "seen": 1788132476.72827,
+    "ast_hash": "9f714b9c802d715bc0bf05ee83c8668a",
+    "semantic_hash": "9f714b9c802d715bc0bf05ee83c8668a"
+  },
+  "frontemd/frontend/src/components/Form.tsx": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.728271,
+    "ast_hash": "2c103e4662c5f2e93a8feb6c7a054b9c",
+    "semantic_hash": "2c103e4662c5f2e93a8feb6c7a054b9c"
+  },
+  "frontemd/frontend/src/components/Input.tsx": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.728272,
+    "ast_hash": "3ff565e5324f2fc433d37fca8c7a0efb",
+    "semantic_hash": "3ff565e5324f2fc433d37fca8c7a0efb"
+  },
+  "frontemd/frontend/src/components/Model.tsx": {
+    "mtime": 1788047485.5767639,
+    "seen": 1788132476.728273,
+    "ast_hash": "fc27683871ddb0ad57e752bbb3c875af",
+    "semantic_hash": "fc27683871ddb0ad57e752bbb3c875af"
+  },
+  "frontemd/frontend/src/components/Navigation.tsx": {
+    "mtime": 1788130530.6153111,
+    "seen": 1788132476.7282736,
+    "ast_hash": "7c47a76d475852e54ae95fd8eb1d2175",
+    "semantic_hash": "7c47a76d475852e54ae95fd8eb1d2175"
+  },
+  "frontemd/frontend/src/components/ResizableSidebar.tsx": {
+    "mtime": 1788047485.578331,
+    "seen": 1788132476.7282743,
+    "ast_hash": "b60df50f8813e5df5c26d448e7775ffb",
+    "semantic_hash": "b60df50f8813e5df5c26d448e7775ffb"
+  },
+  "frontemd/frontend/src/components/SelectInput.tsx": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.7282753,
+    "ast_hash": "d5a232dcbd37cf15fb67130e15bab908",
+    "semantic_hash": "d5a232dcbd37cf15fb67130e15bab908"
+  },
+  "frontemd/frontend/src/components/Table.tsx": {
+    "mtime": 1788047485.5788481,
+    "seen": 1788132476.7282763,
+    "ast_hash": "7f4b357c8a15f3d5043e62f6dcc9f4b9",
+    "semantic_hash": "7f4b357c8a15f3d5043e62f6dcc9f4b9"
+  },
+  "frontemd/frontend/src/components/Text.tsx": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.728277,
+    "ast_hash": "7048b44122d58b06fba14c90200b35b1",
+    "semantic_hash": "7048b44122d58b06fba14c90200b35b1"
+  },
+  "frontemd/frontend/src/components/Toast.tsx": {
+    "mtime": 1788047485.5793676,
+    "seen": 1788132476.728278,
+    "ast_hash": "5a85057ae9c33938ad153db2c713e254",
+    "semantic_hash": "5a85057ae9c33938ad153db2c713e254"
+  },
+  "frontemd/frontend/src/features/auth/AuthLayout.tsx": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.7282789,
+    "ast_hash": "e05a0996240bd02dfe82e439f9f98058",
+    "semantic_hash": "e05a0996240bd02dfe82e439f9f98058"
+  },
+  "frontemd/frontend/src/features/auth/Permissions.tsx": {
+    "mtime": 1788129279.4688666,
+    "seen": 1788132476.7282796,
+    "ast_hash": "02c1e4d0421fc53bae31b89a6781825a",
+    "semantic_hash": "02c1e4d0421fc53bae31b89a6781825a"
+  },
+  "frontemd/frontend/src/features/auth/auth.routes.ts": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.7282803,
+    "ast_hash": "1a50c8c3bdc388da8de871e3d5390543",
+    "semantic_hash": "1a50c8c3bdc388da8de871e3d5390543"
+  },
+  "frontemd/frontend/src/features/auth/authSlice.ts": {
+    "mtime": 1788047485.580376,
+    "seen": 1788132476.728281,
+    "ast_hash": "c02e5bef3dab2065f72d7bc0b13297fa",
+    "semantic_hash": "c02e5bef3dab2065f72d7bc0b13297fa"
+  },
+  "frontemd/frontend/src/features/auth/components/Relogin.tsx": {
+    "mtime": 1788047485.5813167,
+    "seen": 1788132476.7282822,
+    "ast_hash": "d56708d27ed78d82b4bbeeb419787803",
+    "semantic_hash": "d56708d27ed78d82b4bbeeb419787803"
+  },
+  "frontemd/frontend/src/features/auth/index.ts": {
+    "mtime": 1788047485.581777,
+    "seen": 1788132476.728283,
+    "ast_hash": "d6ecc8d2e92d64018a8f0a4d3fff1a53",
+    "semantic_hash": "d6ecc8d2e92d64018a8f0a4d3fff1a53"
+  },
+  "frontemd/frontend/src/features/auth/pages/LoginPage.tsx": {
+    "mtime": 1788047485.581777,
+    "seen": 1788132476.728284,
+    "ast_hash": "8a4d70a08542ad699bed95a1fa4fb7c2",
+    "semantic_hash": "8a4d70a08542ad699bed95a1fa4fb7c2"
+  },
+  "frontemd/frontend/src/features/auth/pages/RegisterPage.tsx": {
+    "mtime": 1788047485.581777,
+    "seen": 1788132476.7282846,
+    "ast_hash": "ae78455b7a2f7f5a5b24211c30f0933e",
+    "semantic_hash": "ae78455b7a2f7f5a5b24211c30f0933e"
+  },
+  "frontemd/frontend/src/features/auth/pages/registerWizard/Step1.tsx": {
+    "mtime": 1788047485.581777,
+    "seen": 1788132476.7282856,
+    "ast_hash": "f56b187a074a3da7ab72e82b4e834584",
+    "semantic_hash": "f56b187a074a3da7ab72e82b4e834584"
+  },
+  "frontemd/frontend/src/features/auth/pages/registerWizard/Step2.tsx": {
+    "mtime": 1788047485.581777,
+    "seen": 1788132476.7282863,
+    "ast_hash": "f12a407c29723904276ccac00dbddc5d",
+    "semantic_hash": "f12a407c29723904276ccac00dbddc5d"
+  },
+  "frontemd/frontend/src/features/auth/services/auth.service.ts": {
+    "mtime": 1788047485.5861228,
+    "seen": 1788132476.728287,
+    "ast_hash": "8cc1fcaa911d55ba404594f7c9bf7ae5",
+    "semantic_hash": "8cc1fcaa911d55ba404594f7c9bf7ae5"
+  },
+  "frontemd/frontend/src/features/auth/types/authForms.ts": {
+    "mtime": 1787892879.564829,
+    "seen": 1788132476.728288,
+    "ast_hash": "df54bff9e3681426b52238182bb17a20",
+    "semantic_hash": "df54bff9e3681426b52238182bb17a20"
+  },
+  "frontemd/frontend/src/features/auth/types/roles.ts": {
+    "mtime": 1788047485.5861228,
+    "seen": 1788132476.7282891,
+    "ast_hash": "81ed44034393330ff1e8343b9c6b5801",
+    "semantic_hash": "81ed44034393330ff1e8343b9c6b5801"
+  },
+  "frontemd/frontend/src/features/auth/types/users.ts": {
+    "mtime": 1788047485.587334,
+    "seen": 1788132476.7282898,
+    "ast_hash": "f4b0b3f81e3a9d1b5f861ceaf1a7f51f",
+    "semantic_hash": "f4b0b3f81e3a9d1b5f861ceaf1a7f51f"
+  },
+  "frontemd/frontend/src/features/auth/utility/decodeAccessToken.ts": {
+    "mtime": 1788047485.587334,
+    "seen": 1788132476.7282908,
+    "ast_hash": "f73d4cb87d564f1772ce48d95f5bcbb4",
+    "semantic_hash": "f73d4cb87d564f1772ce48d95f5bcbb4"
+  },
+  "frontemd/frontend/src/features/inventory/access.ts": {
+    "mtime": 1788130304.221241,
+    "seen": 1788132476.7282915,
+    "ast_hash": "ba3df38fe1eb43346e81522ac8fd7baf",
+    "semantic_hash": "ba3df38fe1eb43346e81522ac8fd7baf"
+  },
+  "frontemd/frontend/src/features/inventory/components/InventoryListView.tsx": {
+    "mtime": 1788130436.3117945,
+    "seen": 1788132476.7282927,
+    "ast_hash": "3f63ab3e21321c04bca45573c871dfef",
+    "semantic_hash": "3f63ab3e21321c04bca45573c871dfef"
+  },
+  "frontemd/frontend/src/features/inventory/index.ts": {
+    "mtime": 1788047485.5883386,
+    "seen": 1788132476.7282934,
+    "ast_hash": "26888df419b44f04f0d290f50e576ba3",
+    "semantic_hash": "26888df419b44f04f0d290f50e576ba3"
+  },
+  "frontemd/frontend/src/features/inventory/inventory.routes.ts": {
+    "mtime": 1788130373.1250503,
+    "seen": 1788132476.7282941,
+    "ast_hash": "3b0e3ef1da04f1bec49d2c8007a24ec2",
+    "semantic_hash": "3b0e3ef1da04f1bec49d2c8007a24ec2"
+  },
+  "frontemd/frontend/src/features/inventory/pages/InventoryBillsPage.tsx": {
+    "mtime": 1788130361.487512,
+    "seen": 1788132476.7282948,
+    "ast_hash": "ebfecebe47c403c5e38f8352a9ccaf65",
+    "semantic_hash": "ebfecebe47c403c5e38f8352a9ccaf65"
+  },
+  "frontemd/frontend/src/features/inventory/pages/InventoryCategoriesPage.tsx": {
+    "mtime": 1788130361.4521084,
+    "seen": 1788132476.728296,
+    "ast_hash": "06425b28a8f1bf101b177567560bd7ce",
+    "semantic_hash": "06425b28a8f1bf101b177567560bd7ce"
+  },
+  "frontemd/frontend/src/features/inventory/pages/InventoryItemsPage.tsx": {
+    "mtime": 1788130361.421388,
+    "seen": 1788132476.7282968,
+    "ast_hash": "b85e2e455007c35cc882c1bc42ec54da",
+    "semantic_hash": "b85e2e455007c35cc882c1bc42ec54da"
+  },
+  "frontemd/frontend/src/features/inventory/pages/InventoryPage.tsx": {
+    "mtime": 1788129242.8155773,
+    "seen": 1788132476.7282975,
+    "ast_hash": "add98d05b12d74354f964fd3f6782973",
+    "semantic_hash": "add98d05b12d74354f964fd3f6782973"
+  },
+  "frontemd/frontend/src/features/inventory/services/inventory.service.ts": {
+    "mtime": 1788130318.2843688,
+    "seen": 1788132476.7282984,
+    "ast_hash": "726a858c5d10909310119d549b9ca51f",
+    "semantic_hash": "726a858c5d10909310119d549b9ca51f"
+  },
+  "frontemd/frontend/src/features/inventory/services/products.service.ts": {
+    "mtime": 1788047485.5901928,
+    "seen": 1788132476.7282994,
+    "ast_hash": "3035fc50836d72813f512193ea89f490",
+    "semantic_hash": "3035fc50836d72813f512193ea89f490"
+  },
+  "frontemd/frontend/src/features/inventory/types/inventory.ts": {
+    "mtime": 1788130318.2497342,
+    "seen": 1788132476.7283003,
+    "ast_hash": "0b9e626aceac0f39a535223b108cba54",
+    "semantic_hash": "0b9e626aceac0f39a535223b108cba54"
+  },
+  "frontemd/frontend/src/features/products/index.ts": {
+    "mtime": 1788047485.5901928,
+    "seen": 1788132476.728301,
+    "ast_hash": "cfe511112b282d7a076f62d4f97cc566",
+    "semantic_hash": "cfe511112b282d7a076f62d4f97cc566"
+  },
+  "frontemd/frontend/src/features/products/pages/ProductsPage.tsx": {
+    "mtime": 1788047485.593417,
+    "seen": 1788132476.7283018,
+    "ast_hash": "14cbc7b0eda7422d24c9a838abb91de1",
+    "semantic_hash": "14cbc7b0eda7422d24c9a838abb91de1"
+  },
+  "frontemd/frontend/src/features/products/pages/SupplierPage.tsx": {
+    "mtime": 1788047485.593417,
+    "seen": 1788132476.728303,
+    "ast_hash": "c1f6de1f467af524c8d123800dc765c5",
+    "semantic_hash": "c1f6de1f467af524c8d123800dc765c5"
+  },
+  "frontemd/frontend/src/features/products/products.routes.ts": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283037,
+    "ast_hash": "3ac114ac6e6070a82faf9f531eb4bcef",
+    "semantic_hash": "3ac114ac6e6070a82faf9f531eb4bcef"
+  },
+  "frontemd/frontend/src/features/products/types/products.ts": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283046,
+    "ast_hash": "1f0c7cce307293bfa8b91e53020aa5eb",
+    "semantic_hash": "1f0c7cce307293bfa8b91e53020aa5eb"
+  },
+  "frontemd/frontend/src/hooks/useDebounce.ts": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283053,
+    "ast_hash": "df444ddcde23031c62919fef76f2fe0f",
+    "semantic_hash": "df444ddcde23031c62919fef76f2fe0f"
+  },
+  "frontemd/frontend/src/hooks/useOpenMenu.ts": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283063,
+    "ast_hash": "8464592f992c91ab2b4b222edfd122b7",
+    "semantic_hash": "8464592f992c91ab2b4b222edfd122b7"
+  },
+  "frontemd/frontend/src/i18n.ts": {
+    "mtime": 1787892879.564829,
+    "seen": 1788132476.7283072,
+    "ast_hash": "f18440de8e2b81083ef2d4cf6e20ef7f",
+    "semantic_hash": "f18440de8e2b81083ef2d4cf6e20ef7f"
+  },
+  "frontemd/frontend/src/i18n/ar.ts": {
+    "mtime": 1788130408.4290211,
+    "seen": 1788132476.728308,
+    "ast_hash": "642967a16704e4c1ebeece3bbfa48805",
+    "semantic_hash": "642967a16704e4c1ebeece3bbfa48805"
+  },
+  "frontemd/frontend/src/layouts/appLayout.tsx": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283087,
+    "ast_hash": "a0eca757a25d3cc06caa4b92be0b29dd",
+    "semantic_hash": "a0eca757a25d3cc06caa4b92be0b29dd"
+  },
+  "frontemd/frontend/src/main.tsx": {
+    "mtime": 1788047485.594422,
+    "seen": 1788132476.7283094,
+    "ast_hash": "4586f9312d5ba9943fa3f61e24379ab7",
+    "semantic_hash": "4586f9312d5ba9943fa3f61e24379ab7"
+  },
+  "frontemd/frontend/src/router.tsx": {
+    "mtime": 1788047485.599453,
+    "seen": 1788132476.7283106,
+    "ast_hash": "73383078f6de6261f511f51c411d163a",
+    "semantic_hash": "73383078f6de6261f511f51c411d163a"
+  },
+  "frontemd/frontend/src/services/api.ts": {
+    "mtime": 1788114046.8891387,
+    "seen": 1788132476.7283113,
+    "ast_hash": "26214edd912f6f41f8057b4f6b774219",
+    "semantic_hash": "26214edd912f6f41f8057b4f6b774219"
+  },
+  "frontemd/frontend/src/store/appSlice.ts": {
+    "mtime": 1788047485.600306,
+    "seen": 1788132476.728312,
+    "ast_hash": "6cd9866341978cd093f291db86ef65bf",
+    "semantic_hash": "6cd9866341978cd093f291db86ef65bf"
+  },
+  "frontemd/frontend/src/store/useBoundStore.ts": {
+    "mtime": 1788047485.600306,
+    "seen": 1788132476.728313,
+    "ast_hash": "30a51e8a5a3a8311af50a3baf41f486d",
+    "semantic_hash": "30a51e8a5a3a8311af50a3baf41f486d"
+  },
+  "frontemd/frontend/tsconfig.app.json": {
+    "mtime": 1787892879.5807517,
+    "seen": 1788132476.728314,
+    "ast_hash": "e4f83bdfdf660f5e5364945e14291d70",
+    "semantic_hash": "e4f83bdfdf660f5e5364945e14291d70"
+  },
+  "frontemd/frontend/tsconfig.json": {
+    "mtime": 1787892879.5807517,
+    "seen": 1788132476.7283146,
+    "ast_hash": "852c3a5df14a4b43ac28e9554ebedf4a",
+    "semantic_hash": "852c3a5df14a4b43ac28e9554ebedf4a"
+  },
+  "frontemd/frontend/tsconfig.node.json": {
+    "mtime": 1787892879.5807517,
+    "seen": 1788132476.7283154,
+    "ast_hash": "74cde0261ad0a13045ca0a05ab1542ae",
+    "semantic_hash": "74cde0261ad0a13045ca0a05ab1542ae"
+  },
+  "frontemd/frontend/vite.config.ts": {
+    "mtime": 1787893506.0190392,
+    "seen": 1788132476.7283163,
+    "ast_hash": "c7e51111742eba8782bc936ba3beea10",
+    "semantic_hash": "c7e51111742eba8782bc936ba3beea10"
+  },
+  ".github/copilot-instructions.md": {
+    "mtime": 1785867781.0488722,
+    "seen": 1788132476.7283173,
+    "ast_hash": "0dadf99dacfca193fb7d32df1b2204ab",
+    "semantic_hash": "0dadf99dacfca193fb7d32df1b2204ab"
+  },
+  ".github/instructions/mermaid.instructions.md": {
+    "mtime": 1785867781.0476873,
+    "seen": 1788132476.728318,
+    "ast_hash": "ab726032d04ea534caeabfa5fce4a103",
+    "semantic_hash": "ab726032d04ea534caeabfa5fce4a103"
+  },
+  "4th-8-commit.txt": {
+    "mtime": 1785892799.3332746,
+    "seen": 1788132476.7283187,
+    "ast_hash": "a2ac7cebc3b6234a0a8917fda98539af",
+    "semantic_hash": "a2ac7cebc3b6234a0a8917fda98539af"
+  },
+  "DB_ERD.md": {
+    "mtime": 1788115054.52266,
+    "seen": 1788132476.7283194,
+    "ast_hash": "76e946415a17afa9e838ebf36550ff03",
+    "semantic_hash": "76e946415a17afa9e838ebf36550ff03"
+  },
+  "backend/AUTH_JWT_DRAFT.md": {
+    "mtime": 1787614528.4325812,
+    "seen": 1788132476.7283206,
+    "ast_hash": "c62d6ac9a7ebb1e054e06a5371ffa631",
+    "semantic_hash": "c62d6ac9a7ebb1e054e06a5371ffa631"
+  },
+  "backend/Medware_Backend/docs/API_README.md": {
+    "mtime": 1786857632.3018515,
+    "seen": 1788132476.7283213,
+    "ast_hash": "6434b6fd8aa6d8e84fee5267ca9f19e7",
+    "semantic_hash": "6434b6fd8aa6d8e84fee5267ca9f19e7"
+  },
+  "backend/Medware_Backend/scripts/smoke_result.txt": {
+    "mtime": 1784327217.9398348,
+    "seen": 1788132476.7283223,
+    "ast_hash": "1cb995423314ba75de37a09136b18167",
+    "semantic_hash": "1cb995423314ba75de37a09136b18167"
+  },
+  "backend/README.md": {
+    "mtime": 1783978078.1319158,
+    "seen": 1788132476.728323,
+    "ast_hash": "20985c0c53fbca9dda7bb366202f7776",
+    "semantic_hash": "20985c0c53fbca9dda7bb366202f7776"
+  },
+  "backend/requirements.txt": {
+    "mtime": 1788114386.060502,
+    "seen": 1788132476.728324,
+    "ast_hash": "db0502c2fbb69e6cb7eb52348f6c6aa1",
+    "semantic_hash": "db0502c2fbb69e6cb7eb52348f6c6aa1"
+  },
+  "frontemd/frontend/README.md": {
+    "mtime": 1787892879.5395267,
+    "seen": 1788132476.7283247,
+    "ast_hash": "8e5f2dd09f37af13627b9d5731da980c",
+    "semantic_hash": "8e5f2dd09f37af13627b9d5731da980c"
+  },
+  "frontemd/frontend/index.html": {
+    "mtime": 1787892879.5395267,
+    "seen": 1788132476.7283254,
+    "ast_hash": "645e88ad8fcb1e4dfb1e08d8980b752f",
+    "semantic_hash": "645e88ad8fcb1e4dfb1e08d8980b752f"
+  },
+  "frontemd/frontend/public/favicon.svg": {
+    "mtime": 1787892879.5395267,
+    "seen": 1788132476.7283263,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": "7e840862161341271697daa99a40d76b"
+  },
+  "frontemd/frontend/public/icons.svg": {
+    "mtime": 1787892879.549082,
+    "seen": 1788132476.7283273,
+    "ast_hash": "21c7473c592c67dc87223d49892c8f0a",
+    "semantic_hash": "21c7473c592c67dc87223d49892c8f0a"
+  }
+}
