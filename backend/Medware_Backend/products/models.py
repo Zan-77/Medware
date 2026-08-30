@@ -18,8 +18,16 @@ class Product(models.Model):
         return self.name
 
 class ProductSupplier(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='supplier_links')
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name='product_links',
+        null=True,
+        blank=True,
+    )
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.product.name} - Bill {self.bill.id}"
+        supplier_name = self.supplier.name if self.supplier_id else 'unassigned supplier'
+        return f"{self.product.name} - {supplier_name}"

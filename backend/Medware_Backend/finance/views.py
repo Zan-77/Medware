@@ -13,6 +13,9 @@ class VoucherViewSet(viewsets.ModelViewSet):
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT', 'SALESMAN'],
         'POST': ['SALESMAN', 'ACCOUNTANT'],
+        'PUT': ['ACCOUNTANT', 'MANAGER'],
+        'PATCH': ['ACCOUNTANT', 'MANAGER'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -23,6 +26,9 @@ class PaymentRecordViewSet(viewsets.ModelViewSet):
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT'],
         'POST': ['SALESMAN', 'ACCOUNTANT'],
+        'PUT': ['ACCOUNTANT'],
+        'PATCH': ['ACCOUNTANT'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -32,6 +38,10 @@ class CommissionRecordViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, RoleMethodPermission]
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT', 'SALESMAN'],
+        'POST': ['ACCOUNTANT'],
+        'PUT': ['ACCOUNTANT'],
+        'PATCH': ['ACCOUNTANT'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -41,6 +51,8 @@ class CustomerBalanceViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, RoleMethodPermission]
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT'],
+        'POST': ['ACCOUNTANT'],
         'PUT': ['ACCOUNTANT'],
         'PATCH': ['ACCOUNTANT'],
+        'DELETE': ['MANAGER'],
     }

@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from products.models import Product, ProductSupplier
+from products.models import Product, Supplier
 
 
 class InventoryCategory(models.Model):
@@ -29,7 +29,10 @@ class InventoryItem(models.Model):
 
 
 class SupplierBill(models.Model):
-    supplier = models.ForeignKey(ProductSupplier, on_delete=models.CASCADE, related_name='inventory_bills')
+    # A bill is issued by a Supplier. This previously pointed at
+    # ProductSupplier (a per-product discount row), which left products.Supplier
+    # orphaned and made "the supplier who sent this bill" unrepresentable.
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='inventory_bills')
     manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='supplier_bills')
     date = models.DateField()
     notes = models.TextField(blank=True)

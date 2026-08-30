@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from users.models import User
-from products.models import Product, ProductSupplier
+from products.models import Product, Supplier
 from inventory.models import InventoryCategory, InventoryItem, SupplierBill, SupplierBillLine
 
 
@@ -61,7 +61,7 @@ class InventoryPermissionTests(TestCase):
     def test_supplier_bill_line_adds_quantity_to_inventory(self):
         product = Product.objects.create(name='Masks')
         item = InventoryItem.objects.get(product=product)
-        supplier = ProductSupplier.objects.create(product=product)
+        supplier = Supplier.objects.create(name='Acme Medical')
         bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
 
         SupplierBillLine.objects.create(bill=bill, item=item, quantity=25, category=item.category)
@@ -72,7 +72,7 @@ class InventoryPermissionTests(TestCase):
     def test_supplier_bill_line_updates_and_removes_quantity(self):
         product = Product.objects.create(name='Bandages')
         item = InventoryItem.objects.get(product=product)
-        supplier = ProductSupplier.objects.create(product=product)
+        supplier = Supplier.objects.create(name='Acme Medical')
         bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
         line = SupplierBillLine.objects.create(bill=bill, item=item, quantity=10, category=item.category)
 

@@ -1,11 +1,10 @@
 from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status, viewsets, permissions
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .decorators import role_required
@@ -16,24 +15,17 @@ from .serializers import (
     EmailOrUsernameTokenObtainPairSerializer,
     RegisterSerializer,
     UserSerializer,
+    build_tokens_for_user,
 )
 
 
+# Must be a DRF view: as a plain Django view this only ever saw Django's
+# session auth and returned 401 for every JWT-authenticated caller, which is
+# how the SPA talks to the API.
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_current_user(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'detail': 'Authentication required.'}, status=401)
-
-    return JsonResponse({
-        'id': request.user.id,
-        'username': request.user.username,
-        'email': request.user.email,
-        'first_name': request.user.first_name,
-        'last_name': request.user.last_name,
-        'role': request.user.role,
-        'role_display': request.user.get_role_display(),
-        'is_staff': request.user.is_staff,
-        'is_superuser': request.user.is_superuser,
-    })
+    return Response(UserSerializer(request.user).data)
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):
@@ -108,11 +100,13 @@ class LogoutView(APIView):
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request):     
-        serializer = RegisterSerializer(data=request.data)
+    def post(self, request):
+        # context carries the request so the serializer can tell whether the
+        # caller is a manager granting a staff role vs. an anonymous signup.
+        serializer = RegisterSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        tokens = self.get_tokens_for_user(user)
+        tokens = build_tokens_for_user(user)
 
         response_data = {
             'access': tokens["access"],
@@ -128,20 +122,11 @@ class RegisterView(APIView):
         )
         return response
 
-    def get_tokens_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-        refresh["role"] = user.role
-        refresh["first_name"] = user.first_name
-        refresh["last_name"] = user.last_name
-        refresh["email"] = user.email
-        return {
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-        }
 
-
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def get_available_roles(request):
-    return JsonResponse({
+    return Response({
         'roles': [
             {'key': key, 'label': label}
             for key, label in User.Role.choices
@@ -149,33 +134,40 @@ def get_available_roles(request):
     })
 
 
-@role_required('MANAGER')
+# These are DRF views rather than plain Django views for the same reason as
+# get_current_user: the `role_required` decorator only understands session
+# auth, so JWT callers were rejected with 401 before the role was ever read.
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsManager])
 def manager_access(request):
-    return JsonResponse({
+    return Response({
         'detail': 'Manager/Admin access granted.',
         'role': request.user.role,
     })
 
 
-@role_required('ACCOUNTANT')
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAccountant])
 def accountant_access(request):
-    return JsonResponse({
+    return Response({
         'detail': 'Accountant access granted.',
         'role': request.user.role,
     })
 
 
-@role_required('SALESMAN')
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsSalesman])
 def salesman_access(request):
-    return JsonResponse({
+    return Response({
         'detail': 'Salesman access granted.',
         'role': request.user.role,
     })
 
 
-@role_required('CUSTOMER')
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsCustomer])
 def customer_access(request):
-    return JsonResponse({
+    return Response({
         'detail': 'Customer access granted.',
         'role': request.user.role,
     })

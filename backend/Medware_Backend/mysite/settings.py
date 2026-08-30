@@ -10,22 +10,39 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _env_bool(name, default=False):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w%)xjtjj62psr_3h)@u@$@21q&_6()bqr_f)hlto1y@xi&vzi8'
+# Override with DJANGO_SECRET_KEY in every deployed environment. The literal
+# below is a development-only fallback.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-w%)xjtjj62psr_3h)@u@$@21q&_6()bqr_f)hlto1y@xi&vzi8',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get(
+        'DJANGO_ALLOWED_HOSTS', 'testserver,localhost,127.0.0.1'
+    ).split(',') if h.strip()
+]
 
 
 # Application definition
@@ -85,9 +102,14 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "Medware"),
+        "USER": os.environ.get("POSTGRES_USER", "postgres"),
+        # Dev fallback only - set POSTGRES_PASSWORD in any shared/deployed env.
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "5517"),
+        "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 
@@ -133,9 +155,13 @@ STATIC_URL = 'static/'
 # Django REST Framework configuration
 try:
     import rest_framework_simplejwt  # noqa: F401
+    # JWT first: DRF derives the 401-vs-403 response from the *first*
+    # authenticator's WWW-Authenticate header. SessionAuthentication supplies
+    # none, so listing it first turned every unauthenticated API call into a
+    # 403 instead of a 401.
     DEFAULT_AUTH_CLASSES = (
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     )
 except Exception:
     DEFAULT_AUTH_CLASSES = (
@@ -147,6 +173,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'EXCEPTION_HANDLER': 'mysite.exception_handlers.api_exception_handler',
 }
 
 CORS_ALLOWED_ORIGINS = [

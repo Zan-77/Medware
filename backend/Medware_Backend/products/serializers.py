@@ -13,7 +13,11 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductSupplierSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
-    
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+
     class Meta:
         model = ProductSupplier
-        fields = ['id', 'product', 'discount']
+        # `product_name` is declared above, so it must be listed here too -
+        # DRF raises an AssertionError (surfacing as a 500) on any request
+        # that builds this serializer's fields if it is missing.
+        fields = ['id', 'product', 'product_name', 'supplier', 'supplier_name', 'discount']

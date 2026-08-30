@@ -1,6 +1,9 @@
-django
-djangorestFramework
-djangorestFramework-simplejwt
-django-cors-headers
-dotenv
-psycopg2-binary
+# Pinned to what the project is actually running against.
+# Regenerate with: pip freeze > requirements.txt
+Django==6.0.5
+djangorestframework==3.17.1
+djangorestframework-simplejwt==5.2.2
+django-cors-headers==4.9.0
+# psycopg 3 is the driver installed in the venv and the one Django 6 targets.
+# (This file previously pinned psycopg2-binary, which is NOT installed.)
+psycopg[binary]==3.3.4

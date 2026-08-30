@@ -7,6 +7,20 @@ from .serializers import (
 )
 from users.permissions import RoleMethodPermission
 
+# Roles that legitimately see every order in the system. Everyone else is
+# narrowed to the rows they are a party to, so one customer can never read
+# or modify another customer's order.
+ORDER_WIDE_ROLES = ('MANAGER', 'ACCOUNTANT', 'WAREHOUSE_WORKER')
+
+
+def scope_to_user(queryset, user, customer_field='customer', salesman_field='salesman'):
+    """Narrow `queryset` to rows the given user is a party to."""
+    if user.is_superuser or getattr(user, 'role', None) in ORDER_WIDE_ROLES:
+        return queryset
+    if getattr(user, 'role', None) == 'SALESMAN':
+        return queryset.filter(**{salesman_field: user})
+    return queryset.filter(**{customer_field: user})
+
 
 class OrderRequestViewSet(viewsets.ModelViewSet):
     queryset = OrderRequest.objects.all()
@@ -23,6 +37,9 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
         'DELETE': ['MANAGER'],
     }
 
+    def get_queryset(self):
+        return scope_to_user(super().get_queryset(), self.request.user)
+
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -36,6 +53,15 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         'DELETE': ['MANAGER'],
     }
 
+    def get_queryset(self):
+        # Items are scoped through their parent order request.
+        return scope_to_user(
+            super().get_queryset(),
+            self.request.user,
+            customer_field='order_request__customer',
+            salesman_field='order_request__salesman',
+        )
+
 
 class OrderReviewViewSet(viewsets.ModelViewSet):
     queryset = OrderReview.objects.all()
@@ -46,6 +72,7 @@ class OrderReviewViewSet(viewsets.ModelViewSet):
         'GET': ['MANAGER', 'ACCOUNTANT'],
         'PUT': ['MANAGER'],
         'PATCH': ['MANAGER'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -58,6 +85,7 @@ class OrderFinalizationViewSet(viewsets.ModelViewSet):
         'GET': ['ACCOUNTANT', 'MANAGER'],
         'PUT': ['ACCOUNTANT'],
         'PATCH': ['ACCOUNTANT'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -70,6 +98,7 @@ class PackagingTaskViewSet(viewsets.ModelViewSet):
         'GET': ['WAREHOUSE_WORKER', 'MANAGER', 'ACCOUNTANT'],
         'PUT': ['WAREHOUSE_WORKER'],
         'PATCH': ['WAREHOUSE_WORKER'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -82,7 +111,11 @@ class ReturnRequestViewSet(viewsets.ModelViewSet):
         'GET': ['MANAGER', 'ACCOUNTANT', 'WAREHOUSE_WORKER', 'SALESMAN', 'CUSTOMER'],
         'PUT': ['MANAGER'],
         'PATCH': ['MANAGER'],
+        'DELETE': ['MANAGER'],
     }
+
+    def get_queryset(self):
+        return scope_to_user(super().get_queryset(), self.request.user)
 
 
 class ReturnAssessmentViewSet(viewsets.ModelViewSet):
@@ -94,6 +127,7 @@ class ReturnAssessmentViewSet(viewsets.ModelViewSet):
         'GET': ['MANAGER', 'WAREHOUSE_WORKER', 'ACCOUNTANT'],
         'PUT': ['WAREHOUSE_WORKER'],
         'PATCH': ['WAREHOUSE_WORKER'],
+        'DELETE': ['MANAGER'],
     }
 
 
@@ -106,4 +140,5 @@ class ReturnApprovalViewSet(viewsets.ModelViewSet):
         'GET': ['MANAGER', 'ACCOUNTANT'],
         'PUT': ['MANAGER'],
         'PATCH': ['MANAGER'],
+        'DELETE': ['MANAGER'],
     }

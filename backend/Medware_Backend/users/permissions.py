@@ -39,8 +39,13 @@ class RoleMethodPermission(BasePermission):
     Views may define `allowed_roles_by_method` as a dict mapping HTTP method
     names (e.g. 'GET', 'POST', 'PUT', 'PATCH', 'DELETE') to lists of role keys.
 
-    If a method is not present in the dict, access falls back to allowing
-    authenticated users. Superusers bypass role checks.
+    This permission is default-deny: a method that is not listed in the
+    mapping is refused, and a view that declares no mapping at all refuses
+    everything. Anything a role should be able to do must be stated
+    explicitly. Superusers bypass role checks.
+
+    HEAD and OPTIONS are evaluated against the 'GET' entry, so read access
+    implies the ability to probe the endpoint.
     """
 
     def has_permission(self, request, view):
@@ -53,15 +58,34 @@ class RoleMethodPermission(BasePermission):
 
         mapping = getattr(view, 'allowed_roles_by_method', None)
         if not mapping:
-            return True
+            # Default deny: a view opting into role checks must declare them.
+            return False
 
-        allowed = mapping.get(request.method)
+        method = request.method
+        if method in ('HEAD', 'OPTIONS'):
+            method = 'GET'
+
+        allowed = mapping.get(method)
         if allowed is None:
-            # No restriction for this method
-            return True
+            # Method not declared for this view -> refused.
+            return False
 
         return request.user.role in allowed
 
     def has_object_permission(self, request, view, obj):
         # Default to same check as has_permission; views can override.
         return self.has_permission(request, view)
+
+
+class PublicReadRoleWritePermission(RoleMethodPermission):
+    """Anonymous read, role-checked write.
+
+    For genuinely public content (the storefront catalogue) where reads must
+    work for signed-out visitors but every write still has to satisfy the
+    view's `allowed_roles_by_method` entry.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return True
+        return super().has_permission(request, view)
