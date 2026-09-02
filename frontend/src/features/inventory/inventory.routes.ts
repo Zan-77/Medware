@@ -1,20 +1,34 @@
 import type { RouteObject } from "react-router";
 import { InventoryBillPage } from "./pages/InventoryBillPage";
+import InventoryItemsDetails from "./pages/InventoryItemsDetails";
+import { InventoryCategoriesPage } from "./pages/InventoryCategoriesPage";
 
 export const inventoryRoutes: RouteObject[] = [
 
     {
         path: "inventory",
-        Component: InventoryBillPage
-    }, 
-    {
-        path: "inventory/bills",
-        Component: InventoryBillPage
-    }, 
-    {
-        path: "inventory/categories",
-        Component: InventoryBillPage
-    }
+        children: [
+
+            {
+                path: "bills",
+                Component: InventoryBillPage,
+                children: [
+                    {
+                        path: ":supplierId/",
+                        Component: InventoryBillPage
+                    }
+                ]
+            },
+            {
+                path: "categories",
+                Component: InventoryCategoriesPage,
+            },
+            {
+                path: ":categoryId/",
+                Component: InventoryItemsDetails
+            },
+        ]
+    },
 
 
 ]

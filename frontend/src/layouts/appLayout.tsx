@@ -22,7 +22,7 @@ export const appLayout = () => {
     return (
         <div className='flex h-dvh box-border md:p-4'>
 
-            <Navigation setIsOpen={setIsOpen}
+            <Navigation 
                 ref={navRef}
                 className={`px-4 max-md:fixed max-md:inset-y-0 max-md:right-0 z-30 w-3xs max-md:h-full max-md:overflow-hidden max-md:transition-all max-md:duration-250 max-md:dark:shadow-lg max-md:border-r max-md:border-light-border-secondary max-md:dark:border-dark-border-tertiary max-md:dark:bg-dark-background-secondary max-md:bg-light-background-secondary ${isOpen ? 'max-md:w-3xs max-md:visible max-md:opacity-100' : 'max-md:w-0 max-md:invisible max-md:opacity-0'}`}
             />
@@ -40,6 +40,7 @@ export const appLayout = () => {
                 <div className='flex gap-x-2 items-center border-b dark:border-dark-border-tertiary border-light-border-secondary'>
                     <Button className='md:hidden' onClick={() => setIsOpen(!isOpen)} size='xs' variants='ghost' iconOnly leftIcon={<HugeiconsIcon size={20} icon={LayoutAlignRightIcon} />} />
                     <Text  weight='medium' className='select-none'>{t(location.state?.location)}</Text>
+                    <Text  weight='medium' className='select-none'>{location.state?.details}</Text>
                 </div>
                 <div>
                     <Outlet />

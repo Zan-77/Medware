@@ -1,4 +1,4 @@
-import axios from "redaxios"
+import axios from "axios"
 
 
 const ax = axios.create({
@@ -7,16 +7,18 @@ const ax = axios.create({
 })
 
 export const setAuthHeader = (token: string | null) => {
-    const headers = (ax.defaults.headers ?? {}) as Record<string, string>
+    const headers = { ...(ax.defaults.headers ?? {}) } as typeof ax.defaults.headers & {
+        Authorization?: string
+    }
 
     if (token) {
-        headers.Authorization = `Token ${token}`
-        ax.defaults.headers = headers
-        
+        headers.Authorization = `Bearer ${token}`
     } else {
         delete headers.Authorization
-        ax.defaults.headers = headers
     }
+
+    ax.defaults.headers = headers
 }
+
 
 export default ax

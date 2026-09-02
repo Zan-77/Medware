@@ -1,4 +1,4 @@
-import type { InventoryData } from "../inventory/types/inventory"
+import type { InventoryCategories, InventoryItems, InventoryStockEntry, SupplierBilllLines, SupplierBillls } from "../inventory/types/inventory"
 import type { Products, Suppliers } from "../products/types/products"
 import type { Roles } from "./types/roles"
 import type { User } from "./types/users"
@@ -18,8 +18,24 @@ export type Permissions = {
         dataType: Suppliers
         actions: Actions
     }
+    supplierBills: {
+        dataType: SupplierBillls
+        actions: Actions
+    }
+    supplierBillLines: {
+        dataType: SupplierBilllLines
+        actions: Actions
+    }
     inventory: {
-        dataType: InventoryData
+        dataType: InventoryItems
+        actions: Actions
+    }
+    inventoryCategories: {
+        dataType: InventoryCategories
+        actions: Actions
+    }
+    inventoryStockEntry: {
+        dataType: InventoryStockEntry
         actions: Actions
     }
     products: {
@@ -60,14 +76,38 @@ const ROLES = {
         }
     },
     ACCOUNTANT: {
-        orders:{
-            
+        inventoryStockEntry: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBillLines: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBills: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        inventoryCategories: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        orders: {
+
         },
         suppliers: {
             read: true,
-            create:false,
-            delete:false,
-            update:false
+            create: false,
+            delete: false,
+            update: false
         },
         products: {
             read: true,
@@ -76,18 +116,45 @@ const ROLES = {
             update: false
         },
         inventory: {
-            read: true
+            read: true,
+            create: false,
+            delete: false,
+            update: false
         }
     },
     CUSTOMER: {
-        orders:{
-            
+        inventoryStockEntry: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBillLines: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBills: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        inventoryCategories: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        orders: {
+
         },
         suppliers: {
             read: false,
-            create:false,
-            delete:false,
-            update:false
+            create: false,
+            delete: false,
+            update: false
         },
         products: {
             read: true,
@@ -96,18 +163,45 @@ const ROLES = {
             update: false
         },
         inventory: {
-            read: true
+            read: false,
+            create: false,
+            delete: false,
+            update: false
         }
     },
     MANAGER: {
-        orders:{
-            
+        inventoryStockEntry: {
+            read: true,
+            create: true,
+            delete: true,
+            update: true
+        },
+        supplierBillLines: {
+            read: true,
+            create: true,
+            delete: true,
+            update: true
+        },
+        supplierBills: {
+            read: true,
+            create: true,
+            delete: true,
+            update: true
+        },
+        inventoryCategories: {
+            read: true,
+            create: true,
+            delete: true,
+            update: true
+        },
+        orders: {
+
         },
         suppliers: {
             read: true,
-            create:true,
-            delete:true,
-            update:true
+            create: true,
+            delete: true,
+            update: true
         },
         products: {
             read: true,
@@ -116,18 +210,45 @@ const ROLES = {
             update: true
         },
         inventory: {
-            read: true
+            read: true,
+            create: true,
+            delete: true,
+            update: true
         }
     },
     SALESMAN: {
-        orders:{
-            
+        inventoryStockEntry: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBillLines: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBills: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        inventoryCategories: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        orders: {
+
         },
         suppliers: {
             read: true,
-            create:false,
-            delete:false,
-            update:false
+            create: false,
+            delete: false,
+            update: false
         },
         products: {
             read: true,
@@ -136,18 +257,45 @@ const ROLES = {
             update: false
         },
         inventory: {
-            read: true
+            read: true,
+            create: false,
+            delete: false,
+            update: false
         }
     },
     WAREHOUSE_WORKER: {
-        orders:{
-            
+        inventoryStockEntry: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBillLines: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        supplierBills: {
+            read: false,
+            create: false,
+            delete: false,
+            update: false
+        },
+        inventoryCategories: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        },
+        orders: {
+
         },
         suppliers: {
             read: true,
-            create:false,
-            delete:false,
-            update:false
+            create: false,
+            delete: false,
+            update: false
         },
         products: {
             read: true,
@@ -155,6 +303,12 @@ const ROLES = {
             delete: false,
             update: false
         },
+        inventory: {
+            read: true,
+            create: false,
+            delete: false,
+            update: false
+        }
     }
 } as const satisfies Partial<RoleWithPermissions>
 

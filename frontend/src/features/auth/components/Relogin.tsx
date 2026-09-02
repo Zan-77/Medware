@@ -36,10 +36,6 @@ export const Relogin = ({ children }: ReloginProps) => {
                 setIsGuest(false)
                 setIsAuthenticated(true)
                 setUser({ id: accessPayload.user_id, role: accessPayload.role, email: accessPayload.email, username: "", first_name: accessPayload.first_name, last_name: accessPayload.last_name })
-                if (accessPayload.role === "CUSTOMER" || (accessPayload.role === "GUEST" && !isAuthenticated))
-                    navigate("/store/")
-                else
-                    navigate("/app/inventory/bills", { state: { location: "inventory/bills" } })
             }
         }
     })

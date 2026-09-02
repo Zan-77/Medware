@@ -10,14 +10,13 @@ import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import Model from "../../../components/Model"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getProducts, postProducts, putProduct, deleteProduct } from "../../inventory/services/products.service"
+import { getProducts, postProducts, putProduct, deleteProduct } from "../services/products.service"
 import { Table } from "../../../components/Table"
 import type { ColumnDef, TableFeatures } from "@tanstack/react-table"
 import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import TableSettingsButton from "../../../components/TableSettingsButton"
 
 type NewProductFieldsValueState = Omit<Products, "id">
 
@@ -252,7 +251,6 @@ export const ProductsPage = () => {
                 <div className="flex gap-x-3 mb-8">
                     {hasPermission(user, "products", "create") && <Button onClick={() => { setIsOpenAddModel(true) }} variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={Plus} />} />}
                     <Button variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={FilterHorizontalIcon} />} />
-                    <TableSettingsButton columns={columns}/>
                 </div>
                 <Table<Products> columns={columns} data={data as any ?? []} tableKey="products" />
             </div>

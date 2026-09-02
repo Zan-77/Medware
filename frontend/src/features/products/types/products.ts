@@ -13,3 +13,11 @@ export type Suppliers ={
     name:string
     phone:string
 }
+
+
+export type ProductSuppliers ={
+    id:string
+    productId:string
+    supplierId:string
+    discount:number
+}

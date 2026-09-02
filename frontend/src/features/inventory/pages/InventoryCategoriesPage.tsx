@@ -19,19 +19,17 @@ import { Link } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
-import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../services/inventory.service"
-import type { SupplierBillls } from "../types/inventory"
+import { getInventoryCategories, postInventoryCategory, putInventoryCategory, deleteInventoryCategory } from "../services/inventory.service"
+import type { InventoryCategories } from "../types/inventory"
 
-type NewSupplierFieldsValueState = Omit<SupplierBillls, "id">
+type NewSupplierFieldsValueState = Omit<InventoryCategories, "id">
 
 const defaultProductValues: NewSupplierFieldsValueState = {
-    supplierId: "",
-    managerId: "",
-    date: "",
-    notes: "",
+    name: "",
+    description: "",
 }
 
-export const InventoryBillPage = () => {
+export const InventoryCategoriesPage = () => {
     //store
     const user = useBoundStore(state => state.authSlice.user)
     //menu state
@@ -50,24 +48,24 @@ export const InventoryBillPage = () => {
     })
     // query 
     const { data } = useQuery({
-        queryKey: ["inventoryBills"],
-        queryFn: getInventoryBills
+        queryKey: ["inventoryCategories"],
+        queryFn: getInventoryCategories
     })
     const queryClient = useQueryClient()
 
     const { mutate: addSupplier } = useMutation({
-        mutationKey: ["inventoryBills", "new"],
-        mutationFn: postInventoryBill
+        mutationKey: ["inventoryCategories", "new"],
+        mutationFn: postInventoryCategory
     })
 
     const updateSupplier = useMutation({
-        mutationKey: ["inventoryBills", "update"],
-        mutationFn: ({ id, data }: { id: string, data: Omit<NewSupplierFieldsValueState, "id"> }) => putInventoryBill(id, data),
+        mutationKey: ["inventoryCategories", "update"],
+        mutationFn: ({ id, data }: { id: string, data: Omit<NewSupplierFieldsValueState, "id"> }) => putInventoryCategory(id, data),
     })
 
     const deleteSupplierMutation = useMutation({
-        mutationKey: ["inventoryBills", "delete"],
-        mutationFn: (id: string) => deleteInventoryBill(id),
+        mutationKey: ["inventoryCategories", "delete"],
+        mutationFn: (id: string) => deleteInventoryCategory(id),
     })
 
     const { control, handleSubmit, reset, setError, clearErrors, formState: { errors } } = useForm<NewSupplierFieldsValueState>({
@@ -75,7 +73,7 @@ export const InventoryBillPage = () => {
         mode: "all"
     })
     const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null)
-    const [deleteTarget, setDeleteTarget] = useState<null | SupplierBillls>(null)
+    const [deleteTarget, setDeleteTarget] = useState<null | InventoryCategories>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const { t } = useTranslation()
 
@@ -103,17 +101,17 @@ export const InventoryBillPage = () => {
             updateSupplier.mutate({ id: editingSupplierId, data }, {
                 onError(error) {
                     console.log(error)
-                    setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
+                    setError("root.server", { type: "server", message: t("InventoryCategoriesMessages.serverError") })
                 },
                 onSuccess() {
                     reset(defaultProductValues)
                     clearErrors()
                     setEditingSupplierId(null)
                     setIsOpenAddModel(false)
-                    setSuccessMessage(t("InventoryBillsMessages.updateSuccess"))
+                    setSuccessMessage(t("InventoryCategoriesMessages.updateSuccess"))
                     setIsOpenToast(true)
                     //@ts-ignore
-                    queryClient.invalidateQueries(["inventoryBills"])
+                    queryClient.invalidateQueries(["inventoryCategories"])
                 }
             })
             return
@@ -123,20 +121,20 @@ export const InventoryBillPage = () => {
 
             onError(error) {
                 console.log(error);
-                setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
+                setError("root.server", { type: "server", message: t("InventoryCategoriesMessages.serverError") })
             },
             onSuccess() {
                 reset(defaultProductValues)
                 clearErrors()
                 setIsOpenAddModel(false)
-                setSuccessMessage(t("InventoryBillsMessages.createSuccess"))
+                setSuccessMessage(t("InventoryCategoriesMessages.createSuccess"))
                 setIsOpenToast(true)
                 //@ts-ignore
-                queryClient.invalidateQueries(["inventoryBills"])
+                queryClient.invalidateQueries(["inventoryCategories"])
             },
         })
     }
-    const columns: Array<ColumnDef<TableFeatures, SupplierBillls>> = [
+    const columns: Array<ColumnDef<TableFeatures, InventoryCategories>> = [
         {
             id: "actions",
             enableColumnFilter: false,
@@ -160,7 +158,7 @@ export const InventoryBillPage = () => {
                         <Button
                             onClick={() => {
                                 setEditingSupplierId(row.original.id);
-                                reset({ supplierId: row.original.supplierId, managerId: row.original.managerId, date: row.original.date, notes: row.original.notes });
+                                reset({ name: row.original.name, description: row.original.description });
                                 setIsOpenAddModel(true)
                             }}
                             size="xs" variants="ghost" iconOnly={true} leftIcon={<HugeiconsIcon size={18} icon={Edit} />} />}
@@ -169,27 +167,24 @@ export const InventoryBillPage = () => {
 
         },
         {
-            meta: { filterVariants: "value" },
-            id: "supplierId",
+            meta: {
+                filterVariants: "value"
+            },
+            id: "name",
             enableSorting: true,
-            header: t("supplier"),
-            accessorKey: "supplierId",
+            header: t("name"),
+            accessorKey: "name",
             filterFn: filterFn_includesString
         },
         {
-            meta: { filterVariants: "value" },
-            id: "managerId",
-            enableSorting: true,
-            header: t("manager"),
-            accessorKey: "managerId",
-            filterFn: filterFn_includesString
-        },
-        {
-            meta: { filterVariants: "value" },
-            id: "date",
-            enableSorting: true,
-            header: t("date"),
-            accessorKey: "date",
+            meta: {
+                filterVariants: "value"
+            },
+            id: "description",
+            enableSorting: false,
+            enableGrouping:false,
+            header: t("description"),
+            accessorKey: "description",
             filterFn: filterFn_includesString
         },
         {
@@ -202,7 +197,7 @@ export const InventoryBillPage = () => {
             header: t("id"),
             accessorKey: "id",
                 cell: ({ row }) => {
-                return <Link to={`/app/inventory/bills/${row.original.id}/`} state={{location:"billDetails" , details:row.original.supplierId}}>{row.original.id}</Link>
+                return <Link to={`/app/inventory/categories/${row.original.id}/`} state={{location:"categoryDetails" , details:row.original.name}}>{row.original.id}</Link>
             },
             filterFn: filterFn_inNumberRange
         },
@@ -211,15 +206,15 @@ export const InventoryBillPage = () => {
 
     return (
         <div>
-            <Model title={t("InventoryBills.newBill")} isOpen={isOpenAddModel} onClick={() => setIsOpenAddModel(false)} ref={AddModelRef}>
-                <Form ServerError={errors.root?.server} onSubmit={handleSubmit(onSubmit)} Buttons={<Button type="submit">{t("InventoryBills.addBill")}</Button>}>
+            <Model title={t("InventoryCategories.newCategory")} isOpen={isOpenAddModel} onClick={() => setIsOpenAddModel(false)} ref={AddModelRef}>
+                <Form ServerError={errors.root?.server} onSubmit={handleSubmit(onSubmit)} Buttons={<Button type="submit">{t("InventoryCategories.addCategory")}</Button>}>
                     <div className="grid grid-cols-2 gap-x-6">
                         <ControlledInput<NewSupplierFieldsValueState>
                             rules={{
                                 shouldUnregister: true,
                                 required: { message: t("SuppliersMessages.nameRequired"), value: true },
                             }}
-                            name="supplierId"
+                            name="name"
                             control={control}
                         />
                         <ControlledInput<NewSupplierFieldsValueState>
@@ -227,33 +222,16 @@ export const InventoryBillPage = () => {
                                 shouldUnregister: true,
                                 required: { message: t("SuppliersMessages.nameRequired"), value: false },
                             }}
-                            name="notes"
-                            control={control}
-                        />
-
-                        <ControlledInput<NewSupplierFieldsValueState>
-                            rules={{
-                                shouldUnregister: true,
-                                required: { message: t("SuppliersMessages.nameRequired"), value: false },
-                            }}
-                            name="managerId"
-                            control={control}
-                        />
-                        <ControlledInput<NewSupplierFieldsValueState>
-                            rules={{
-                                shouldUnregister: true,
-                                required: { message: t("SuppliersMessages.nameRequired"), value: false },
-                            }}
-                            name="date"
+                            name="description"
                             control={control}
                         />
 
                     </div>
                 </Form>
             </Model>
-            <Model title={t("InventoryBills.deleteTitle")} isOpen={isOpenDeleteModel} onClick={() => setIsOpenDeleteModel(false)} ref={DeleteModelRef}>
+            <Model title={t("InventoryCategories.deleteTitle")} isOpen={isOpenDeleteModel} onClick={() => setIsOpenDeleteModel(false)} ref={DeleteModelRef}>
                 <div className="p-4">
-                    <Text>{t("InventoryBills.deleteConfirm")}</Text>
+                    <Text>{t("InventoryCategories.deleteConfirm")}</Text>
                     <div className="flex justify-end gap-x-2 mt-4">
                         <Button variants="ghost" onClick={() => { setIsOpenDeleteModel(false); setDeleteTarget(null) }}>{t("Suppliers.cancel")}</Button>
                         <Button onClick={() => {
@@ -268,13 +246,13 @@ export const InventoryBillPage = () => {
                                     setIsOpenDeleteModel(false)
                                     const deletedId = deleteTarget?.id
                                     setDeleteTarget(null)
-                                    setSuccessMessage(t("InventoryBillsMessages.deleteSuccess"))
+                                    setSuccessMessage(t("InventoryCategoriesMessages.deleteSuccess"))
                                     setIsOpenToast(true)
                                     // remove the deleted item from the queued/cache data so UI updates immediately
                                     //@ts-ignore
-                                    queryClient.setQueryData(["inventoryBills"], (old: SupplierBillls[] | undefined) => {
+                                    queryClient.setQueryData(["inventoryCategories"], (old: InventoryCategories[] | undefined) => {
                                         if (!old) return old
-                                        return old.filter(item => (item as any).id !== deletedId)
+                                        return old.filter(item => item.id !== deletedId)
                                     })
                                 }
                             })
@@ -288,11 +266,11 @@ export const InventoryBillPage = () => {
             <div>
                 <div className="flex items-center gap-x-3 mb-8">
                     {hasPermission(user, "suppliers", "create") && <Button onClick={() => { setIsOpenAddModel(true) }} variants="border" size="sm" iconOnly leftIcon={<HugeiconsIcon size={16} icon={Plus} />} />}
-                    <TableSettings<SupplierBillls>
+                    <TableSettings<InventoryCategories>
                         columns={columns}
                         columnVisibility={columnVisibility} setColumnVisibility={setColumnVisibility}
                         grouping={grouping} setGrouping={setGrouping} />
-                    <TableFilter<SupplierBillls> columns={columns} columnFilters={columnFilters} setColumnFilters={setColumnFilters} />
+                    <TableFilter<InventoryCategories> columns={columns} columnFilters={columnFilters} setColumnFilters={setColumnFilters} />
                     <DebouncedInput
                         fieldset={false}
                         rounded="full"
@@ -302,10 +280,10 @@ export const InventoryBillPage = () => {
                         onChange={setGlobalFilter}
                     />
                 </div>
-                {data ? <Table<SupplierBillls>
+                {data ? <Table<InventoryCategories>
                     columns={columns}
                     data={data}
-                    tableKey="inventoryBills"
+                    tableKey="inventoryCategories"
                     columnFilters={columnFilters} setColumnFilters={setColumnFilters}
                     columnVisibility={columnVisibility}
                     setColumnVisibility={setColumnVisibility}

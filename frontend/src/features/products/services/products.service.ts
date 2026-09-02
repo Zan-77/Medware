@@ -1,5 +1,5 @@
 import ax from "../../../services/api"
-import type { Products, Suppliers } from "../../products/types/products"
+import type { Products, ProductSuppliers, Suppliers } from "../types/products"
 
 const productsUrl = "/products/products/"
 
@@ -27,8 +27,8 @@ export const deleteProduct = async (id: string) => {
 const suppliersUrl = "/products/suppliers/"
 
 
-export const getSuppliers = async ():Promise<Products>=> {
-    const res = await ax.get<Products>(suppliersUrl)
+export const getSuppliers = async (): Promise<Suppliers[]> => {
+    const res = await ax.get<Suppliers[]>(suppliersUrl)
     return res.data
 }
 
@@ -46,3 +46,10 @@ export const deleteSupplier = async (id: string) => {
     const res = await ax.delete(`${suppliersUrl}${id}/`)
     return res
 }
+
+const productSuppliersUrl ="/products/product-suppliers/"
+
+export const getProductSuppliersById = async (id:string): Promise<ProductSuppliers[]> => {
+    const res = await ax.get<ProductSuppliers[]>(productSuppliersUrl+`?supplier=${id}`)
+    return res.data
+} 

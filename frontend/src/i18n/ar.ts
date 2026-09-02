@@ -1,19 +1,21 @@
 export const ar = {
-    logout:"تسجيل الخروج",
+    logout: "تسجيل الخروج",
     email: "حساب الإلكتروني",
     password: "كلمة المرور",
     username: "اسم",
     first_name: "الاسم الأول",
     last_name: "اسم العائلة",
-    phone:"رقم الهاتف",
+    phone: "رقم الهاتف",
     continue: "التالي",
-    name:"اسم",
-    whole_price:"سعر الجملة",
-    retail_price:"سعر المفرق",
+    name: "اسم",
+    description: "الوصف",
+    whole_price: "سعر الجملة",
+    retail_price: "سعر المفرق",
     confirmPassword: "اعد كتابة كلمة المرور",
     back: "عودة",
-    welcome:"مرحباً يا",
+    welcome: "مرحباً يا",
     submit: "تسجيل",
+    search: "بحث",
     inputErrorMessages: {
         emailRequiredMessage: "لم تدخل حسابك",
         emailPatternMessage: "لم تدخل حساباً صحيحاً",
@@ -58,8 +60,8 @@ export const ar = {
         }
     },
     Products: "بضائع",
-    Supplier:"موردون",
-    categories: "الفئات",
+    Supplier: "موردون",
+    categories: "أصناف",
     items: "العناصر",
     bills: "الفواتير",
     Suppliers: {
@@ -81,17 +83,45 @@ export const ar = {
         deleteSuccess: "تم حذف المورد بنجاح",
         successMessage: "تمت إضافة مورد جديد"
     },
+    InventoryCategories: {
+        newCategory: "إضافة فئة جديدة",
+        addCategory: "أضف الفئة",
+        deleteTitle: "حذف فئة",
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذه الفئة؟"
+    },
+    InventoryCategoriesMessages: {
+        serverError: "حدث خطأ أثناء معالجة الفئة.",
+        createSuccess: "تمت إضافة فئة جديدة",
+        updateSuccess: "تم تحديث الفئة بنجاح",
+        deleteSuccess: "تم حذف الفئة بنجاح"
+    },
+    InventoryBills: {
+        newBill: "إضافة فاتورة جديدة",
+        addBill: "أضف الفاتورة",
+        deleteTitle: "حذف فاتورة",
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذه الفاتورة؟"
+    },
+    InventoryBillsMessages: {
+        serverError: "حدث خطأ أثناء معالجة الفاتورة.",
+        createSuccess: "تمت إضافة فاتورة جديدة",
+        updateSuccess: "تم تحديث الفاتورة بنجاح",
+        deleteSuccess: "تم حذف الفاتورة بنجاح"
+    },
+    supplier: "المورد",
+    manager: "المدير",
+    date: "التاريخ",
     inventory: "مستودع",
     Orders: "طلبات",
     finance: "مالية",
-    id:"رقم",
-    actions:"إجراءات",
-    products:{
-         serverErrorMessages: {
+    id: "معرف",
+    none: "غير محدد",
+    actions:"أفعال",
+    products: {
+        serverErrorMessages: {
             500: "خطأ في المخدم"
         },
-        newProduct:"إضافة منتج جديد",
-        addProduct:"أضف المنتج",
+        newProduct: "إضافة منتج جديد",
+        addProduct: "أضف المنتج",
         productNameRequired: "اسم المنتج مطلوب.",
         retailPriceRequired: "سعر البيع مطلوب.",
         retailPriceMin: "لا يمكن أن يكون سعر البيع سالبًا.",
@@ -104,5 +134,18 @@ export const ar = {
         updateSuccess: "تم تحديث المنتج بنجاح",
         deleteSuccess: "تم حذف المنتج بنجاح",
         successMessage: "تمت إضافة منتج جديد"
-    }
+    },
+    tableFilter: {
+        addFilter: "إضافة فلتر",
+        removeAll: "إزالة الكل",
+        column: "العمود",
+        value: "القيمة",
+        min: "الحد الأدنى",
+        max: "الحد الأقصى"
+    },
+    tableSettings: {
+        groupBy: "تجميع حسب",
+        displayColumns: "عرض الأعمدة"
+    },
+    supplierDetails:"تفاصيل المورد :"
 }

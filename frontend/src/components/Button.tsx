@@ -12,9 +12,9 @@ const baseButtonStyle = tv({
             border: "border-2 dark:border-dark-border-primary dark:hover:border-dark-border-primary-hover dark:hover:bg-dark-button-background-secondary-hover/20  border-light-border-primary hover:border-light-border-primary-hover",
             ghost: "dark:hover:bg-dark-button-background-secondary-hover hover:dark:bg-dark-button-background-secondary-hover/50 hover:bg-dark-button-background-secondary-hover/10"
         },
-        active:{
-            true:"",
-            false:""
+        active: {
+            true: "",
+            false: ""
         },
         size: {
             xs: "py-1.5 px-2.5 h-6 gap-x-2.5",
@@ -30,6 +30,7 @@ const baseButtonStyle = tv({
             lg: "rounded-lg",
             xl: "rounded-xl",
             "2xl": "rounded-2xl",
+            full: "rounded-full",
 
         },
         iconOnly: {
@@ -43,16 +44,21 @@ const baseButtonStyle = tv({
     },
     compoundVariants: [
         {
-            variants:"ghost",
-            active:true,
-            className:"dark:text-dark-text-primary text-light-text-primary dark:bg-dark-button-background-secondary-hover/50 bg-dark-button-background-secondary-hover/10"
+            variants: "ghost",
+            active: true,
+            className: "dark:text-dark-text-primary text-light-text-primary dark:bg-dark-button-background-secondary-hover/50 bg-dark-button-background-secondary-hover/10"
+        },
+        {
+            variants: "border",
+            active: true,
+            className: "dark:bg-dark-button-background-secondary-hover bg-light-button-background-secondary-hover"
         }
     ],
     defaultVariants: {
         variants: "primary",
         size: "md",
-        active:false,
-        disabled:false,
+        active: false,
+        disabled: false,
         rounded: "lg",
         iconOnly: false
     }
