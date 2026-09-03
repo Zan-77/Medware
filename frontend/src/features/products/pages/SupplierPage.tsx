@@ -148,6 +148,7 @@ export const SupplierPage = () => {
                     {hasPermission(user, "suppliers", "delete")
                         &&
                         <Button
+                            className="dark:text-error text-error dark:hover:text-dark-text-error-hover hover:text-light-text-error-hover"
                             onClick={() => {
                                 setDeleteTarget(row.original);
                                 setIsOpenDeleteModel(true)
@@ -157,6 +158,7 @@ export const SupplierPage = () => {
                     {hasPermission(user, "suppliers", "update")
                         &&
                         <Button
+                            className="dark:text-accent-light text-accent-extraDark dark:hover:text-accent-extraLight hover:text-accent-dark"
                             onClick={() => {
                                 setEditingSupplierId(row.original.id);
                                 reset({ name: row.original.name, phone: row.original.phone });
@@ -199,7 +201,8 @@ export const SupplierPage = () => {
             //aggregationFn:"count",
             //footer: ({ column }) => column.getAggregationValue<string>().toLocaleString(),
             cell: ({ row }) => {
-                return <Link to={`/app/supplier/${row.original.id}/`} state={{location:"supplierDetails" , details:row.original.name}}>{row.original.id}</Link>
+                return hasPermission(user, "supplierBills", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/bills/${row.original.id}/`} state={{ location: "billDetails", details: row.original.supplierId }}>{row.original.id}</Link> : row.original.id
+
             },
             filterFn: filterFn_inNumberRange
         },
@@ -305,7 +308,7 @@ export const SupplierPage = () => {
                         fieldset={false}
                         rounded="full"
                         className="w-44"
-                        placeholder={t("search")+"..."}
+                        placeholder={t("search") + "..."}
                         value={globalFilter}
                         onChange={setGlobalFilter}
                     />

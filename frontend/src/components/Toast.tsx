@@ -15,7 +15,7 @@ const Toast = forwardRef<HTMLDivElement, ToastProps>(({ children, isOpen, classN
     <div
       ref={ref}
       className={`
-        absolute bottom-4 right-3 z-30 w-56 rounded-xl border
+        absolute bottom-10 right-3 z-30 max-w-full rounded-xl border
         border-light-border-secondary bg-light-background-tertiary p-2
         drop-shadow-2xl transition-all duration-300 ease-out
         dark:border-dark-border-tertiary dark:bg-dark-background-tertiary
@@ -23,9 +23,16 @@ const Toast = forwardRef<HTMLDivElement, ToastProps>(({ children, isOpen, classN
         ${className ?? ""}
       `}
     >
-      <div className="flex items-center justify-between gap-2">
-        {children}
-        <Button onClick={onClick} size="xs" variants="ghost" iconOnly={true} leftIcon={<HugeiconsIcon size={18} icon={Close} />} />
+      <div className="flex w-full items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 wrap-break-word text-wrap">{children}</div>
+        <Button
+          onClick={onClick}
+          size="xs"
+          variants="ghost"
+          iconOnly={true}
+          className="shrink-0"
+          leftIcon={<HugeiconsIcon size={18} icon={Close} />}
+        />
       </div>
     </div>
   )

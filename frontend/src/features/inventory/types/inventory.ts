@@ -17,8 +17,10 @@ export interface InventoryCategories {
 
 export interface SupplierBillls {
     id: string
-    supplierId:string
-    managerId:string
+    supplier?: string | number | null
+    supplierId?: string | number | null
+    manager?: string | number | null
+    managerId?: string | number | null
     date:string | number
     notes:string
 }

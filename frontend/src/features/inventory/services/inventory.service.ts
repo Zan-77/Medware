@@ -47,5 +47,32 @@ export const deleteInventoryBill = async (id: string) => {
 	return res
 }
 
+const inventoryBillLinesUrl = "/inventory/bill-lines/"
+
+export const getSupplierBillLines = async (): Promise<any[]> => {
+	const res = await ax.get<any[]>(inventoryBillLinesUrl)
+	return res.data
+}
+
+export const getSupplierBillLinesById = async (id: string): Promise<any[]> => {
+	const res = await ax.get<any[]>(inventoryBillLinesUrl + `?bill=${id}`)
+	return res.data
+}
+
+export const postSupplierBillLine = async (data: any) => {
+	const res = await ax.post(inventoryBillLinesUrl, data)
+	return res
+}
+
+export const putSupplierBillLine = async (id: string, data: any) => {
+	const res = await ax.put(`${inventoryBillLinesUrl}${id}/`, data)
+	return res
+}
+
+export const deleteSupplierBillLine = async (id: string) => {
+	const res = await ax.delete(`${inventoryBillLinesUrl}${id}/`)
+	return res
+}
+
 
 

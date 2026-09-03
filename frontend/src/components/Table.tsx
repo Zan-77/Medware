@@ -179,11 +179,11 @@ export const Table = <D extends RowData>(
                         const row = rows[virtualRow.index]
 
                         return (
-                            <tr className={`flex transition-colors duration-200 ${row.getIsGrouped() ? "dark:bg-dark-background-tertiary/60 bg-light-background-secondary/70" : "hover:dark:bg-dark-button-background-secondary-hover/20 hover:bg-dark-button-background-secondary-hover/5"}`}
+                            <tr className={`flex transition-colors duration-200 border-b dark:border-dark-border-primary/50 border-light-background-primary ${row.getIsGrouped() ? " dark:bg-dark-background-tertiary/60 bg-light-background-secondary/70" : "hover:dark:bg-dark-button-background-secondary-hover/20 hover:bg-dark-button-background-secondary-hover/5"}`}
                                 key={row.id}
                                 style={{
                                     position: 'absolute',
-                                    transform: `translateY(${virtualRow.start * rowGap / 8}px)`,
+                                    transform: `translateY(${virtualRow.start}px)`,
                                     width: '100%',
                                 }}
                             >

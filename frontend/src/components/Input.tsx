@@ -52,7 +52,7 @@ const Input = ({ legend, type, buttonIcon, autoComplete, className, fieldset = t
         </fieldset> :
             <div className={baseInputStyle({ ...rest, className })}>
                 <div className="relative">
-                    <input autoComplete={autoComplete} {...rest} placeholder={rest.placeholder} type={type} className="w-full rtl:pl-6 ltr:pr-6 outline-none py-1 px-4" />
+                    <input autoComplete={autoComplete} {...rest} placeholder={rest.placeholder} type={type} className=" w-full rtl:pl-6 ltr:pr-6 outline-none py-1 px-4" />
                     {buttonIcon && <Button type="button" onClick={onClick} variants="ghost" size="sm" className="absolute top-1/2 -translate-y-1/2 left-2" iconOnly>{buttonIcon}</Button>}
                 </div>
             </div>

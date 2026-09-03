@@ -62,7 +62,7 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
              {user.first_name}
             </Button>
             <Dropdown absolute isOpen={isOpenUserButton}>
-              <Button onClick={() => { mutation.mutate() }} className='w-full text-light-text-error-hover hover:text-light-text-error-hover dark:text-dark-text-error-hover dark:hover:text-dark-text-error-hover' size='sm' leftIcon={<HugeiconsIcon size={22} icon={Logout05Icon} />} variants='ghost'>{t('logout')}</Button>
+              <Button onClick={() => { mutation.mutate() }} className='w-full text-light-text-error-hover hover:text-light-text-error-hover dark:text-dark-text-error-hover dark:hover:text-dark-text-error-hover' size='sm' rightIcon={<HugeiconsIcon size={22} icon={Logout05Icon} />} variants='ghost'>{t('logout')}</Button>
             </Dropdown>
           </div>
         </div>
@@ -101,9 +101,9 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               variants='ghost'
               active={location.pathname.includes("inventory/bills")}
               leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "inventory" } }); }}
+              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "purchaseBills" } }); }}
             >
-              {t('bills')}
+              {t('purchaseBills')}
             </Button>
           </Dropdown>
         </div>

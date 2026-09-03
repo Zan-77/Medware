@@ -27,18 +27,47 @@ type ControlledInputProps<TFieldValues extends FieldValues> = UseControllerProps
     ControlledInputStyleVariants & {
         className?: string
         name: UseControllerProps<TFieldValues>["name"]
-        control: NonNullable<UseControllerProps<TFieldValues>["control"]>
+            control?: NonNullable<UseControllerProps<TFieldValues>["control"]>
         type?: HTMLInputTypeAttribute
         buttonIcon?: React.ReactNode
         autoComplete?: React.InputHTMLAttributes<HTMLInputElement>["autoComplete"]
-
+        placeholder?: string
+        value?: string
+        onChange?: React.ChangeEventHandler<HTMLInputElement>
+        onBlur?: React.FocusEventHandler<HTMLInputElement>
+        onFocus?: React.FocusEventHandler<HTMLInputElement>
         onClick?: () => void
+        state?: "normal" | "error" | "ok"
+        legend?: string
     }
 
-const ControlledInput = <TFieldValues extends FieldValues>({ className,autoComplete, type, buttonIcon, onClick, ...props }: ControlledInputProps<TFieldValues>) => {
+const ControlledInput = <TFieldValues extends FieldValues>({ className, autoComplete, type, buttonIcon, onClick, placeholder, value, onChange, onBlur, onFocus, state, legend, ...props }: ControlledInputProps<TFieldValues>) => {
     const { t } = useTranslation()
+    const hasExternalState = value !== undefined || onChange !== undefined || onBlur !== undefined || onFocus !== undefined
+
+    if (hasExternalState) {
+        const resolvedState = state ?? "normal"
+        return (
+            <div className={baseControlledInputStyle({ state: resolvedState, className })}>
+                <Input
+                    autoComplete={autoComplete}
+                    onClick={onClick}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    onChange={onChange}
+                    value={value}
+                    placeholder={placeholder}
+                    state={resolvedState}
+                    type={type}
+                    buttonIcon={buttonIcon}
+                    legend={legend ?? t(String(props.name))}
+                />
+            </div>
+        )
+    }
+
     const { field, fieldState, formState } = useController({ ...props })
-    const state = fieldState.error || formState.errors.root?.server ? "error" : "normal"
+    const resolvedState = fieldState.error || formState.errors.root?.server ? "error" : "normal"
 
     const errorMessage = fieldState.error?.message
     let renderedError = ""
@@ -48,9 +77,9 @@ const ControlledInput = <TFieldValues extends FieldValues>({ className,autoCompl
     }
 
     return (
-        <div className={baseControlledInputStyle({ state, className })}>
-            <Input autoComplete={autoComplete} onClick={onClick} {...field} state={state} type={type} buttonIcon={buttonIcon} legend={t(String(props.name))} />
-            <Text color={state} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>
+        <div className={baseControlledInputStyle({ state: resolvedState, className })}>
+            <Input autoComplete={autoComplete} onClick={onClick} {...field} state={resolvedState} type={type} buttonIcon={buttonIcon} legend={t(String(props.name))} />
+            <Text color={resolvedState} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>
         </div>
     )
 }

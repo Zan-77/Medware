@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { useLocation, useNavigate } from "react-router"
 import { useEffect, useRef } from "react"
-import { relogin } from "../services/auth.service"
+import { logout, relogin } from "../services/auth.service"
 import { setAuthHeader } from "../../../services/api"
 import { decodeAccessToken } from "../utility/decodeAccessToken"
 import { useBoundStore } from "../../../store/useBoundStore"
@@ -20,7 +20,8 @@ export const Relogin = ({ children }: ReloginProps) => {
     const mutation = useMutation({
         mutationKey: ["auth", "relogin"],
         mutationFn: relogin,
-        onError: () => {
+        onError: async() => {
+            await logout();
             if (hasAttemptedRelogin.current) {
                 if (location.pathname.includes("store")) {
                     navigate("/store/")

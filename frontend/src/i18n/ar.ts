@@ -16,6 +16,7 @@ export const ar = {
     welcome: "مرحباً يا",
     submit: "تسجيل",
     search: "بحث",
+    notes:"ملاحظات",
     inputErrorMessages: {
         emailRequiredMessage: "لم تدخل حسابك",
         emailPatternMessage: "لم تدخل حساباً صحيحاً",
@@ -64,6 +65,8 @@ export const ar = {
     categories: "أصناف",
     items: "العناصر",
     bills: "الفواتير",
+    purchaseBills:"فواتير مشتريات",
+    noNotes:"لا يوجد ملاحظات",
     Suppliers: {
         newSuppliers: "إضافة مورد جديد",
         addSupplier: "أضف المورد",
@@ -99,7 +102,8 @@ export const ar = {
         newBill: "إضافة فاتورة جديدة",
         addBill: "أضف الفاتورة",
         deleteTitle: "حذف فاتورة",
-        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذه الفاتورة؟"
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذه الفاتورة؟",
+        createEditNotImplemented: "إنشاء/تعديل خطوط الفاتورة غير منفذ بعد"
     },
     InventoryBillsMessages: {
         serverError: "حدث خطأ أثناء معالجة الفاتورة.",
@@ -148,4 +152,13 @@ export const ar = {
         displayColumns: "عرض الأعمدة"
     },
     supplierDetails:"تفاصيل المورد :"
+    ,
+    item: "عنصر",
+    category: "فئة",
+    quantity: "الكمية",
+    unit_price: "سعر الوحدة",
+    discount: "الخصم",
+    expiry_date: "تاريخ الانتهاء",
+    guest: "زائر",
+    
 }

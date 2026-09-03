@@ -8,6 +8,7 @@ export const getProducts = async ():Promise<Products>=> {
     return res.data
 }
 
+
 export const postProducts = async (data: Omit<Products, "id">) => {
     const res = await ax.post(productsUrl, data)
     return res
@@ -26,9 +27,13 @@ export const deleteProduct = async (id: string) => {
 
 const suppliersUrl = "/products/suppliers/"
 
-
 export const getSuppliers = async (): Promise<Suppliers[]> => {
     const res = await ax.get<Suppliers[]>(suppliersUrl)
+    return res.data
+}
+
+export const getSuppliersById = async (id:string): Promise<Suppliers[]> => {
+    const res = await ax.get<Suppliers[]>(suppliersUrl+`?id=${id}`)
     return res.data
 }
 

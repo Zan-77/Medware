@@ -3,12 +3,11 @@ import { CheckmarkCircle01Icon, Edit, Plus, Trash } from "@hugeicons/core-free-i
 import Button from "../../../components/Button"
 import useOpenMenu from "../../../hooks/useOpenMenu"
 import Form from "../../../components/Form"
-import ControlledInput from "../../../components/ControlledInput"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import Model from "../../../components/Model"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Table } from "../../../components/Table"
 import { filterFn_includesString, filterFn_inNumberRange, type ColumnDef, type ColumnFiltersState, type ColumnVisibilityState, type GroupingState, type SortingState, type TableFeatures } from "@tanstack/react-table"
 import Toast from "../../../components/Toast"
@@ -19,8 +18,12 @@ import { Link } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
+import { ControlledDateInput } from "../../../components/DateInput"
+import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
+import { getSuppliers, getSuppliersById } from "../../products/services/products.service"
 import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../services/inventory.service"
 import type { SupplierBillls } from "../types/inventory"
+import ControlledTextArea from "../../../components/ControlledTextArea"
 
 type NewSupplierFieldsValueState = Omit<SupplierBillls, "id">
 
@@ -53,6 +56,42 @@ export const InventoryBillPage = () => {
         queryKey: ["inventoryBills"],
         queryFn: getInventoryBills
     })
+    const { data: suppliers = [] } = useQuery({
+        queryKey: ["suppliersList"],
+        queryFn: getSuppliers,
+    })
+    const supplierOptions = suppliers.map((supplier) => ({
+        value: String(supplier.id),
+        label: supplier.name,
+    }))
+
+    const supplierIds = Array.from(
+        new Set(
+            (data ?? [])
+                .map((bill) => bill.supplier ?? bill.supplierId)
+                .filter((value): value is string => Boolean(value))
+        )
+    )
+
+    const supplierNameQueries = useQueries({
+        queries: supplierIds.map((supplierId) => ({
+            queryKey: ["supplierById", supplierId],
+            queryFn: () => getSuppliersById(String(supplierId)),
+            enabled: Boolean(supplierId),
+            staleTime: 5 * 60 * 1000,
+        })),
+    })
+
+    const supplierNameMap = new Map<string, string>()
+    supplierIds.forEach((supplierId, index) => {
+        const supplier = supplierNameQueries[index]?.data?.find(
+            (item) => String(item.id) === String(supplierId)
+        )
+
+        if (supplier?.name) {
+            supplierNameMap.set(String(supplierId), supplier.name)
+        }
+    })
     const queryClient = useQueryClient()
 
     const { mutate: addSupplier } = useMutation({
@@ -71,13 +110,23 @@ export const InventoryBillPage = () => {
     })
 
     const { control, handleSubmit, reset, setError, clearErrors, formState: { errors } } = useForm<NewSupplierFieldsValueState>({
-        defaultValues: defaultProductValues,
+        defaultValues: {
+            ...defaultProductValues,
+            managerId: user?.id ?? "",
+        },
         mode: "all"
     })
     const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<null | SupplierBillls>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const { t } = useTranslation()
+
+    const toSupplierBillPayload = (data: NewSupplierFieldsValueState) => ({
+        supplier: data.supplierId ? Number(data.supplierId) : null,
+        manager: data.managerId || user?.id || null,
+        date: data.date,
+        notes: data.notes ?? "",
+    })
 
     useEffect(() => {
         if (!isOpenAddModel) {
@@ -99,8 +148,10 @@ export const InventoryBillPage = () => {
 
     const onSubmit = (data: NewSupplierFieldsValueState) => {
         clearErrors("root.server")
+        const payload = toSupplierBillPayload(data)
+
         if (editingSupplierId) {
-            updateSupplier.mutate({ id: editingSupplierId, data }, {
+            updateSupplier.mutate({ id: editingSupplierId, data: payload as any }, {
                 onError(error) {
                     console.log(error)
                     setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
@@ -119,14 +170,17 @@ export const InventoryBillPage = () => {
             return
         }
 
-        addSupplier(data, {
+        addSupplier(payload as any, {
 
             onError(error) {
                 console.log(error);
                 setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
             },
             onSuccess() {
-                reset(defaultProductValues)
+                reset({
+                    ...defaultProductValues,
+                    managerId: user?.id ?? "",
+                })
                 clearErrors()
                 setIsOpenAddModel(false)
                 setSuccessMessage(t("InventoryBillsMessages.createSuccess"))
@@ -146,44 +200,57 @@ export const InventoryBillPage = () => {
             header: t("actions"),
             cell: ({ row }) => (
                 <div className="flex justify-center gap-x-2">
-                    {hasPermission(user, "suppliers", "delete")
+                    {hasPermission(user, "supplierBills", "delete")
                         &&
                         <Button
+                            className="dark:text-error text-error dark:hover:text-dark-text-error-hover hover:text-light-text-error-hover"
                             onClick={() => {
                                 setDeleteTarget(row.original);
                                 setIsOpenDeleteModel(true)
                             }}
                             size="xs" variants="ghost" iconOnly={true}
                             leftIcon={<HugeiconsIcon size={18} icon={Trash} />} />}
-                    {hasPermission(user, "suppliers", "update")
+                    {hasPermission(user, "supplierBills", "update")
                         &&
                         <Button
+                        className="dark:text-accent-light text-accent-extraDark dark:hover:text-accent-extraLight hover:text-accent-dark"
                             onClick={() => {
                                 setEditingSupplierId(row.original.id);
                                 reset({ supplierId: row.original.supplierId, managerId: row.original.managerId, date: row.original.date, notes: row.original.notes });
                                 setIsOpenAddModel(true)
                             }}
                             size="xs" variants="ghost" iconOnly={true} leftIcon={<HugeiconsIcon size={18} icon={Edit} />} />}
+
                 </div>
             )
 
         },
         {
             meta: { filterVariants: "value" },
+            id: "notes",
+            enableSorting: true,
+            header: t("notes"),
+            accessorFn: (row) => row.notes?.trim() ? row.notes : t("noNotes"),
+            cell: ({ row }) => row.original.notes?.trim() ? row.original.notes : t("noNotes"),
+            filterFn: filterFn_includesString
+        },
+
+        {
+            meta: { filterVariants: "value" },
             id: "supplierId",
             enableSorting: true,
             header: t("supplier"),
-            accessorKey: "supplierId",
+            accessorFn: (row) => {
+                const supplierId = row.supplier ?? row.supplierId
+                return supplierNameMap.get(String(supplierId)) ?? String(supplierId ?? "")
+            },
+            cell: ({ row }) => {
+                const supplierId = row.original.supplier ?? row.original.supplierId
+                return supplierNameMap.get(String(supplierId)) ?? String(supplierId ?? "")
+            },
             filterFn: filterFn_includesString
         },
-        {
-            meta: { filterVariants: "value" },
-            id: "managerId",
-            enableSorting: true,
-            header: t("manager"),
-            accessorKey: "managerId",
-            filterFn: filterFn_includesString
-        },
+
         {
             meta: { filterVariants: "value" },
             id: "date",
@@ -197,12 +264,12 @@ export const InventoryBillPage = () => {
                 filterVariants: "range"
             },
             id: "id",
-            enableGrouping:false,
+            enableGrouping: false,
             enableSorting: true,
             header: t("id"),
             accessorKey: "id",
-                cell: ({ row }) => {
-                return <Link to={`/app/inventory/bills/${row.original.id}/`} state={{location:"billDetails" , details:row.original.supplierId}}>{row.original.id}</Link>
+            cell: ({ row }) => {
+                return hasPermission(user, "supplierBillLines", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/bills/${row.original.id}/`} state={{ location:"billDetails"}}>{row.original.id}</Link> : row.original.id
             },
             filterFn: filterFn_inNumberRange
         },
@@ -214,41 +281,36 @@ export const InventoryBillPage = () => {
             <Model title={t("InventoryBills.newBill")} isOpen={isOpenAddModel} onClick={() => setIsOpenAddModel(false)} ref={AddModelRef}>
                 <Form ServerError={errors.root?.server} onSubmit={handleSubmit(onSubmit)} Buttons={<Button type="submit">{t("InventoryBills.addBill")}</Button>}>
                     <div className="grid grid-cols-2 gap-x-6">
-                        <ControlledInput<NewSupplierFieldsValueState>
+                        <ControlledSearchSelectInput<NewSupplierFieldsValueState>
+                            control={control}
+                            name="supplierId"
+                            label={t("supplier")}
                             rules={{
                                 shouldUnregister: true,
                                 required: { message: t("SuppliersMessages.nameRequired"), value: true },
                             }}
-                            name="supplierId"
-                            control={control}
-                        />
-                        <ControlledInput<NewSupplierFieldsValueState>
-                            rules={{
-                                shouldUnregister: true,
-                                required: { message: t("SuppliersMessages.nameRequired"), value: false },
-                            }}
-                            name="notes"
-                            control={control}
+                            options={supplierOptions}
+                            placeholder={t("search") + "..."}
                         />
 
-                        <ControlledInput<NewSupplierFieldsValueState>
-                            rules={{
-                                shouldUnregister: true,
-                                required: { message: t("SuppliersMessages.nameRequired"), value: false },
-                            }}
-                            name="managerId"
+                        <ControlledDateInput<NewSupplierFieldsValueState>
                             control={control}
-                        />
-                        <ControlledInput<NewSupplierFieldsValueState>
-                            rules={{
-                                shouldUnregister: true,
-                                required: { message: t("SuppliersMessages.nameRequired"), value: false },
-                            }}
                             name="date"
-                            control={control}
+                            rules={{
+                                shouldUnregister: true,
+                                required: { message: t("SuppliersMessages.nameRequired"), value: true },
+                            }}
                         />
-
                     </div>
+                    <ControlledTextArea<NewSupplierFieldsValueState>
+                        rules={{
+                            shouldUnregister: true,
+                        }}
+                        placeholder={t("notes")}
+                        name="notes"
+                        control={control}
+                    />
+
                 </Form>
             </Model>
             <Model title={t("InventoryBills.deleteTitle")} isOpen={isOpenDeleteModel} onClick={() => setIsOpenDeleteModel(false)} ref={DeleteModelRef}>
@@ -297,7 +359,7 @@ export const InventoryBillPage = () => {
                         fieldset={false}
                         rounded="full"
                         className="w-44"
-                        placeholder={t("search")+"..."}
+                        placeholder={t("search") + "..."}
                         value={globalFilter}
                         onChange={setGlobalFilter}
                     />

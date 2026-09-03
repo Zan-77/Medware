@@ -17,7 +17,7 @@ const Form = ({
     return (
         <form className={className} onSubmit={onSubmit}>
             {children}
-            {ServerError && <Text color={ServerError ? "error" : "normal"} className="mb-4 ml-4.5 rtl:mr-4.5">{ServerError?.message}</Text>}
+            {ServerError && <Text color={ServerError ? "error" : "normal"}>{ServerError?.message}</Text>}
             {Buttons}
         </form>
     )

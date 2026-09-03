@@ -63,7 +63,7 @@ ax.interceptors.response.use(
                 } catch (e) {
                     // ignore
                 }
-                window.location.href = "/login"
+                window.location.href = "app/auth/login"
                 return Promise.reject(error)
             }
 
@@ -92,7 +92,7 @@ ax.interceptors.response.use(
                 } catch (e) {
                     // ignore
                 }
-                window.location.href = "/login"
+                window.location.href = "app/auth/login"
                 return Promise.reject(err)
             } finally {
                 isRefreshing = false
