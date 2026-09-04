@@ -300,3 +300,84 @@ class OrderMutationLockTests(TestCase):
         # but we do not rely on that alone.
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(order.status, OrderRequest.Status.PENDING)
+
+
+from notifications.services import notify
+
+
+class InboxTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.salesman = User.objects.create_user(username='ib_slm', password='pass', role=User.Role.SALESMAN)
+        self.other_salesman = User.objects.create_user(username='ib_slm2', password='pass', role=User.Role.SALESMAN)
+        self.manager = User.objects.create_user(username='ib_mgr', password='pass', role=User.Role.MANAGER)
+        self.accountant = User.objects.create_user(username='ib_acc', password='pass', role=User.Role.ACCOUNTANT)
+        self.warehouse = User.objects.create_user(username='ib_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
+        self.customer = Customer.objects.create(name='Al Noor Pharmacy')
+
+        self.pending = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer, salesman=self.salesman,
+            status=OrderRequest.Status.PENDING)
+        self.approved = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer, salesman=self.salesman,
+            status=OrderRequest.Status.APPROVED)
+
+    def test_manager_inbox_holds_the_pending_orders(self):
+        self.client.force_authenticate(user=self.manager)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        self.assertEqual(body['role'], 'MANAGER')
+        self.assertEqual(body['count'], 1)
+        self.assertEqual(body['items'][0]['order']['id'], self.pending.pk)
+        self.assertEqual(body['items'][0]['kind'], 'ORDER_PENDING')
+
+    def test_accountant_inbox_holds_the_approved_orders(self):
+        self.client.force_authenticate(user=self.accountant)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        self.assertEqual([i['order']['id'] for i in body['items']], [self.approved.pk])
+
+    def test_warehouse_inbox_is_empty_until_finance_lands(self):
+        self.client.force_authenticate(user=self.warehouse)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        self.assertEqual(body['count'], 0)
+
+    def test_salesman_inbox_holds_their_unread_rejections_only(self):
+        rejected = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer, salesman=self.salesman,
+            status=OrderRequest.Status.REJECTED)
+        mine = notify([self.salesman], Notification.Kind.ORDER_REJECTED, rejected,
+                      message='Order rejected: too expensive')[0]
+        notify([self.other_salesman], Notification.Kind.ORDER_REJECTED, rejected,
+               message='Not yours')
+
+        self.client.force_authenticate(user=self.salesman)
+        body = self.client.get('/api/orders/inbox/').json()
+
+        self.assertEqual(body['count'], 1)
+        self.assertEqual(body['items'][0]['notification_id'], mine.pk)
+        self.assertEqual(body['items'][0]['order']['id'], rejected.pk)
+
+    def test_a_read_rejection_leaves_the_salesman_inbox(self):
+        rejected = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer, salesman=self.salesman,
+            status=OrderRequest.Status.REJECTED)
+        row = notify([self.salesman], Notification.Kind.ORDER_REJECTED, rejected, message='x')[0]
+        self.client.force_authenticate(user=self.salesman)
+
+        self.client.post(f'/api/notifications/{row.pk}/read/')
+
+        self.assertEqual(self.client.get('/api/orders/inbox/').json()['count'], 0)
+
+    def test_customer_cannot_read_the_inbox(self):
+        account = User.objects.create_user(username='ib_cust', password='pass', role=User.Role.CUSTOMER)
+        self.client.force_authenticate(user=account)
+
+        self.assertEqual(self.client.get('/api/orders/inbox/').status_code, 403)
+
+    def test_unauthenticated_is_401(self):
+        self.assertEqual(APIClient().get('/api/orders/inbox/').status_code, 401)

@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     OrderRequestViewSet, OrderItemViewSet, OrderReviewViewSet, OrderFinalizationViewSet,
-    PackagingTaskViewSet, ReturnRequestViewSet, ReturnAssessmentViewSet, ReturnApprovalViewSet
+    PackagingTaskViewSet, ReturnRequestViewSet, ReturnAssessmentViewSet, ReturnApprovalViewSet,
+    InboxView
 )
 
 router = DefaultRouter()
@@ -16,5 +17,6 @@ router.register(r'return-assessments', ReturnAssessmentViewSet)
 router.register(r'return-approvals', ReturnApprovalViewSet)
 
 urlpatterns = [
+    path('inbox/', InboxView.as_view(), name='order-inbox'),
     path('', include(router.urls)),
 ]

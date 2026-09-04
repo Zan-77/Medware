@@ -6,6 +6,7 @@ from rest_framework import status as http_status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from audit.models import RequestTransition
 from notifications.models import Notification
@@ -293,3 +294,65 @@ class ReturnApprovalViewSet(viewsets.ModelViewSet):
         'PATCH': ['MANAGER'],
         'DELETE': ['MANAGER'],
     }
+
+
+class InboxView(APIView):
+    """What is waiting for the requesting user.
+
+    For the queue roles this derives from order status, so it cannot drift:
+    an order is in the manager's queue because it *is* pending, not because a
+    row somewhere says so. The salesman's rows are events rather than work,
+    so they come from unread notifications.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    QUEUE_STATUS_BY_ROLE = {
+        'MANAGER': OrderRequest.Status.PENDING,
+        'ACCOUNTANT': OrderRequest.Status.APPROVED,
+        # Empty until the finance slice introduces FINALIZED orders.
+        'WAREHOUSE_WORKER': OrderRequest.Status.FINALIZED,
+    }
+
+    def get(self, request):
+        role = getattr(request.user, 'role', '')
+        if role not in list(self.QUEUE_STATUS_BY_ROLE) + ['SALESMAN']:
+            raise PermissionDenied('This role has no request inbox.')
+
+        if role == 'SALESMAN':
+            items = self._salesman_updates(request)
+        else:
+            items = self._queue(request, self.QUEUE_STATUS_BY_ROLE[role])
+
+        return Response({'role': role, 'count': len(items), 'items': items})
+
+    def _queue(self, request, status_value):
+        orders = OrderRequest.objects.filter(status=status_value).order_by('created_at')
+        return [
+            {
+                'kind': f'ORDER_{status_value}',
+                'order': OrderRequestSerializer(order, context={'request': request}).data,
+                'message': '',
+                'notification_id': None,
+            }
+            for order in orders
+        ]
+
+    def _salesman_updates(self, request):
+        unread = Notification.objects.filter(
+            recipient=request.user,
+            kind=Notification.Kind.ORDER_REJECTED,
+            read_at__isnull=True,
+        )
+        items = []
+        for notification in unread:
+            order = OrderRequest.objects.filter(pk=notification.target_id).first()
+            if order is None:
+                continue
+            items.append({
+                'kind': 'ORDER_REJECTED',
+                'order': OrderRequestSerializer(order, context={'request': request}).data,
+                'message': notification.message,
+                'notification_id': notification.pk,
+            })
+        return items
