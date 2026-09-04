@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CheckmarkCircle01Icon, Edit, FilterHorizontalIcon, FilterMailIcon, Plus, Trash } from "@hugeicons/core-free-icons"
+import { CheckmarkCircle01Icon, Edit, FilterHorizontalIcon, Plus, Trash } from "@hugeicons/core-free-icons"
 import Button from "../../../components/Button"
 import useOpenMenu from "../../../hooks/useOpenMenu"
 import Form from "../../../components/Form"

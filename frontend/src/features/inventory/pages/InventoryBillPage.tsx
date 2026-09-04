@@ -7,25 +7,32 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import Model from "../../../components/Model"
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Table } from "../../../components/Table"
 import { filterFn_includesString, filterFn_inNumberRange, type ColumnDef, type ColumnFiltersState, type ColumnVisibilityState, type GroupingState, type SortingState, type TableFeatures } from "@tanstack/react-table"
 import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import { Link } from "react-router"
+import { Link, useSearchParams } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
 import { ControlledDateInput } from "../../../components/DateInput"
 import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
-import { getSuppliers, getSuppliersById } from "../../products/services/products.service"
+import { getSuppliers } from "../../products/services/products.service"
 import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../services/inventory.service"
 import type { SupplierBillls } from "../types/inventory"
 import ControlledTextArea from "../../../components/ControlledTextArea"
 
-type NewSupplierFieldsValueState = Omit<SupplierBillls, "id">
+// Form fields, not the API shape: the inputs hold strings and
+// `toSupplierBillPayload` converts them to what SupplierBillSerializer expects.
+type NewSupplierFieldsValueState = {
+    supplierId: string
+    managerId: string
+    date: string
+    notes: string
+}
 
 const defaultProductValues: NewSupplierFieldsValueState = {
     supplierId: "",
@@ -51,10 +58,15 @@ export const InventoryBillPage = () => {
         phone: true,
         name: true
     })
-    // query 
+    // query
+    // `?supplier=` narrows the list to one supplier's bills - that is what the
+    // id link on the suppliers table opens. The parameter is part of the query
+    // key so switching suppliers refetches instead of showing the previous set.
+    const [searchParams] = useSearchParams()
+    const supplierFilter = searchParams.get("supplier") ?? undefined
     const { data } = useQuery({
-        queryKey: ["inventoryBills"],
-        queryFn: getInventoryBills
+        queryKey: ["inventoryBills", supplierFilter ?? null],
+        queryFn: () => getInventoryBills(supplierFilter)
     })
     const { data: suppliers = [] } = useQuery({
         queryKey: ["suppliersList"],
@@ -65,33 +77,13 @@ export const InventoryBillPage = () => {
         label: supplier.name,
     }))
 
-    const supplierIds = Array.from(
-        new Set(
-            (data ?? [])
-                .map((bill) => bill.supplier ?? bill.supplierId)
-                .filter((value): value is string => Boolean(value))
-        )
+    // Bills carry `supplier_name` from the serializer. This used to issue one
+    // `getSuppliersById` request per distinct supplier in the table - and that
+    // endpoint returned every supplier anyway, so the name was resolved by
+    // scanning the whole list on the client.
+    const supplierNameMap = new Map<string, string>(
+        suppliers.map((supplier) => [String(supplier.id), supplier.name])
     )
-
-    const supplierNameQueries = useQueries({
-        queries: supplierIds.map((supplierId) => ({
-            queryKey: ["supplierById", supplierId],
-            queryFn: () => getSuppliersById(String(supplierId)),
-            enabled: Boolean(supplierId),
-            staleTime: 5 * 60 * 1000,
-        })),
-    })
-
-    const supplierNameMap = new Map<string, string>()
-    supplierIds.forEach((supplierId, index) => {
-        const supplier = supplierNameQueries[index]?.data?.find(
-            (item) => String(item.id) === String(supplierId)
-        )
-
-        if (supplier?.name) {
-            supplierNameMap.set(String(supplierId), supplier.name)
-        }
-    })
     const queryClient = useQueryClient()
 
     const { mutate: addSupplier } = useMutation({
@@ -101,7 +93,7 @@ export const InventoryBillPage = () => {
 
     const updateSupplier = useMutation({
         mutationKey: ["inventoryBills", "update"],
-        mutationFn: ({ id, data }: { id: string, data: Omit<NewSupplierFieldsValueState, "id"> }) => putInventoryBill(id, data),
+        mutationFn: ({ id, data }: { id: string, data: Omit<SupplierBillls, "id"> }) => putInventoryBill(id, data),
     })
 
     const deleteSupplierMutation = useMutation({
@@ -121,7 +113,8 @@ export const InventoryBillPage = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const { t } = useTranslation()
 
-    const toSupplierBillPayload = (data: NewSupplierFieldsValueState) => ({
+    // Field names here are the serializer's, not the form's.
+    const toSupplierBillPayload = (data: NewSupplierFieldsValueState): Omit<SupplierBillls, "id"> => ({
         supplier: data.supplierId ? Number(data.supplierId) : null,
         manager: data.managerId || user?.id || null,
         date: data.date,
@@ -151,7 +144,7 @@ export const InventoryBillPage = () => {
         const payload = toSupplierBillPayload(data)
 
         if (editingSupplierId) {
-            updateSupplier.mutate({ id: editingSupplierId, data: payload as any }, {
+            updateSupplier.mutate({ id: editingSupplierId, data: payload }, {
                 onError(error) {
                     console.log(error)
                     setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
@@ -163,14 +156,13 @@ export const InventoryBillPage = () => {
                     setIsOpenAddModel(false)
                     setSuccessMessage(t("InventoryBillsMessages.updateSuccess"))
                     setIsOpenToast(true)
-                    //@ts-ignore
-                    queryClient.invalidateQueries(["inventoryBills"])
+                    queryClient.invalidateQueries({ queryKey: ["inventoryBills"] })
                 }
             })
             return
         }
 
-        addSupplier(payload as any, {
+        addSupplier(payload, {
 
             onError(error) {
                 console.log(error);
@@ -185,8 +177,7 @@ export const InventoryBillPage = () => {
                 setIsOpenAddModel(false)
                 setSuccessMessage(t("InventoryBillsMessages.createSuccess"))
                 setIsOpenToast(true)
-                //@ts-ignore
-                queryClient.invalidateQueries(["inventoryBills"])
+                queryClient.invalidateQueries({ queryKey: ["inventoryBills"] })
             },
         })
     }
@@ -216,7 +207,12 @@ export const InventoryBillPage = () => {
                         className="dark:text-accent-light text-accent-extraDark dark:hover:text-accent-extraLight hover:text-accent-dark"
                             onClick={() => {
                                 setEditingSupplierId(row.original.id);
-                                reset({ supplierId: row.original.supplierId, managerId: row.original.managerId, date: row.original.date, notes: row.original.notes });
+                                reset({
+                                    supplierId: row.original.supplier != null ? String(row.original.supplier) : "",
+                                    managerId: row.original.manager != null ? String(row.original.manager) : "",
+                                    date: row.original.date,
+                                    notes: row.original.notes,
+                                });
                                 setIsOpenAddModel(true)
                             }}
                             size="xs" variants="ghost" iconOnly={true} leftIcon={<HugeiconsIcon size={18} icon={Edit} />} />}
@@ -240,14 +236,8 @@ export const InventoryBillPage = () => {
             id: "supplierId",
             enableSorting: true,
             header: t("supplier"),
-            accessorFn: (row) => {
-                const supplierId = row.supplier ?? row.supplierId
-                return supplierNameMap.get(String(supplierId)) ?? String(supplierId ?? "")
-            },
-            cell: ({ row }) => {
-                const supplierId = row.original.supplier ?? row.original.supplierId
-                return supplierNameMap.get(String(supplierId)) ?? String(supplierId ?? "")
-            },
+            accessorFn: (row) => row.supplier_name ?? supplierNameMap.get(String(row.supplier)) ?? String(row.supplier ?? ""),
+            cell: ({ row }) => row.original.supplier_name ?? supplierNameMap.get(String(row.original.supplier)) ?? String(row.original.supplier ?? ""),
             filterFn: filterFn_includesString
         },
 
@@ -320,7 +310,6 @@ export const InventoryBillPage = () => {
                         <Button variants="ghost" onClick={() => { setIsOpenDeleteModel(false); setDeleteTarget(null) }}>{t("Suppliers.cancel")}</Button>
                         <Button onClick={() => {
                             if (!deleteTarget) return
-                            //@ts-ignore
                             deleteSupplierMutation.mutate(deleteTarget.id, {
                                 onError(error) {
                                     console.log(error)
@@ -333,10 +322,9 @@ export const InventoryBillPage = () => {
                                     setSuccessMessage(t("InventoryBillsMessages.deleteSuccess"))
                                     setIsOpenToast(true)
                                     // remove the deleted item from the queued/cache data so UI updates immediately
-                                    //@ts-ignore
-                                    queryClient.setQueryData(["inventoryBills"], (old: SupplierBillls[] | undefined) => {
+                                    queryClient.setQueryData(["inventoryBills", supplierFilter ?? null], (old: SupplierBillls[] | undefined) => {
                                         if (!old) return old
-                                        return old.filter(item => (item as any).id !== deletedId)
+                                        return old.filter(item => item.id !== deletedId)
                                     })
                                 }
                             })

@@ -11,11 +11,15 @@ import { useParams } from 'react-router'
 export const SupplierDetails = () => {
   const [sorting, setSorting] = useState<SortingState>([])
   const { t } = useTranslation()
-  const params = useParams()
+  const { supplierId } = useParams<{ supplierId: string }>()
   const { data } = useQuery(
     {
-      queryKey: ["ProductSuppliers"],
-      queryFn: () => { params.supplierId && getProductSuppliersById(params.supplierId) }
+      // The supplier id belongs in the key: without it every supplier shared
+      // one cache entry. The queryFn also had a braced body with no `return`,
+      // so it resolved `undefined` and the table was always empty.
+      queryKey: ["ProductSuppliers", supplierId],
+      queryFn: () => getProductSuppliersById(String(supplierId)),
+      enabled: Boolean(supplierId),
     }
   )
   const columns: Array<ColumnDef<TableFeatures, ProductSuppliers>> = [
@@ -32,29 +36,30 @@ export const SupplierDetails = () => {
       meta: {
         filterVariants: "value"
       },
-      id: "sid",
+      id: "product",
       enableSorting: true,
-      header: t("id"),
-      accessorKey: "id",
+      header: t("Products"),
+      // All three columns used to read `accessorKey: "id"` under the headers
+      // id/id/id, so the table showed the same value three times.
+      accessorFn: (row) => row.product_name ?? String(row.product ?? ""),
+      cell: ({ row }) => row.original.product_name ?? String(row.original.product ?? ""),
     },
     {
       meta: {
         filterVariants: "range"
       },
-      id: "pid",
+      id: "discount",
       enableSorting: true,
-      header: t("id"),
-      accessorKey: "id",
-
+      header: t("discount"),
+      accessorKey: "discount",
     },
   ]
   return (
     <div>
-   <Table<ProductSuppliers> tableKey='Productsupplier' sorting={sorting}
-        setSorting={setSorting} columns={columns} data={data ?? []} />
-
-   <Table<ProductSuppliers> tableKey='Productsupplier' sorting={sorting}
-        setSorting={setSorting} columns={columns} data={data ?? []} />
+      {data && data.length > 0
+        ? <Table<ProductSuppliers> tableKey='Productsupplier' sorting={sorting}
+          setSorting={setSorting} columns={columns} data={data} />
+        : <Text>no items</Text>}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate } from "react-router"
+import { useNavigate } from "react-router"
 import ControlledInput from "../../../../components/ControlledInput"
 import Form from "../../../../components/Form"
 import Text from "../../../../components/Text"

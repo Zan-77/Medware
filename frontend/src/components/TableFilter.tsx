@@ -66,7 +66,9 @@ const TableFilter = <D extends RowData>({ columns, columnFilters, setColumnFilte
         if (!nextColumn) return
 
         const nextColumnId = getColumnId(nextColumn, filterableColumns.indexOf(nextColumn))
-        setColumnFilters((prev) => [...prev, { id: nextColumnId, value: '' }])
+        // A range column needs its `{ min, max }` shape here; an empty string
+        // matched nothing and blanked the whole table on "add filter".
+        setColumnFilters((prev) => [...prev, { id: nextColumnId, value: getDefaultFilterValue(nextColumn) }])
     }
 
     const updateFilterColumn = (index: number, nextColumnId: string) => {

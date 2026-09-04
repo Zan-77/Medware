@@ -23,7 +23,10 @@ const TableSettings = <D extends RowData>({ columns, columnVisibility, grouping,
     const toggleColumnVisibility = (columnId: string) => {
         setColumnVisibility((prev) => ({
             ...prev,
-            [columnId]: !prev[columnId],
+            // A column missing from the map is visible, so `!prev[columnId]`
+            // resolved to `true` and the first click on any default-visible
+            // column did nothing.
+            [columnId]: !(prev[columnId] ?? true),
         }))
     }
 

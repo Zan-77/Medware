@@ -197,7 +197,9 @@ export const InventoryCategoriesPage = () => {
             header: t("id"),
             accessorKey: "id",
                 cell: ({ row }) => {
-                return <Link to={`/app/inventory/categories/${row.original.id}/`} state={{location:"categoryDetails" , details:row.original.name}}>{row.original.id}</Link>
+                // Matches the `inventory/categories/:categoryId` route. This
+                // used to be the only link to it, and no route matched it.
+                return <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/categories/${row.original.id}/`} state={{location:"categoryDetails" , details:row.original.name}}>{row.original.id}</Link>
             },
             filterFn: filterFn_inNumberRange
         },

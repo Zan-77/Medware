@@ -38,10 +38,16 @@ const SearchSelectInput = ({
     })
     const debouncedSearch = useDebounce(search, 300)
 
+    // Callers build `options` inline, so the array is a new reference on every
+    // parent render. Keying this effect on the array identity re-ran it - and
+    // wiped whatever the user had typed - each time the parent re-rendered.
+    // The signature only changes when the option *contents* change.
+    const optionsSignature = options.map((option) => `${option.value}:${option.label}`).join("|")
     useEffect(() => {
         const selected = options.find((option) => option.value === value)
         setSearch(selected ? selected.label : "")
-    }, [options, value])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [optionsSignature, value])
 
     const filteredOptions = useMemo(() => {
         const term = debouncedSearch.trim().toLowerCase()

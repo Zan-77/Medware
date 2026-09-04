@@ -41,32 +41,35 @@ type ControlledInputProps<TFieldValues extends FieldValues> = UseControllerProps
         legend?: string
     }
 
-const ControlledInput = <TFieldValues extends FieldValues>({ className, autoComplete, type, buttonIcon, onClick, placeholder, value, onChange, onBlur, onFocus, state, legend, ...props }: ControlledInputProps<TFieldValues>) => {
+// The two modes live in separate components on purpose: `useController` used
+// to sit *after* an early return, so whether the hook ran depended on the
+// props. Splitting them keeps the hook order fixed in each component.
+const ExternallyControlledInput = <TFieldValues extends FieldValues>({ className, autoComplete, type, buttonIcon, onClick, placeholder, value, onChange, onBlur, onFocus, state, legend, ...props }: ControlledInputProps<TFieldValues>) => {
     const { t } = useTranslation()
-    const hasExternalState = value !== undefined || onChange !== undefined || onBlur !== undefined || onFocus !== undefined
+    const resolvedState = state ?? "normal"
 
-    if (hasExternalState) {
-        const resolvedState = state ?? "normal"
-        return (
-            <div className={baseControlledInputStyle({ state: resolvedState, className })}>
-                <Input
-                    autoComplete={autoComplete}
-                    onClick={onClick}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                    onChange={onChange}
-                    value={value}
-                    placeholder={placeholder}
-                    state={resolvedState}
-                    type={type}
-                    buttonIcon={buttonIcon}
-                    legend={legend ?? t(String(props.name))}
-                />
-            </div>
-        )
-    }
+    return (
+        <div className={baseControlledInputStyle({ state: resolvedState, className })}>
+            <Input
+                autoComplete={autoComplete}
+                onClick={onClick}
+                onFocus={onFocus}
+                onBlur={onBlur}
+                onChange={onChange}
+                value={value}
+                placeholder={placeholder}
+                state={resolvedState}
+                type={type}
+                buttonIcon={buttonIcon}
+                legend={legend ?? t(String(props.name))}
+            />
+        </div>
+    )
+}
 
-    const { field, fieldState, formState } = useController({ ...props })
+const FormControlledInput = <TFieldValues extends FieldValues>({ className, autoComplete, type, buttonIcon, onClick, placeholder, legend, name, control, rules }: ControlledInputProps<TFieldValues>) => {
+    const { t } = useTranslation()
+    const { field, fieldState, formState } = useController({ name, control, rules })
     const resolvedState = fieldState.error || formState.errors.root?.server ? "error" : "normal"
 
     const errorMessage = fieldState.error?.message
@@ -78,10 +81,18 @@ const ControlledInput = <TFieldValues extends FieldValues>({ className, autoComp
 
     return (
         <div className={baseControlledInputStyle({ state: resolvedState, className })}>
-            <Input autoComplete={autoComplete} onClick={onClick} {...field} state={resolvedState} type={type} buttonIcon={buttonIcon} legend={t(String(props.name))} />
+            <Input autoComplete={autoComplete} onClick={onClick} placeholder={placeholder} {...field} state={resolvedState} type={type} buttonIcon={buttonIcon} legend={legend ?? t(String(name))} />
             <Text color={resolvedState} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>
         </div>
     )
+}
+
+const ControlledInput = <TFieldValues extends FieldValues>(props: ControlledInputProps<TFieldValues>) => {
+    const hasExternalState = props.value !== undefined || props.onChange !== undefined || props.onBlur !== undefined || props.onFocus !== undefined
+
+    return hasExternalState
+        ? <ExternallyControlledInput<TFieldValues> {...props} />
+        : <FormControlledInput<TFieldValues> {...props} />
 }
 
 

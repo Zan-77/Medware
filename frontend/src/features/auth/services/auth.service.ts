@@ -45,60 +45,59 @@ const processQueue = (error: any, token: string | null = null) => {
     })
     failedQueue = []
 }
+
+// The endpoints that mint tokens must never be retried through this path: a
+// 401 from them means the credentials/refresh cookie are genuinely invalid,
+// and refreshing in response would recurse.
+const isAuthEndpoint = (url: string) =>
+    url.includes("/auth/token/") || url.includes("/auth/logout/")
+
 ax.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest: any = error?.config
+        const original = error?.config as (typeof error.config & { _retry?: boolean }) | undefined
 
-        if (!originalRequest) return Promise.reject(error)
-
-        if (originalRequest._retry) return Promise.reject(error)
-
-        const status = error?.response?.status
-        if (status === 401) {
-            // Don't try to refresh if the refresh endpoint itself returned 401
-            if (originalRequest.url && originalRequest.url.includes("/auth/token/refresh/")) {
-                try {
-                    await logout()
-                } catch (e) {
-                    // ignore
-                }
-                window.location.href = "app/auth/login"
-                return Promise.reject(error)
-            }
-
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject })
-                }).then((token) => {
-                    if (token) originalRequest.headers = { ...originalRequest.headers, Authorization: `Bearer ${token}` }
-                    return ax(originalRequest)
-                })
-            }
-
-            originalRequest._retry = true
-            isRefreshing = true
-
-            try {
-                const data = await relogin()
-                const access = data?.access ?? null
-                if (access) setAuthHeader(access)
-                processQueue(null, access)
-                return ax(originalRequest)
-            } catch (err) {
-                processQueue(err, null)
-                try {
-                    await logout()
-                } catch (e) {
-                    // ignore
-                }
-                window.location.href = "app/auth/login"
-                return Promise.reject(err)
-            } finally {
-                isRefreshing = false
-            }
+        if (error?.response?.status !== 401 || !original || original._retry || isAuthEndpoint(original.url ?? "")) {
+            return Promise.reject(error)
         }
 
-        return Promise.reject(error)
-    }
+        original._retry = true
+
+        // A refresh is already in flight: queue this request and replay it
+        // with whatever token that refresh produces, so a page that fired ten
+        // queries at once does not fire ten refreshes.
+        if (isRefreshing) {
+            return new Promise<string | null>((resolve, reject) => {
+                failedQueue.push({ resolve, reject })
+            }).then((token) => {
+                original.headers = { ...original.headers, Authorization: `Bearer ${token}` }
+                return ax(original)
+            })
+        }
+
+        isRefreshing = true
+
+        try {
+            const data = await relogin()
+            setAuthHeader(data.access)
+            processQueue(null, data.access)
+            original.headers = { ...original.headers, Authorization: `Bearer ${data.access}` }
+            return await ax(original)
+        } catch (refreshError) {
+            processQueue(refreshError)
+            setAuthHeader(null)
+            try {
+                await logout()
+            } catch {
+                // The session is gone either way - never let a failing logout
+                // swallow the redirect below.
+            }
+            if (typeof window !== "undefined" && !window.location.pathname.includes("/store")) {
+                window.location.assign("/app/auth/login")
+            }
+            return Promise.reject(refreshError)
+        } finally {
+            isRefreshing = false
+        }
+    },
 )

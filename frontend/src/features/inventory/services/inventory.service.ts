@@ -1,6 +1,6 @@
 
 import ax from "../../../services/api"
-import type { InventoryCategories } from "../types/inventory"
+import type { InventoryCategories, InventoryItems, SupplierBilllLines } from "../types/inventory"
 import type { SupplierBillls } from "../types/inventory"
 
 const inventoryCategoriesUrl = "/inventory/categories/"
@@ -25,10 +25,28 @@ export const deleteInventoryCategory = async (id: string) => {
 	return res
 }
 
+const inventoryItemsUrl = "/inventory/items/"
+
+export const getInventoryItems = async (categoryId?: string): Promise<InventoryItems[]> => {
+	const res = await ax.get<InventoryItems[]>(inventoryItemsUrl, {
+		params: categoryId ? { category: categoryId } : undefined,
+	})
+	return res.data
+}
+
 const inventoryBillsUrl = "/inventory/bills/"
 
-export const getInventoryBills = async (): Promise<SupplierBillls[]> => {
-	const res = await ax.get<SupplierBillls[]>(inventoryBillsUrl)
+// `supplierId` maps to the `?supplier=` filter on SupplierBillViewSet, which is
+// how the suppliers table opens "the bills of this supplier".
+export const getInventoryBills = async (supplierId?: string): Promise<SupplierBillls[]> => {
+	const res = await ax.get<SupplierBillls[]>(inventoryBillsUrl, {
+		params: supplierId ? { supplier: supplierId } : undefined,
+	})
+	return res.data
+}
+
+export const getInventoryBillById = async (id: string): Promise<SupplierBillls> => {
+	const res = await ax.get<SupplierBillls>(`${inventoryBillsUrl}${id}/`)
 	return res.data
 }
 
@@ -49,22 +67,26 @@ export const deleteInventoryBill = async (id: string) => {
 
 const inventoryBillLinesUrl = "/inventory/bill-lines/"
 
-export const getSupplierBillLines = async (): Promise<any[]> => {
-	const res = await ax.get<any[]>(inventoryBillLinesUrl)
+export const getSupplierBillLines = async (): Promise<SupplierBilllLines[]> => {
+	const res = await ax.get<SupplierBilllLines[]>(inventoryBillLinesUrl)
 	return res.data
 }
 
-export const getSupplierBillLinesById = async (id: string): Promise<any[]> => {
-	const res = await ax.get<any[]>(inventoryBillLinesUrl + `?bill=${id}`)
+// One bill's lines. The `?bill=` filter is enforced server-side by
+// SupplierBillLineViewSet.get_queryset; without it this returned every line in
+// the system, which is what made one bill look like it had every other bill's
+// rows in it.
+export const getSupplierBillLinesById = async (id: string): Promise<SupplierBilllLines[]> => {
+	const res = await ax.get<SupplierBilllLines[]>(inventoryBillLinesUrl, { params: { bill: id } })
 	return res.data
 }
 
-export const postSupplierBillLine = async (data: any) => {
+export const postSupplierBillLine = async (data: Omit<SupplierBilllLines, "id">) => {
 	const res = await ax.post(inventoryBillLinesUrl, data)
 	return res
 }
 
-export const putSupplierBillLine = async (id: string, data: any) => {
+export const putSupplierBillLine = async (id: string, data: Omit<SupplierBilllLines, "id">) => {
 	const res = await ax.put(`${inventoryBillLinesUrl}${id}/`, data)
 	return res
 }
@@ -73,6 +95,3 @@ export const deleteSupplierBillLine = async (id: string) => {
 	const res = await ax.delete(`${inventoryBillLinesUrl}${id}/`)
 	return res
 }
-
-
-

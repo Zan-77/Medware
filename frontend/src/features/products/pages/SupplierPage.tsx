@@ -201,7 +201,12 @@ export const SupplierPage = () => {
             //aggregationFn:"count",
             //footer: ({ column }) => column.getAggregationValue<string>().toLocaleString(),
             cell: ({ row }) => {
-                return hasPermission(user, "supplierBills", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/bills/${row.original.id}/`} state={{ location: "billDetails", details: row.original.supplierId }}>{row.original.id}</Link> : row.original.id
+                // The supplier id opens that supplier's bills. It used to point
+                // at `/app/inventory/bills/<supplier id>/`, which is the *bill
+                // lines* route - so it opened an unrelated bill, keyed by a
+                // supplier id, and `row.original.supplierId` does not exist on
+                // a supplier row at all.
+                return hasPermission(user, "supplierBills", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/bills?supplier=${row.original.id}`} state={{ location: "inventory_bills", details: row.original.name }}>{row.original.id}</Link> : row.original.id
 
             },
             filterFn: filterFn_inNumberRange

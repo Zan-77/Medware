@@ -122,7 +122,7 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               leftIcon={<HugeiconsIcon size={22} icon={DashboardSquare01Icon} />}
               onClick={() => { navigarte("/app/inventory/categories/", { state: { location: "inventory" } }); }}
             >
-              {t('orders')}
+              {t('categories')}
             </Button>
             <Button
               size='sm'
@@ -146,7 +146,6 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
             </Button>
           </Dropdown>
         </div>
-        <Button active={location.pathname.includes("finance")} size='sm' onClick={() => { navigarte("/app/finance", { state: { location: "finance" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={Coupon01Icon} />} variants='ghost'>{t('finance')}</Button>
         <Button active={location.pathname.includes("finance")} size='sm' onClick={() => { navigarte("/app/finance", { state: { location: "finance" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={Coupon01Icon} />} variants='ghost'>{t('finance')}</Button>
       </div>
     </div>

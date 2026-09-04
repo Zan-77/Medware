@@ -14,6 +14,14 @@ type DateInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' |
 
 const getThemeMode = () => (document.documentElement.classList.contains("dark") ? "dark" : "light")
 
+// `yyyy-MM-dd` in the user's own timezone - the format every DateField in the
+// API expects.
+const toLocalDateString = (date: Date) => {
+    const month = `${date.getMonth() + 1}`.padStart(2, "0")
+    const day = `${date.getDate()}`.padStart(2, "0")
+    return `${date.getFullYear()}-${month}-${day}`
+}
+
 const DateInput = ({ value, onChange, legend, className, ...rest }: DateInputProps) => {
     const [theme, setTheme] = useState<"light" | "dark">(getThemeMode)
 
@@ -46,7 +54,10 @@ const DateInput = ({ value, onChange, legend, className, ...rest }: DateInputPro
                     selected={selectedDate}
                     onChange={(date: Date | null | Date[]) => {
                         const selected = Array.isArray(date) ? date[0] ?? null : date
-                        onChange?.(selected ? selected.toISOString().slice(0, 10) : "")
+                        // The picker hands back local midnight. `toISOString()`
+                        // converts to UTC first, so east of Greenwich the saved
+                        // date was the day before the one that was clicked.
+                        onChange?.(selected ? toLocalDateString(selected) : "")
                     }}
                     onBlur={rest.onBlur}
                     onFocus={rest.onFocus}
@@ -60,7 +71,7 @@ const DateInput = ({ value, onChange, legend, className, ...rest }: DateInputPro
                     disabled={rest.disabled}
                     required={rest.required}
                     readOnly={rest.readOnly}
-                    aria-invalid={rest["aria-invalid"] ? true : false}
+                    aria-invalid={rest["aria-invalid"] ? "true" : "false"}
                 />
             </div>
         </fieldset>

@@ -160,5 +160,30 @@ export const ar = {
     discount: "الخصم",
     expiry_date: "تاريخ الانتهاء",
     guest: "زائر",
+    // Header labels for `location.state.location`, rendered by appLayout via
+    // `t(...)`. A key that is missing here renders the raw English identifier.
+    inventory_bills: "الفواتير",
+    billDetails: "تفاصيل الفاتورة :",
+    categoryDetails: "تفاصيل الفئة :",
+    itemsCount: "عدد العناصر",
+    InventoryBillLines: {
+        newLine: "إضافة سطر جديد",
+        addLine: "أضف السطر",
+        editLine: "تعديل السطر",
+        deleteTitle: "حذف سطر",
+        deleteConfirm: "هل أنت متأكد أنك تريد حذف هذا السطر؟",
+        billMissing: "لم يتم تحديد فاتورة."
+    },
+    InventoryBillLinesMessages: {
+        serverError: "حدث خطأ أثناء معالجة السطر.",
+        createSuccess: "تمت إضافة سطر جديد",
+        updateSuccess: "تم تحديث السطر بنجاح",
+        deleteSuccess: "تم حذف السطر بنجاح",
+        itemRequired: "العنصر مطلوب.",
+        categoryRequired: "الفئة مطلوبة.",
+        quantityRequired: "الكمية مطلوبة.",
+        quantityMin: "يجب أن تكون الكمية أكبر من صفر.",
+        priceMin: "لا يمكن أن يكون السعر سالبًا."
+    },
     
 }

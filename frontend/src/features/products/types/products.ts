@@ -15,9 +15,13 @@ export type Suppliers ={
 }
 
 
+// Mirrors ProductSupplierSerializer: the API names the foreign keys `product`
+// and `supplier` and adds read-only `*_name` labels.
 export type ProductSuppliers ={
     id:string
-    productId:string
-    supplierId:string
-    discount:number
+    product:string | number
+    product_name?:string | null
+    supplier:string | number | null
+    supplier_name?:string | null
+    discount:number | null
 }
