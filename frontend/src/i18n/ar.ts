@@ -122,6 +122,7 @@ export const ar = {
     actions:"أفعال",
     details: "تفاصيل",
     supplierBills: "فواتير الموردين",
+    suppliersList: "قائمة الموردين",
     products: {
         serverErrorMessages: {
             500: "خطأ في المخدم"

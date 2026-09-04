@@ -47,6 +47,7 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
   const { isOpen: isOpenUserButton, setIsOpen: setIsOpenUserButton, ref: userButtonRef } = useOpenMenu()
   const { isOpen: isOpenWareHouse, setIsOpen: setIsOpenWareHouse } = useOpenMenu()
   const { isOpen: isOpenOrders, setIsOpen: setIsOpenOrders } = useOpenMenu()
+  const { isOpen: isOpenSuppliers, setIsOpen: setIsOpenSuppliers } = useOpenMenu()
   const { t } = useTranslation()
   const navigarte = useNavigate()
   
@@ -67,7 +68,36 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
           </div>
         </div>
         <Button active={location.pathname.includes("products")} size='sm' onClick={() => { navigarte("/app/products", { state: { location: "Products" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={BoxIcon} />} variants='ghost'>{t('Products')}</Button>
-        <Button active={location.pathname.includes("supplier")} size='sm' onClick={() => { navigarte("/app/supplier", { state: { location: "Supplier" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />} variants='ghost'>{t('Supplier')}</Button>
+        <div>
+          <Button size='sm'
+            onClick={() => { setIsOpenSuppliers(!isOpenSuppliers) }}
+            className={`w-full justify-start`}
+            leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
+            rightIcon={<HugeiconsIcon className={` transition-all ease-in-out ${isOpenSuppliers ? "rotate-0" : "rotate-180"}`} size={22} icon={ArrowDown01Icon} />}
+            variants='ghost'>{t('Supplier')}</Button>
+          <Dropdown isOpen={isOpenSuppliers}>
+            <Button
+              size='sm'
+              className={`w-full justify-start`}
+              variants='ghost'
+              active={location.pathname === "/app/supplier"}
+              leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
+              onClick={() => { navigarte("/app/supplier", { state: { location: "Supplier" } }); }}
+            >
+              {t('suppliersList')}
+            </Button>
+            <Button
+              size='sm'
+              className={`w-full justify-start`}
+              variants='ghost'
+              active={location.pathname.includes("supplier/bills")}
+              leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
+              onClick={() => { navigarte("/app/supplier/bills", { state: { location: "supplierBills" } }); }}
+            >
+              {t('supplierBills')}
+            </Button>
+          </Dropdown>
+        </div>
         <div>
           <Button size='sm'
             onClick={() => { setIsOpenWareHouse(!isOpenWareHouse) }}
@@ -94,16 +124,6 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               onClick={() => { navigarte("/app/inventory/items", { state: { location: "inventory" } }); }}
             >
               {t('items')}
-            </Button>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("inventory/bills")}
-              leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "purchaseBills" } }); }}
-            >
-              {t('purchaseBills')}
             </Button>
           </Dropdown>
         </div>
@@ -133,16 +153,6 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               onClick={() => { navigarte("/app/inventory/items", { state: { location: "inventory" } }); }}
             >
               {t('items')}
-            </Button>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("inventory/bills")}
-              leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/inventory/bills", { state: { location: "inventory_bills" } }); }}
-            >
-              {t('bills')}
             </Button>
           </Dropdown>
         </div>
