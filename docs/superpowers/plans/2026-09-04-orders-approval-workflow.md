@@ -292,6 +292,82 @@ In `finance/models.py`, replace the `customer` field on `CustomerBalance`:
     customer = models.OneToOneField('customers.Customer', on_delete=models.CASCADE, related_name='balance')
 ```
 
+- [ ] **Step 7b: Fix customer scoping, without breaking returns**
+
+`orders/views.py` has `scope_to_user`, which narrows a queryset to rows the user is a party to. For a `CUSTOMER`-role user it does `queryset.filter(customer=user)`. Once `OrderRequest.customer` is a `Customer`, that comparison is invalid — the path to the user account is now `customer__user`.
+
+**`scope_to_user` is shared with `ReturnRequestViewSet`, whose `customer` field is still a `User`.** Changing the helper's default would break returns. Change the *call sites* instead, leaving the helper alone.
+
+In `OrderRequestViewSet`:
+
+```python
+    def get_queryset(self):
+        # OrderRequest.customer is now a Customer record; the path to the
+        # account that may read it is customer__user. ReturnRequest still
+        # points straight at User, which is why this is set per call site
+        # rather than changed in scope_to_user itself.
+        return scope_to_user(super().get_queryset(), self.request.user,
+                             customer_field='customer__user')
+```
+
+In `OrderItemViewSet`:
+
+```python
+    def get_queryset(self):
+        # Items are scoped through their parent order request.
+        return scope_to_user(
+            super().get_queryset(),
+            self.request.user,
+            customer_field='order_request__customer__user',
+            salesman_field='order_request__salesman',
+        )
+```
+
+`ReturnRequestViewSet.get_queryset` is left exactly as it is.
+
+- [ ] **Step 7c: Repair the cross-tenant security test**
+
+`users/tests_security.py:109` builds an order with a `User` as its customer. It is the F8 regression test for cross-tenant order access and must keep testing that. Replace the body of `test_customer_cannot_see_another_customers_order` with:
+
+```python
+    def test_customer_cannot_see_another_customers_order(self):
+        from customers.models import Customer
+
+        # Both customers now hold a Customer record linked to their account,
+        # which is how a website login maps onto a customer.
+        mine = Customer.objects.create(name='My shop', user=self.customer)
+        theirs = Customer.objects.create(name='Their shop', user=self.other_customer)
+        my_order = OrderRequest.objects.create(origin='CUSTOMER', customer=mine, status='PENDING')
+        other_order = OrderRequest.objects.create(origin='CUSTOMER', customer=theirs, status='PENDING')
+        self.client.force_authenticate(user=self.customer)
+
+        listed = self.client.get('/api/orders/order-requests/')
+        self.assertEqual(listed.status_code, 200)
+        ids = [row['id'] for row in listed.json()]
+        # Positive and negative: seeing my own proves the filter is not simply
+        # returning nothing, which would make the assertion below vacuous.
+        self.assertIn(my_order.pk, ids)
+        self.assertNotIn(other_order.pk, ids)
+
+        detail = self.client.get(f'/api/orders/order-requests/{other_order.pk}/')
+        self.assertEqual(detail.status_code, 404)
+```
+
+The original asserted only the negative. With scoping now going through `customer__user`, a customer with no `Customer` record would see an empty list and the old assertion would pass without proving anything. The positive assertion closes that.
+
+- [ ] **Step 7d: Update the dev script**
+
+`scripts/method_matrix.py:66` also constructs an `OrderRequest` with a `User`. It is not picked up by Django's test discovery (which matches `test*.py`), so it does not affect the suite, but leave it working:
+
+```python
+        from customers.models import Customer
+        self.customer_record = Customer.objects.create(name='Matrix customer', user=self.users['CUSTOMER'])
+        self.order = OrderRequest.objects.create(
+            origin='CUSTOMER', customer=self.customer_record, salesman=self.users['SALESMAN'], status='PENDING')
+```
+
+`ReturnRequest.objects.create(... customer=self.users['CUSTOMER'] ...)` on the following lines stays unchanged — returns still point at `User`.
+
 - [ ] **Step 8: Generate and apply migrations**
 
 ```bash
@@ -2570,4 +2646,6 @@ There is no browser automation in this environment, so these are for you to walk
 
 **Type consistency.** `OrderRequest.Status` members are used identically in Tasks 2, 4 and 5. `notify(recipients, kind, target, message='')` and `managers()` are defined in Task 3 and called with that exact signature in Task 4. The frontend `OrderRequest`/`OrderItem`/`OrderInbox` types defined in Task 6 are the ones consumed in Tasks 7–9. Service names (`getOrders`, `getOrderById`, `postOrder`, `approveOrder`, `rejectOrder`, `getInbox`, `getUnreadNotifications`, `markNotificationRead`, `getCustomers`) are defined once in Task 6 and used unchanged thereafter. The i18n group is `Orders_` everywhere, chosen because the existing top-level `Orders` key is a string and i18next cannot have a key be both.
 
-**Known risk.** Task 1 Step 10 may surface pre-existing tests that build an `OrderRequest` with a `User` as its customer. They must be fixed there rather than deferred, or the suite is red for the rest of the plan.
+**Known risk — measured, not assumed.** Exactly one existing test builds an `OrderRequest` with a `User` as its customer: `users/tests_security.py:109`. Step 7c repairs it and strengthens it. `scripts/method_matrix.py` does too but is never run by Django's test discovery; Step 7d keeps it working anyway. Step 7b covers the `scope_to_user` change these depend on.
+
+**Deliberate inconsistency, carried forward.** `ReturnRequest.customer` stays a foreign key to `User` while `OrderRequest.customer` becomes a `Customer`. Repointing returns is not in this slice — returns have no UI, no workflow and no tests exercising them yet, and dragging them in widens a slice that is already nine tasks. The consequence is that `scope_to_user` is called with different `customer_field` arguments depending on the viewset, which Step 7b comments at both call sites. **When the returns slice is built, `ReturnRequest.customer` should move to `Customer` and those call sites should converge.**
