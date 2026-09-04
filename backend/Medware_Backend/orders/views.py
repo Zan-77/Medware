@@ -124,14 +124,16 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
         if getattr(request.user, 'role', '') != 'MANAGER':
             raise PermissionDenied('Only a manager may approve an order.')
 
-        order = self.get_object()
-        if order.status != OrderRequest.Status.PENDING:
-            return Response(
-                {'detail': f'An order in status {order.status} cannot be approved.'},
-                status=http_status.HTTP_409_CONFLICT,
-            )
-
         with transaction.atomic():
+            # Lock the row and re-check inside the transaction: without this,
+            # two concurrent approvals both pass the status check and each
+            # writes a review, an audit row and a notification.
+            order = OrderRequest.objects.select_for_update().get(pk=self.get_object().pk)
+            if order.status != OrderRequest.Status.PENDING:
+                return Response(
+                    {'detail': f'An order in status {order.status} cannot be approved.'},
+                    status=http_status.HTTP_409_CONFLICT,
+                )
             _approve(order, request.user)
         return Response(self.get_serializer(order).data)
 
@@ -144,14 +146,16 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
         if not notes:
             raise ValidationError({'notes': 'A rejection reason is required.'})
 
-        order = self.get_object()
-        if order.status != OrderRequest.Status.PENDING:
-            return Response(
-                {'detail': f'An order in status {order.status} cannot be rejected.'},
-                status=http_status.HTTP_409_CONFLICT,
-            )
-
         with transaction.atomic():
+            # Lock the row and re-check inside the transaction: without this,
+            # two concurrent approvals both pass the status check and each
+            # writes a review, an audit row and a notification.
+            order = OrderRequest.objects.select_for_update().get(pk=self.get_object().pk)
+            if order.status != OrderRequest.Status.PENDING:
+                return Response(
+                    {'detail': f'An order in status {order.status} cannot be rejected.'},
+                    status=http_status.HTTP_409_CONFLICT,
+                )
             from_status = order.status
             order.status = OrderRequest.Status.REJECTED
             order.save(update_fields=['status'])
@@ -193,7 +197,13 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             raise Conflict(f'Order {order.pk} is {order.status} and its items are frozen.')
 
     def perform_create(self, serializer):
-        self._assert_parent_pending(serializer.validated_data['order_request'])
+        # `order_request` is optional on the serializer so the parent can supply
+        # it during nested creation. On a direct POST it is required - without
+        # this it raised a bare KeyError and DRF returned 500.
+        order = serializer.validated_data.get('order_request')
+        if order is None:
+            raise ValidationError({'order_request': 'This field is required.'})
+        self._assert_parent_pending(order)
         serializer.save()
 
     def perform_update(self, serializer):

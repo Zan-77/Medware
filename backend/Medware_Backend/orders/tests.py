@@ -271,6 +271,18 @@ class OrderMutationLockTests(TestCase):
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(item.quantity, 2)
 
+    def test_posting_an_item_without_an_order_is_a_validation_error(self):
+        """`order_request` is optional on the serializer for nested creation,
+        so a direct POST that omits it must 400 rather than raise KeyError."""
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post('/api/orders/order-items/', {
+            'product': self.product.pk, 'quantity': 1, 'sell_price': '10.00',
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('order_request', resp.json())
+
     def test_reviews_cannot_be_posted_directly(self):
         """A review posted by hand would walk around the state machine."""
         order = self._order(OrderRequest.Status.PENDING)
