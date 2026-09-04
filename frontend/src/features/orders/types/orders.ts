@@ -8,6 +8,7 @@ export interface OrderItem {
     id: string
     order_request?: string | number
     product: string | number
+    product_name?: string | null
     quantity: number
     sell_price: number
     note: string

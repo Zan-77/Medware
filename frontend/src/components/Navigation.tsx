@@ -7,8 +7,9 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import Dropdown from './Dropdown'
 import useOpenMenu from '../hooks/useOpenMenu'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { logout } from '../features/auth'
+import { getUnreadNotifications } from '../features/orders/services/orders.service'
 import { setAuthHeader } from '../services/api'
 import { useBoundStore } from '../store/useBoundStore'
 
@@ -44,6 +45,12 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
 
     }
   })
+  const { data: unreadNotifications } = useQuery({
+    queryKey: ["unreadNotifications"],
+    queryFn: getUnreadNotifications,
+    refetchInterval: 30000,
+  })
+  const unreadCount = unreadNotifications?.length ?? 0
   const { isOpen: isOpenUserButton, setIsOpen: setIsOpenUserButton, ref: userButtonRef } = useOpenMenu()
   const { isOpen: isOpenWareHouse, setIsOpen: setIsOpenWareHouse } = useOpenMenu()
   const { isOpen: isOpenOrders, setIsOpen: setIsOpenOrders } = useOpenMenu()
@@ -150,6 +157,9 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               variants='ghost'
               active={location.pathname.includes("/app/requests")}
               leftIcon={<HugeiconsIcon size={22} icon={RightToLeftListDashIcon} />}
+              rightIcon={unreadCount > 0
+                ? <span className="min-w-5 px-1.5 rounded-full text-xs bg-error text-dark-text-primary">{unreadCount}</span>
+                : undefined}
               onClick={() => { navigarte("/app/requests", { state: { location: "requests" } }); }}
             >
               {t('requests')}

@@ -73,7 +73,13 @@ export const OrderDetailsPage = () => {
     })
 
     const columns: Array<ColumnDef<TableFeatures, OrderItem>> = [
-        { id: "product", header: t("item"), accessorKey: "product", enableSorting: true },
+        {
+            id: "product",
+            header: t("item"),
+            accessorFn: (row) => row.product_name ?? String(row.product ?? ""),
+            cell: ({ row }) => row.original.product_name ?? String(row.original.product ?? ""),
+            enableSorting: true,
+        },
         { id: "quantity", header: t("quantity"), accessorKey: "quantity", enableSorting: true },
         { id: "sell_price", header: t("unit_price"), accessorKey: "sell_price", enableSorting: true },
         {
