@@ -21,8 +21,8 @@ import ControlledInput from "../../../components/ControlledInput"
 import { ControlledDateInput } from "../../../components/DateInput"
 import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
 import { useParams } from "react-router"
-import { getSupplierBillLinesById, postSupplierBillLine, putSupplierBillLine, deleteSupplierBillLine, getInventoryCategories, getInventoryItems } from "../services/inventory.service"
-import type { SupplierBilllLines } from "../types/inventory"
+import { getSupplierBillLinesById, postSupplierBillLine, putSupplierBillLine, deleteSupplierBillLine, getInventoryCategories, getInventoryItems } from "../../inventory/services/inventory.service"
+import type { SupplierBilllLines } from "../../inventory/types/inventory"
 
 // Form fields are kept as strings because that is what the inputs produce;
 // `toBillLinePayload` converts them to the shapes the API expects.
@@ -44,7 +44,7 @@ const defaultBillLineValues: NewBillLineFields = {
     discount: "",
 }
 
-export const InventoryBillLinesPage = () => {
+export const SupplierBillLinesPage = () => {
     const { billId } = useParams<{ billId: string }>()
     const user = useBoundStore(state => state.authSlice.user)
     const { isOpen: isOpenAddModel, setIsOpen: setIsOpenAddModel, ref: AddModelRef } = useOpenMenu()

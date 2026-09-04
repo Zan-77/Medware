@@ -20,9 +20,9 @@ import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
 import { ControlledDateInput } from "../../../components/DateInput"
 import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
-import { getSuppliers } from "../../products/services/products.service"
-import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../services/inventory.service"
-import type { SupplierBillls } from "../types/inventory"
+import { getSuppliers } from "../services/products.service"
+import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../../inventory/services/inventory.service"
+import type { SupplierBillls } from "../../inventory/types/inventory"
 import ControlledTextArea from "../../../components/ControlledTextArea"
 
 // Form fields, not the API shape: the inputs hold strings and
@@ -41,7 +41,7 @@ const defaultProductValues: NewSupplierFieldsValueState = {
     notes: "",
 }
 
-export const InventoryBillPage = () => {
+export const SupplierBillsPage = () => {
     //store
     const user = useBoundStore(state => state.authSlice.user)
     //menu state
