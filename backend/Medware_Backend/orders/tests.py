@@ -381,3 +381,20 @@ class InboxTests(TestCase):
 
     def test_unauthenticated_is_401(self):
         self.assertEqual(APIClient().get('/api/orders/inbox/').status_code, 401)
+
+    def test_a_notification_with_a_non_order_target_is_skipped(self):
+        """`target_id` is generic and will carry non-order targets; one bad
+        row must not 500 the whole inbox."""
+        Notification.objects.create(
+            recipient=self.salesman,
+            kind=Notification.Kind.ORDER_REJECTED,
+            target_type='SupplierBill',
+            target_id='not-an-order',
+            message='unrelated',
+        )
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.get('/api/orders/inbox/')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 0)

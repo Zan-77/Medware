@@ -346,7 +346,14 @@ class InboxView(APIView):
         )
         items = []
         for notification in unread:
-            order = OrderRequest.objects.filter(pk=notification.target_id).first()
+            # `target_id` is a CharField and the model is documented as taking
+            # non-order targets in future, so a value that is not an order pk
+            # must skip this row rather than 500 the whole inbox.
+            try:
+                target_pk = int(notification.target_id)
+            except (TypeError, ValueError):
+                continue
+            order = OrderRequest.objects.filter(pk=target_pk).first()
             if order is None:
                 continue
             items.append({
