@@ -64,8 +64,6 @@ export const ar = {
     Supplier: "موردون",
     categories: "أصناف",
     items: "العناصر",
-    bills: "الفواتير",
-    purchaseBills:"فواتير مشتريات",
     noNotes:"لا يوجد ملاحظات",
     Suppliers: {
         newSuppliers: "إضافة مورد جديد",
@@ -165,7 +163,6 @@ export const ar = {
     guest: "زائر",
     // Header labels for `location.state.location`, rendered by appLayout via
     // `t(...)`. A key that is missing here renders the raw English identifier.
-    inventory_bills: "الفواتير",
     billDetails: "تفاصيل الفاتورة :",
     categoryDetails: "تفاصيل الفئة :",
     itemsCount: "عدد العناصر",
