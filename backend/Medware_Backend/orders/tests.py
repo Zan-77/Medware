@@ -281,5 +281,10 @@ class OrderMutationLockTests(TestCase):
         }, format='json')
 
         order.refresh_from_db()
-        self.assertEqual(resp.status_code, 405)
+        # 403, not 405: RoleMethodPermission is default-deny and runs in
+        # APIView.dispatch()'s initial() before the handler is selected, so it
+        # refuses the write before DRF can report "method not allowed". That
+        # default-deny is the guard - the viewset also has no create() method,
+        # but we do not rely on that alone.
+        self.assertEqual(resp.status_code, 403)
         self.assertEqual(order.status, OrderRequest.Status.PENDING)

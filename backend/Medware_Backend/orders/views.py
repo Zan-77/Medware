@@ -212,16 +212,8 @@ class OrderReviewViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
     queryset = OrderReview.objects.all()
     serializer_class = OrderReviewSerializer
     permission_classes = [permissions.IsAuthenticated, RoleMethodPermission]
-    # POST is listed here even though the viewset defines no `create` action.
-    # RoleMethodPermission default-denies (403) any method missing from this
-    # mapping, and that check runs before DRF ever notices there is no
-    # handler - so a bare {'GET': [...]} mapping would mask the "no such
-    # action" 405 behind a 403. Listing the same roles as GET lets a manager
-    # or accountant's POST fall through permission and hit DRF's genuine
-    # http_method_not_allowed (405) for a route the router never bound.
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT'],
-        'POST': ['MANAGER', 'ACCOUNTANT'],
     }
 
 
