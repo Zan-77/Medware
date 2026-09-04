@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Plus, Trash } from "@hugeicons/core-free-icons"
 import { useMutation, useQuery } from "@tanstack/react-query"
@@ -44,17 +44,28 @@ export const OrderCreatePage = () => {
     const { fields, append, remove } = useFieldArray({ control, name: "items" })
     const watchedItems = watch("items")
 
-    // Adding a product prefills the line's price from the catalogue; it stays
-    // editable, and the value is frozen on the order once saved.
+    // Tracks which product each row was last prefilled for, keyed by the
+    // useFieldArray field id (stable across reordering, unlike the index).
+    const prefilledProductByRow = useRef<Record<string, string>>({})
+
+    // Choosing a product fills that row's price from the catalogue once. It
+    // deliberately does NOT re-derive from the current price text: "0" and ""
+    // are values a user can legitimately type, and re-writing on every render
+    // both clobbered mid-edit input and span forever for a product priced 0.
     useEffect(() => {
-        watchedItems.forEach((item, index) => {
-            if (!item.product) return
-            const product = productList.find((p) => String(p.id) === String(item.product))
-            if (product && (item.sell_price === "0" || item.sell_price === "")) {
-                setValue(`items.${index}.sell_price`, String(product.retail_price ?? 0))
-            }
+        fields.forEach((field, index) => {
+            const chosen = watchedItems[index]?.product
+            if (!chosen) return
+            if (prefilledProductByRow.current[field.id] === chosen) return
+
+            const product = productList.find((p) => String(p.id) === String(chosen))
+            // Products may still be loading - do not record the row as done.
+            if (!product) return
+
+            prefilledProductByRow.current[field.id] = chosen
+            setValue(`items.${index}.sell_price`, String(product.retail_price ?? 0))
         })
-    }, [watchedItems, productList, setValue])
+    }, [fields, watchedItems, productList, setValue])
 
     // Live feedback only. The server recomputes and its response is the truth.
     const previewTotal = watchedItems.reduce(
