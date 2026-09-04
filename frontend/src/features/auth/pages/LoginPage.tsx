@@ -56,7 +56,7 @@ export const LoginPage = () => {
                     if (accessPayload.role === "CUSTOMER" || accessPayload.role === "GUEST")
                         navigate("/store/")
                     else
-                        navigate("/app/supplier/bills", { state: { location: "supplierBills" } })
+                        navigate("/app/products", { state: { location: "Products" } })
 
                 }
             }

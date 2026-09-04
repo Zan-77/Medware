@@ -70,7 +70,7 @@ export const Step2 = () => {
                     if (accessPayload.role === "CUSTOMER")
                         navigate("/store/")
                     else
-                        navigate("/app/supplier/bills", { state: { location: "supplierBills" } })
+                        navigate("/app/products", { state: { location: "Products" } })
                     
                 }
             }

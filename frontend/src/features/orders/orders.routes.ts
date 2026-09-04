@@ -2,6 +2,7 @@ import type { RouteObject } from "react-router";
 import { OrdersPage } from "./pages/OrdersPage";
 import { OrderDetailsPage } from "./pages/OrderDetailsPage";
 import { OrderCreatePage } from "./pages/OrderCreatePage";
+import { RequestsPage } from "./pages/RequestsPage";
 
 export const ordersRoutes: RouteObject[] = [
     {
@@ -15,5 +16,9 @@ export const ordersRoutes: RouteObject[] = [
     {
         path: "orders/:orderId",
         Component: OrderDetailsPage,
+    },
+    {
+        path: "requests",
+        Component: RequestsPage,
     },
 ]
