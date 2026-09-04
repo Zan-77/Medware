@@ -1,4 +1,16 @@
-from rest_framework import viewsets, permissions
+from decimal import Decimal
+
+from django.db import transaction
+from rest_framework import mixins, permissions, viewsets
+from rest_framework import status as http_status
+from rest_framework.decorators import action
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
+from rest_framework.response import Response
+
+from audit.models import RequestTransition
+from notifications.models import Notification
+from notifications.services import managers, notify
+
 from .models import OrderRequest, OrderItem, OrderReview, OrderFinalization, PackagingTask, ReturnRequest, ReturnAssessment, ReturnApproval
 from .serializers import (
     OrderRequestSerializer, OrderItemSerializer, OrderReviewSerializer,
@@ -13,6 +25,12 @@ from users.permissions import RoleMethodPermission
 ORDER_WIDE_ROLES = ('MANAGER', 'ACCOUNTANT', 'WAREHOUSE_WORKER')
 
 
+class Conflict(APIException):
+    """409 - the request is valid but the target is in the wrong state."""
+    status_code = http_status.HTTP_409_CONFLICT
+    default_detail = 'This record is in a state that does not allow the change.'
+
+
 def scope_to_user(queryset, user, customer_field='customer', salesman_field='salesman'):
     """Narrow `queryset` to rows the given user is a party to."""
     if user.is_superuser or getattr(user, 'role', None) in ORDER_WIDE_ROLES:
@@ -20,6 +38,43 @@ def scope_to_user(queryset, user, customer_field='customer', salesman_field='sal
     if getattr(user, 'role', None) == 'SALESMAN':
         return queryset.filter(**{salesman_field: user})
     return queryset.filter(**{customer_field: user})
+
+
+def _record_transition(order, from_status, actor, notes=''):
+    RequestTransition.objects.create(
+        source_model='OrderRequest',
+        source_id=str(order.pk),
+        from_status=from_status,
+        to_status=order.status,
+        actor=actor,
+        actor_role=getattr(actor, 'role', ''),
+        notes=notes,
+    )
+
+
+def _approve(order, manager):
+    """Flip to APPROVED, freezing the balances the customer agreed to.
+
+    Reads finance.CustomerBalance but never writes it - moving the real
+    balance is the accountant's finalize step, which is a later slice.
+    """
+    from finance.models import CustomerBalance
+
+    from_status = order.status
+    balance = CustomerBalance.objects.filter(customer=order.customer).first()
+    order.previous_balance = balance.outstanding_balance if balance else Decimal('0')
+    order.new_balance = order.previous_balance + order.total
+    order.status = OrderRequest.Status.APPROVED
+    order.save(update_fields=['status', 'previous_balance', 'new_balance'])
+
+    OrderReview.objects.create(order=order, manager=manager, decision='APPROVE', notes='')
+    _record_transition(order, from_status, manager)
+    notify(
+        [order.salesman] if order.salesman else [],
+        Notification.Kind.ORDER_APPROVED,
+        order,
+        message=f'Order {order.pk} was approved.',
+    )
 
 
 class OrderRequestViewSet(viewsets.ModelViewSet):
@@ -45,6 +100,72 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
         return scope_to_user(super().get_queryset(), self.request.user,
                              customer_field='customer__user')
 
+    def perform_create(self, serializer):
+        """`origin` and `salesman` come from the requesting user, never the
+        client. A manager's own order is approved in the same transaction, so
+        every order reaching the accountant has exactly one review row."""
+        user = self.request.user
+        role = getattr(user, 'role', '')
+        with transaction.atomic():
+            order = serializer.save(
+                origin=role if role in ('SALESMAN', 'MANAGER', 'CUSTOMER') else 'SALESMAN',
+                salesman=user if role == 'SALESMAN' else None,
+            )
+            if role == 'MANAGER':
+                _approve(order, user)
+            else:
+                notify(managers(), Notification.Kind.ORDER_SUBMITTED, order,
+                       message=f'New order {order.pk} awaiting review.')
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        # RoleMethodPermission checks the HTTP method, and POST is open to
+        # SALESMAN on this viewset - so the role is checked here explicitly.
+        if getattr(request.user, 'role', '') != 'MANAGER':
+            raise PermissionDenied('Only a manager may approve an order.')
+
+        order = self.get_object()
+        if order.status != OrderRequest.Status.PENDING:
+            return Response(
+                {'detail': f'An order in status {order.status} cannot be approved.'},
+                status=http_status.HTTP_409_CONFLICT,
+            )
+
+        with transaction.atomic():
+            _approve(order, request.user)
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if getattr(request.user, 'role', '') != 'MANAGER':
+            raise PermissionDenied('Only a manager may reject an order.')
+
+        notes = (request.data.get('notes') or '').strip()
+        if not notes:
+            raise ValidationError({'notes': 'A rejection reason is required.'})
+
+        order = self.get_object()
+        if order.status != OrderRequest.Status.PENDING:
+            return Response(
+                {'detail': f'An order in status {order.status} cannot be rejected.'},
+                status=http_status.HTTP_409_CONFLICT,
+            )
+
+        with transaction.atomic():
+            from_status = order.status
+            order.status = OrderRequest.Status.REJECTED
+            order.save(update_fields=['status'])
+            OrderReview.objects.create(order=order, manager=request.user,
+                                       decision='DECLINE', notes=notes)
+            _record_transition(order, from_status, request.user, notes=notes)
+            notify(
+                [order.salesman] if order.salesman else [],
+                Notification.Kind.ORDER_REJECTED,
+                order,
+                message=f'Order {order.pk} was rejected: {notes}',
+            )
+        return Response(self.get_serializer(order).data)
+
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -67,17 +188,40 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             salesman_field='order_request__salesman',
         )
 
+    def _assert_parent_pending(self, order):
+        if order.status != OrderRequest.Status.PENDING:
+            raise Conflict(f'Order {order.pk} is {order.status} and its items are frozen.')
 
-class OrderReviewViewSet(viewsets.ModelViewSet):
+    def perform_create(self, serializer):
+        self._assert_parent_pending(serializer.validated_data['order_request'])
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._assert_parent_pending(serializer.instance.order_request)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._assert_parent_pending(instance.order_request)
+        instance.delete()
+
+
+class OrderReviewViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Read-only: reviews are written by the approve/reject actions, never
+    posted directly - a hand-written review walks around the state machine."""
+
     queryset = OrderReview.objects.all()
     serializer_class = OrderReviewSerializer
     permission_classes = [permissions.IsAuthenticated, RoleMethodPermission]
+    # POST is listed here even though the viewset defines no `create` action.
+    # RoleMethodPermission default-denies (403) any method missing from this
+    # mapping, and that check runs before DRF ever notices there is no
+    # handler - so a bare {'GET': [...]} mapping would mask the "no such
+    # action" 405 behind a 403. Listing the same roles as GET lets a manager
+    # or accountant's POST fall through permission and hit DRF's genuine
+    # http_method_not_allowed (405) for a route the router never bound.
     allowed_roles_by_method = {
-        'POST': ['MANAGER'],
         'GET': ['MANAGER', 'ACCOUNTANT'],
-        'PUT': ['MANAGER'],
-        'PATCH': ['MANAGER'],
-        'DELETE': ['MANAGER'],
+        'POST': ['MANAGER', 'ACCOUNTANT'],
     }
 
 
