@@ -50,6 +50,12 @@ export const OrderDetailsPage = () => {
             setIsOpenToast(true)
             queryClient.invalidateQueries({ queryKey: ["orders"] })
         },
+        onError() {
+            // 409 when another manager already decided this order. Without
+            // this the button is a silent no-op and the manager cannot tell
+            // whether the click registered.
+            setError("root.server", { type: "server", message: t("Orders_.serverError") })
+        },
     })
 
     const rejectMutation = useMutation({
@@ -125,6 +131,8 @@ export const OrderDetailsPage = () => {
                 <Text>{t("previousBalance")}: {order.previous_balance ?? "-"}</Text>
                 <Text>{t("newBalance")}: {order.new_balance ?? "-"}</Text>
             </div>
+
+            {errors.root?.server && <Text className="mb-3 text-error">{errors.root.server.message}</Text>}
 
             {canDecide && <div className="mt-6 flex gap-x-3">
                 <Button onClick={() => approve.mutate()}>{t("approve")}</Button>
