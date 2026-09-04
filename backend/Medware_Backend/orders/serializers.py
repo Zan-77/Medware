@@ -10,10 +10,21 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderRequestSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    customer_name = serializers.CharField(source='customer.name', read_only=True, default=None)
+    salesman_name = serializers.CharField(source='salesman.username', read_only=True, default=None)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = OrderRequest
-        fields = ['id', 'origin', 'customer', 'salesman', 'created_at', 'status', 'notes', 'items']
+        fields = [
+            'id', 'origin', 'customer', 'customer_name', 'salesman', 'salesman_name',
+            'created_at', 'status', 'notes', 'previous_balance', 'new_balance',
+            'total', 'items',
+        ]
+        # `status` moves only through the approve/reject actions. `origin` and
+        # `salesman` are derived from the requesting user. Leaving any of them
+        # writable lets a salesman approve their own order with a PATCH.
+        read_only_fields = ['status', 'origin', 'salesman', 'previous_balance', 'new_balance']
 
 
 class OrderReviewSerializer(serializers.ModelSerializer):

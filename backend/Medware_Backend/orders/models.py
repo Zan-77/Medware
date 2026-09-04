@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from products.models import Product
 from users.models import User
@@ -9,15 +11,28 @@ class OrderRequest(models.Model):
         ('MANAGER', 'Manager'),
         ('CUSTOMER', 'Customer'),
     ]
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending manager review'
+        APPROVED = 'APPROVED', 'Approved - awaiting accountant'
+        REJECTED = 'REJECTED', 'Rejected by manager'
+        FINALIZED = 'FINALIZED', 'Finalized by accountant'
+
     origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)
-    # A customer is a business record, not a login - see customers.Customer.
-    # PROTECT because deleting a customer must never cascade away their
-    # order history.
     customer = models.ForeignKey('customers.Customer', on_delete=models.PROTECT, related_name='order_requests')
     salesman = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='salesman_orders')
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
-    status = models.CharField(max_length=30, default='PENDING')
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING)
+    # Frozen when the manager approves. Computed live, reopening an old order
+    # would show today's balance rather than the one the customer agreed to.
+    previous_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    new_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    @property
+    def total(self):
+        """Derived, never stored - a stored total can disagree with its lines."""
+        return sum((item.line_total for item in self.items.all()), Decimal('0'))
 
     def __str__(self):
         return f"OrderRequest {self.id} ({self.status})"
@@ -27,8 +42,15 @@ class OrderItem(models.Model):
     order_request = models.ForeignKey(OrderRequest, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.IntegerField()
+    # Copied from the product when the line is added, then editable. A later
+    # change to Product.retail_price must not restate a historical order.
     sell_price = models.DecimalField(max_digits=10, decimal_places=2)
+    note = models.TextField(blank=True)
     return_quantity = models.IntegerField(default=0)
+
+    @property
+    def line_total(self):
+        return self.quantity * self.sell_price
 
 
 class OrderReview(models.Model):
