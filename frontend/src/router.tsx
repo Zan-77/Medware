@@ -4,6 +4,7 @@ import { authRoutes } from "./features/auth";
 import { inventoryRoutes } from "./features/inventory";
 import { appLayout } from "./layouts/appLayout";
 import { peoductsRoutes } from "./features/products";
+import { ordersRoutes } from "./features/orders";
 
 export const router = createBrowserRouter([
     {
@@ -16,7 +17,8 @@ export const router = createBrowserRouter([
                 Component:appLayout,
                 children:[
                     ...inventoryRoutes,
-                    ...peoductsRoutes
+                    ...peoductsRoutes,
+                    ...ordersRoutes
                 ]
             },
             {

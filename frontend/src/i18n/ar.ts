@@ -120,6 +120,7 @@ export const ar = {
     actions:"أفعال",
     details: "تفاصيل",
     requests: "الطلبات الواردة",
+    status: "الحالة",
     orders: "الطلبات",
     newOrder: "طلب جديد",
     customer: "العميل",
