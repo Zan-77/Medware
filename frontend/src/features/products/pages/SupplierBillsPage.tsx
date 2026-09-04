@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CheckmarkCircle01Icon, Edit, Plus, Trash } from "@hugeicons/core-free-icons"
+import { CheckmarkCircle01Icon, Edit, Plus, Trash, ViewIcon } from "@hugeicons/core-free-icons"
 import Button from "../../../components/Button"
 import useOpenMenu from "../../../hooks/useOpenMenu"
 import Form from "../../../components/Form"
@@ -14,7 +14,7 @@ import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import { Link, useSearchParams } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
@@ -63,6 +63,7 @@ export const SupplierBillsPage = () => {
     // id link on the suppliers table opens. The parameter is part of the query
     // key so switching suppliers refetches instead of showing the previous set.
     const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
     const supplierFilter = searchParams.get("supplier") ?? undefined
     const { data } = useQuery({
         queryKey: ["inventoryBills", supplierFilter ?? null],
@@ -191,6 +192,17 @@ export const SupplierBillsPage = () => {
             header: t("actions"),
             cell: ({ row }) => (
                 <div className="flex justify-center gap-x-2">
+                    {hasPermission(user, "supplierBillLines", "read")
+                        &&
+                        <Button
+                            className="dark:text-accent-medium text-accent-dark dark:hover:text-accent-extraLight hover:text-accent-dark"
+                            onClick={() => {
+                                navigate(`/app/supplier/bills/${row.original.id}/`, {
+                                    state: { location: "billDetails", details: row.original.supplier_name ?? "" },
+                                })
+                            }}
+                            size="xs" variants="ghost" iconOnly={true}
+                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />} />}
                     {hasPermission(user, "supplierBills", "delete")
                         &&
                         <Button
@@ -258,9 +270,8 @@ export const SupplierBillsPage = () => {
             enableSorting: true,
             header: t("id"),
             accessorKey: "id",
-            cell: ({ row }) => {
-                return hasPermission(user, "supplierBillLines", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/inventory/bills/${row.original.id}/`} state={{ location:"billDetails"}}>{row.original.id}</Link> : row.original.id
-            },
+            // The ID is data, not navigation. Bill details open from the
+            // "details" action in the actions column.
             filterFn: filterFn_inNumberRange
         },
 

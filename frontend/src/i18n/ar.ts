@@ -120,6 +120,7 @@ export const ar = {
     id: "معرف",
     none: "غير محدد",
     actions:"أفعال",
+    details: "تفاصيل",
     products: {
         serverErrorMessages: {
             500: "خطأ في المخدم"
