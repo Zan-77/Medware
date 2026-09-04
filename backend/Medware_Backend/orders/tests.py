@@ -398,3 +398,53 @@ class InboxTests(TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['count'], 0)
+
+
+class OrderListFilterTests(TestCase):
+    """The spec requires ?status= and ?customer= to filter the order list.
+
+    Before this, neither was implemented and both were silently discarded -
+    `getOrders('PENDING')` returned every order in the system.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='fl_mgr', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=self.manager)
+
+        self.customer_a = Customer.objects.create(name='Al Noor Pharmacy')
+        self.customer_b = Customer.objects.create(name='Dar Al Shifa')
+
+        self.pending = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer_a, status=OrderRequest.Status.PENDING)
+        self.approved = OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer_b, status=OrderRequest.Status.APPROVED)
+
+    def test_status_narrows_the_list(self):
+        resp = self.client.get('/api/orders/order-requests/?status=PENDING')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([row['id'] for row in resp.json()], [self.pending.pk])
+
+    def test_customer_narrows_the_list(self):
+        resp = self.client.get(f'/api/orders/order-requests/?customer={self.customer_b.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([row['id'] for row in resp.json()], [self.approved.pk])
+
+    def test_no_filter_returns_everything(self):
+        resp = self.client.get('/api/orders/order-requests/')
+
+        self.assertEqual(len(resp.json()), 2)
+
+    def test_an_unknown_status_is_rejected(self):
+        """A typo must fail loudly rather than silently returning every row."""
+        resp = self.client.get('/api/orders/order-requests/?status=NOT_A_STATUS')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('status', resp.json())
+
+    def test_a_non_numeric_customer_is_rejected(self):
+        resp = self.client.get('/api/orders/order-requests/?customer=abc')
+
+        self.assertEqual(resp.status_code, 400)

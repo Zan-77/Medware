@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from audit.models import RequestTransition
+from mysite.filters import filter_by_query_params
 from notifications.models import Notification
 from notifications.services import managers, notify
 
@@ -94,12 +95,28 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
     }
 
     def get_queryset(self):
+        # Scope first, then filter: a query parameter must never widen what a
+        # user can see.
+        #
         # OrderRequest.customer is now a Customer record; the path to the
         # account that may read it is customer__user. ReturnRequest still
         # points straight at User, which is why this is set per call site
         # rather than changed in scope_to_user itself.
-        return scope_to_user(super().get_queryset(), self.request.user,
-                             customer_field='customer__user')
+        queryset = scope_to_user(super().get_queryset(), self.request.user,
+                                 customer_field='customer__user')
+        # `customer` is a numeric id, so the shared helper's int() coercion and
+        # its 400 on garbage are exactly right. `status` is a choice string, so
+        # it is validated here instead - routing it through the helper would
+        # reject every valid value.
+        queryset = filter_by_query_params(queryset, self.request, {'customer': 'customer_id'})
+        status_value = self.request.query_params.get('status')
+        if status_value:
+            if status_value not in OrderRequest.Status.values:
+                raise ValidationError({
+                    'status': f"'{status_value}' is not a valid status.",
+                })
+            queryset = queryset.filter(status=status_value)
+        return queryset
 
     def perform_create(self, serializer):
         """`origin` and `salesman` come from the requesting user, never the
