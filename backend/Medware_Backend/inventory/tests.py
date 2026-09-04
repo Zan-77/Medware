@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from users.models import User
 from products.models import Product, Supplier
-from inventory.models import InventoryCategory, InventoryItem, SupplierBill, SupplierBillLine
+from inventory.models import InventoryCategory, InventoryItem, StockEntry, SupplierBill, SupplierBillLine
 
 
 class InventoryPermissionTests(TestCase):
@@ -84,3 +84,153 @@ class InventoryPermissionTests(TestCase):
         line.delete()
         item.refresh_from_db()
         self.assertEqual(item.quantity, 0)
+
+
+class ListFilterTests(TestCase):
+    """Query parameters the frontend sends must actually narrow the list.
+
+    The frontend asks for one bill's lines with
+    `/api/inventory/bill-lines/?bill=<id>`. DRF ignores query parameters a
+    view was never told about, so before these filters existed that request
+    returned every line of every bill - the "ask for one bill, get every id
+    back" bug. Each test here pins one of those parameters.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='filter_mgr', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=self.manager)
+
+        self.supplier_a = Supplier.objects.create(name='Alpha Supplies')
+        self.supplier_b = Supplier.objects.create(name='Beta Supplies')
+
+        self.category_a = InventoryCategory.objects.create(name='Syringes')
+        self.category_b = InventoryCategory.objects.create(name='Dressings')
+
+        self.item_a = InventoryItem.objects.create(name='Syringe 5ml', category=self.category_a)
+        self.item_b = InventoryItem.objects.create(name='Gauze roll', category=self.category_b)
+
+        self.bill_a = SupplierBill.objects.create(supplier=self.supplier_a, manager=self.manager, date='2026-09-01')
+        self.bill_b = SupplierBill.objects.create(supplier=self.supplier_b, manager=self.manager, date='2026-09-02')
+
+        self.line_a = SupplierBillLine.objects.create(bill=self.bill_a, item=self.item_a, category=self.category_a, quantity=5)
+        self.line_b = SupplierBillLine.objects.create(bill=self.bill_b, item=self.item_b, category=self.category_b, quantity=7)
+
+    def test_bill_lines_are_narrowed_to_the_requested_bill(self):
+        resp = self.client.get(f'/api/inventory/bill-lines/?bill={self.bill_a.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        ids = [row['id'] for row in resp.json()]
+        self.assertEqual(ids, [self.line_a.pk])
+
+    def test_bill_lines_without_a_filter_still_return_everything(self):
+        resp = self.client.get('/api/inventory/bill-lines/')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.json()), 2)
+
+    def test_bill_lines_reject_a_non_numeric_bill_id(self):
+        """A typo must fail loudly, not silently widen the result set."""
+        resp = self.client.get('/api/inventory/bill-lines/?bill=not-a-number')
+
+        self.assertEqual(resp.status_code, 400)
+
+    def test_bill_lines_are_narrowed_to_the_requested_item(self):
+        resp = self.client.get(f'/api/inventory/bill-lines/?item={self.item_b.pk}')
+
+        self.assertEqual([row['id'] for row in resp.json()], [self.line_b.pk])
+
+    def test_bills_are_narrowed_to_the_requested_supplier(self):
+        resp = self.client.get(f'/api/inventory/bills/?supplier={self.supplier_b.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([row['id'] for row in resp.json()], [self.bill_b.pk])
+
+    def test_items_are_narrowed_to_the_requested_category(self):
+        resp = self.client.get(f'/api/inventory/items/?category={self.category_a.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([row['id'] for row in resp.json()], [self.item_a.pk])
+
+    def test_stock_entries_are_narrowed_to_the_requested_item(self):
+        entry = StockEntry.objects.create(item=self.item_a, quantity=3)
+        StockEntry.objects.create(item=self.item_b, quantity=4)
+
+        resp = self.client.get(f'/api/inventory/stock-entries/?item={self.item_a.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        returned = {row['id'] for row in resp.json()}
+        self.assertIn(entry.pk, returned)
+        self.assertTrue(all(row['item'] == self.item_a.pk for row in resp.json()))
+
+
+class ReadableNameFieldTests(TestCase):
+    """Bill rows carry the names the tables display.
+
+    `ProductSupplierSerializer` already exposes `product_name`/`supplier_name`;
+    the inventory serializers follow that pattern so a table does not have to
+    issue one request per row to turn an id into a label.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='name_mgr', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=self.manager)
+
+        self.supplier = Supplier.objects.create(name='Alpha Supplies')
+        self.category = InventoryCategory.objects.create(name='Syringes')
+        self.item = InventoryItem.objects.create(name='Syringe 5ml', category=self.category)
+        self.bill = SupplierBill.objects.create(supplier=self.supplier, manager=self.manager, date='2026-09-01')
+        self.line = SupplierBillLine.objects.create(bill=self.bill, item=self.item, category=self.category, quantity=5)
+
+    def test_bill_carries_its_supplier_name(self):
+        row = self.client.get(f'/api/inventory/bills/{self.bill.pk}/').json()
+
+        self.assertEqual(row['supplier_name'], 'Alpha Supplies')
+
+    def test_bill_line_carries_item_and_category_names(self):
+        row = self.client.get(f'/api/inventory/bill-lines/{self.line.pk}/').json()
+
+        self.assertEqual(row['item_name'], 'Syringe 5ml')
+        self.assertEqual(row['category_name'], 'Syringes')
+
+    def test_a_line_whose_item_was_deleted_still_serialises(self):
+        """`item` is nullable (SET_NULL), so the name must tolerate a null FK."""
+        self.item.delete()
+        self.line.refresh_from_db()
+
+        row = self.client.get(f'/api/inventory/bill-lines/{self.line.pk}/').json()
+
+        self.assertIsNone(row['item'])
+        self.assertIsNone(row['item_name'])
+
+
+class DecimalRepresentationTests(TestCase):
+    """Money comes back as JSON numbers, not strings.
+
+    DRF's default (`COERCE_DECIMAL_TO_STRING`) renders every DecimalField as
+    a quoted string. The frontend types declare `unit_price`/`discount`/
+    `whole_price` as numbers and feeds them to numeric range filters, so a
+    string silently broke sorting and filtering on those columns.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='dec_mgr', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=self.manager)
+
+        supplier = Supplier.objects.create(name='Alpha Supplies')
+        category = InventoryCategory.objects.create(name='Syringes')
+        item = InventoryItem.objects.create(name='Syringe 5ml', category=category)
+        bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-09-01')
+        self.line = SupplierBillLine.objects.create(
+            bill=bill, item=item, category=category, quantity=5,
+            unit_price='12.50', discount='1.25',
+        )
+
+    def test_bill_line_money_fields_are_numbers(self):
+        row = self.client.get(f'/api/inventory/bill-lines/{self.line.pk}/').json()
+
+        self.assertIsInstance(row['unit_price'], float)
+        self.assertEqual(row['unit_price'], 12.5)
+        self.assertIsInstance(row['discount'], float)

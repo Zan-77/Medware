@@ -192,3 +192,26 @@ class SecurityRegressionTests(TestCase):
             'role': 'CUSTOMER',
         }, format='json')
         self.assertEqual(resp.status_code, 400)
+
+    def test_a_rotated_refresh_token_cannot_be_reused(self):
+        """ROTATE_REFRESH_TOKENS is only a security win with blacklisting.
+
+        Rotation alone hands out a new refresh token but leaves the old one
+        valid until its natural expiry, so a stolen token has an unbounded
+        life - the opposite of what rotation is for.
+        """
+        client = APIClient()
+        login = client.post('/api/auth/token/', {
+            'email': 'sec_mgr@example.com', 'password': 'pass1234',
+        }, format='json')
+        self.assertEqual(login.status_code, 200)
+        # The refresh token is returned as an httpOnly cookie, not in the body.
+        original_refresh = login.cookies['refresh'].value
+
+        rotated = client.post('/api/auth/token/refresh/', {}, format='json')
+        self.assertEqual(rotated.status_code, 200)
+        self.assertNotEqual(rotated.cookies['refresh'].value, original_refresh)
+
+        replayed = APIClient().post(
+            '/api/auth/token/refresh/', {'refresh': original_refresh}, format='json')
+        self.assertEqual(replayed.status_code, 401)

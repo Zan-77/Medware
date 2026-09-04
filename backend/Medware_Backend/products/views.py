@@ -5,6 +5,7 @@ from .serializers import (
     ProductSupplierSerializer
 )
 from users.permissions import RoleMethodPermission
+from mysite.filters import filter_by_query_params
 
 # The product catalogue is readable by every signed-in role (the storefront
 # and the internal app both list it), but only a manager may change it.
@@ -23,6 +24,11 @@ class SupplierViewSet(viewsets.ModelViewSet):
         'PATCH': ['MANAGER'],
         'DELETE': ['MANAGER'],
     }
+
+    def get_queryset(self):
+        # `?id=` backs `getSuppliersById`, which resolves one supplier's name
+        # for a bills table cell.
+        return filter_by_query_params(super().get_queryset(), self.request, {'id': 'id'})
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -49,3 +55,10 @@ class ProductSupplierViewSet(viewsets.ModelViewSet):
         'PATCH': ['MANAGER'],
         'DELETE': ['MANAGER'],
     }
+
+    def get_queryset(self):
+        # `?supplier=` backs the supplier-details table of a supplier's products.
+        return filter_by_query_params(
+            super().get_queryset(), self.request,
+            {'supplier': 'supplier_id', 'product': 'product_id'},
+        )

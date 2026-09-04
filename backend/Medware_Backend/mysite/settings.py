@@ -57,6 +57,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    # Backs BLACKLIST_AFTER_ROTATION below: without this app a rotated-away
+    # refresh token stays valid until its natural expiry.
+    'rest_framework_simplejwt.token_blacklist',
     'users',
     'products',
     'orders',
@@ -175,6 +178,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'EXCEPTION_HANDLER': 'mysite.exception_handlers.api_exception_handler',
+    # Render DecimalFields as JSON numbers. DRF's default quotes them, which
+    # contradicts every price/discount field the frontend types as `number`
+    # and silently broke the numeric range filters on those columns.
+    'COERCE_DECIMAL_TO_STRING': False,
 }
 
 CORS_ALLOWED_ORIGINS = [
@@ -190,13 +197,17 @@ CORS_ALLOW_CREDENTIALS = True
 # force - a 5 minute access token. Combined with a frontend that had no
 # refresh-on-401 path, every request started failing with 401 about five
 # minutes after signing in, regardless of the user's role. The frontend now
-# refreshes and retries (see services/api.ts); these are stated explicitly so
-# the lifetime is a decision rather than an inherited default.
+# refreshes and retries (the response interceptor in
+# features/auth/services/auth.service.ts); these are stated explicitly so the
+# lifetime is a decision rather than an inherited default.
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     # Each refresh returns a new refresh token, so an idle-but-active session
-    # keeps working while a stolen refresh token has a bounded life.
+    # keeps working while a stolen refresh token has a bounded life. Rotation
+    # only bounds anything with blacklisting on - otherwise the superseded
+    # token remains usable for its full REFRESH_TOKEN_LIFETIME.
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 

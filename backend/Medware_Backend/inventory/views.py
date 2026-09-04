@@ -5,6 +5,7 @@ from .serializers import (
     SupplierBillLineSerializer, StockEntrySerializer
 )
 from users.permissions import RoleMethodPermission
+from mysite.filters import filter_by_query_params
 
 
 class InventoryCategoryViewSet(viewsets.ModelViewSet):
@@ -32,6 +33,14 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
         'DELETE': ['MANAGER'],
     }
 
+    def get_queryset(self):
+        # `?category=` backs the category drill-down; `?product=` resolves the
+        # inventory row for a catalogue product.
+        return filter_by_query_params(
+            super().get_queryset(), self.request,
+            {'category': 'category_id', 'product': 'product_id'},
+        )
+
 
 class SupplierBillViewSet(viewsets.ModelViewSet):
     queryset = SupplierBill.objects.all()
@@ -44,6 +53,14 @@ class SupplierBillViewSet(viewsets.ModelViewSet):
         'PATCH': ['MANAGER'],
         'DELETE': ['MANAGER'],
     }
+
+    def get_queryset(self):
+        # `?supplier=` is how the suppliers table opens "the bills of this
+        # supplier"; without it that link listed every bill in the system.
+        return filter_by_query_params(
+            super().get_queryset(), self.request,
+            {'supplier': 'supplier_id', 'manager': 'manager_id', 'id': 'id'},
+        )
 
 
 class SupplierBillLineViewSet(viewsets.ModelViewSet):
@@ -58,6 +75,14 @@ class SupplierBillLineViewSet(viewsets.ModelViewSet):
         'DELETE': ['MANAGER'],
     }
 
+    def get_queryset(self):
+        # `?bill=` is the whole point of the bill-details page: one bill's
+        # lines, not every line ever recorded.
+        return filter_by_query_params(
+            super().get_queryset(), self.request,
+            {'bill': 'bill_id', 'item': 'item_id', 'category': 'category_id'},
+        )
+
 
 class StockEntryViewSet(viewsets.ModelViewSet):
     queryset = StockEntry.objects.all()
@@ -70,3 +95,9 @@ class StockEntryViewSet(viewsets.ModelViewSet):
         'PATCH': ['MANAGER'],
         'DELETE': ['MANAGER'],
     }
+
+    def get_queryset(self):
+        return filter_by_query_params(
+            super().get_queryset(), self.request,
+            {'item': 'item_id', 'source_bill_line': 'source_bill_line_id'},
+        )
