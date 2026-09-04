@@ -3,9 +3,11 @@ from .models import OrderRequest, OrderItem, OrderReview, OrderFinalization, Pac
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True, default=None)
+
     class Meta:
         model = OrderItem
-        fields = ['id', 'order_request', 'product', 'quantity', 'sell_price', 'note', 'return_quantity']
+        fields = ['id', 'order_request', 'product', 'product_name', 'quantity', 'sell_price', 'note', 'return_quantity']
         extra_kwargs = {'order_request': {'required': False}}
 
 
@@ -31,8 +33,21 @@ class OrderRequestSerializer(serializers.ModelSerializer):
         items = validated_data.pop('items', [])
         order = OrderRequest.objects.create(**validated_data)
         for item in items:
+            # The parent order always wins; a nested item that carries its own
+            # `order_request` would otherwise raise TypeError -> 500.
+            item.pop('order_request', None)
             OrderItem.objects.create(order_request=order, **item)
         return order
+
+    def update(self, instance, validated_data):
+        # Items are edited through /api/orders/order-items/, not nested here.
+        # Without this, a PATCH carrying `items` hits DRF's nested-write
+        # assertion and returns 500 instead of a validation error.
+        if 'items' in validated_data:
+            raise serializers.ValidationError({
+                'items': 'Order items are edited through /api/orders/order-items/.',
+            })
+        return super().update(instance, validated_data)
 
 
 class OrderReviewSerializer(serializers.ModelSerializer):

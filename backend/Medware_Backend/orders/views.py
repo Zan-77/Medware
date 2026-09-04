@@ -87,10 +87,10 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
     # GET: list/retrieve (Manager, Accountant, Salesman, Warehouse Worker, Customer)
     # PATCH/PUT: modification requests allowed pre-shipment (Customer, Salesman, Manager, Accountant)
     allowed_roles_by_method = {
-        'POST': ['SALESMAN', 'MANAGER', 'CUSTOMER'],
+        'POST': ['SALESMAN', 'MANAGER'],
         'GET': ['MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER', 'CUSTOMER'],
-        'PUT': ['CUSTOMER', 'SALESMAN', 'MANAGER', 'ACCOUNTANT'],
-        'PATCH': ['CUSTOMER', 'SALESMAN', 'MANAGER', 'ACCOUNTANT'],
+        'PUT': ['SALESMAN', 'MANAGER'],
+        'PATCH': ['SALESMAN', 'MANAGER'],
         'DELETE': ['MANAGER'],
     }
 
@@ -104,6 +104,7 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
         # rather than changed in scope_to_user itself.
         queryset = scope_to_user(super().get_queryset(), self.request.user,
                                  customer_field='customer__user')
+        queryset = queryset.select_related('customer', 'salesman').prefetch_related('items')
         # `customer` is a numeric id, so the shared helper's int() coercion and
         # its 400 on garbage are exactly right. `status` is a choice string, so
         # it is validated here instead - routing it through the helper would
@@ -134,6 +135,16 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
             else:
                 notify(managers(), Notification.Kind.ORDER_SUBMITTED, order,
                        message=f'New order {order.pk} awaiting review.')
+
+    def perform_update(self, serializer):
+        # Freezing items but leaving the order itself editable closed the
+        # smaller door: repointing an approved order at another customer
+        # detaches the manager's review and the balance snapshots from what
+        # was actually approved.
+        order = serializer.instance
+        if order.status != OrderRequest.Status.PENDING:
+            raise Conflict(f'Order {order.pk} is {order.status} and can no longer be edited.')
+        serializer.save()
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -195,9 +206,9 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, RoleMethodPermission]
     allowed_roles_by_method = {
         'GET': ['MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER', 'CUSTOMER'],
-        'POST': ['MANAGER', 'ACCOUNTANT'],
-        'PUT': ['MANAGER', 'ACCOUNTANT'],
-        'PATCH': ['MANAGER', 'ACCOUNTANT'],
+        'POST': ['SALESMAN', 'MANAGER'],
+        'PUT': ['SALESMAN', 'MANAGER'],
+        'PATCH': ['SALESMAN', 'MANAGER'],
         'DELETE': ['MANAGER'],
     }
 
@@ -210,9 +221,15 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             salesman_field='order_request__salesman',
         )
 
-    def _assert_parent_pending(self, order):
+    def _assert_editable(self, order):
         if order.status != OrderRequest.Status.PENDING:
             raise Conflict(f'Order {order.pk} is {order.status} and its items are frozen.')
+        user = self.request.user
+        role = getattr(user, 'role', '')
+        # A manager may adjust any pending order as part of reviewing it; a
+        # salesman only their own.
+        if role == 'SALESMAN' and order.salesman_id != user.id:
+            raise PermissionDenied('You may only edit your own orders.')
 
     def perform_create(self, serializer):
         # `order_request` is optional on the serializer so the parent can supply
@@ -221,15 +238,15 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         order = serializer.validated_data.get('order_request')
         if order is None:
             raise ValidationError({'order_request': 'This field is required.'})
-        self._assert_parent_pending(order)
+        self._assert_editable(order)
         serializer.save()
 
     def perform_update(self, serializer):
-        self._assert_parent_pending(serializer.instance.order_request)
+        self._assert_editable(serializer.instance.order_request)
         serializer.save()
 
     def perform_destroy(self, instance):
-        self._assert_parent_pending(instance.order_request)
+        self._assert_editable(instance.order_request)
         instance.delete()
 
 
@@ -344,7 +361,9 @@ class InboxView(APIView):
         return Response({'role': role, 'count': len(items), 'items': items})
 
     def _queue(self, request, status_value):
-        orders = OrderRequest.objects.filter(status=status_value).order_by('created_at')
+        orders = OrderRequest.objects.filter(status=status_value) \
+            .select_related('customer', 'salesman').prefetch_related('items') \
+            .order_by('created_at')
         return [
             {
                 'kind': f'ORDER_{status_value}',
@@ -356,21 +375,31 @@ class InboxView(APIView):
         ]
 
     def _salesman_updates(self, request):
-        unread = Notification.objects.filter(
+        unread = list(Notification.objects.filter(
             recipient=request.user,
             kind=Notification.Kind.ORDER_REJECTED,
             read_at__isnull=True,
-        )
-        items = []
+        ))
+        # `target_id` is a CharField and the model is documented as taking
+        # non-order targets in future, so a value that is not an order pk
+        # must skip its row rather than 500 the whole inbox.
+        target_pks_by_notification = {}
         for notification in unread:
-            # `target_id` is a CharField and the model is documented as taking
-            # non-order targets in future, so a value that is not an order pk
-            # must skip this row rather than 500 the whole inbox.
             try:
-                target_pk = int(notification.target_id)
+                target_pks_by_notification[notification.pk] = int(notification.target_id)
             except (TypeError, ValueError):
                 continue
-            order = OrderRequest.objects.filter(pk=target_pk).first()
+
+        orders_by_pk = {
+            order.pk: order
+            for order in OrderRequest.objects.filter(pk__in=target_pks_by_notification.values())
+                .select_related('customer', 'salesman').prefetch_related('items')
+        }
+
+        items = []
+        for notification in unread:
+            target_pk = target_pks_by_notification.get(notification.pk)
+            order = orders_by_pk.get(target_pk)
             if order is None:
                 continue
             items.append({

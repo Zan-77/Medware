@@ -448,3 +448,133 @@ class OrderListFilterTests(TestCase):
         resp = self.client.get('/api/orders/order-requests/?customer=abc')
 
         self.assertEqual(resp.status_code, 400)
+
+
+class OrderMutationGuardTests(TestCase):
+    """Guards found by the final whole-branch review."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.salesman = User.objects.create_user(username='mg_slm', password='pass', role=User.Role.SALESMAN)
+        self.other_salesman = User.objects.create_user(username='mg_slm2', password='pass', role=User.Role.SALESMAN)
+        self.manager = User.objects.create_user(username='mg_mgr', password='pass', role=User.Role.MANAGER)
+        self.accountant = User.objects.create_user(username='mg_acc', password='pass', role=User.Role.ACCOUNTANT)
+        self.customer_a = Customer.objects.create(name='Al Noor Pharmacy')
+        self.customer_b = Customer.objects.create(name='Dar Al Shifa')
+        self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
+
+    def _order(self, status, salesman=None):
+        return OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer_a,
+            salesman=salesman or self.salesman, status=status)
+
+    def test_an_approved_order_cannot_be_repointed_at_another_customer(self):
+        order = self._order(OrderRequest.Status.APPROVED)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/orders/order-requests/{order.pk}/',
+                                 {'customer': self.customer_b.pk}, format='json')
+
+        order.refresh_from_db()
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(order.customer_id, self.customer_a.pk)
+
+    def test_a_pending_order_can_still_be_edited(self):
+        order = self._order(OrderRequest.Status.PENDING)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/orders/order-requests/{order.pk}/',
+                                 {'notes': 'updated'}, format='json')
+
+        order.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(order.notes, 'updated')
+
+    def test_a_nested_item_carrying_order_request_does_not_500(self):
+        # The nested `order_request` must name a real row - a nonexistent pk
+        # (e.g. 999) is rejected by the field's own PrimaryKeyRelatedField
+        # validation with 400 before create() ever runs, which would test FK
+        # validation rather than the TypeError this guards against. A decoy
+        # order that actually exists proves the parent order wins instead of
+        # the nested value leaking through.
+        decoy = self._order(OrderRequest.Status.PENDING, salesman=self.other_salesman)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.post('/api/orders/order-requests/', {
+            'customer': self.customer_a.pk,
+            'items': [{'order_request': decoy.pk, 'product': self.product.pk,
+                       'quantity': 1, 'sell_price': '10.00'}],
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 201)
+        order = OrderRequest.objects.get(pk=resp.json()['id'])
+        self.assertEqual(order.items.count(), 1)
+        self.assertEqual(order.items.first().order_request_id, order.pk)
+        self.assertEqual(decoy.items.count(), 0)
+
+    def test_patching_items_is_a_validation_error_not_a_500(self):
+        order = self._order(OrderRequest.Status.PENDING)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/orders/order-requests/{order.pk}/', {
+            'items': [{'product': self.product.pk, 'quantity': 1, 'sell_price': '10.00'}],
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('items', resp.json())
+
+    def test_a_customer_cannot_create_an_order(self):
+        account = User.objects.create_user(username='mg_cust', password='pass', role=User.Role.CUSTOMER)
+        self.client.force_authenticate(user=account)
+
+        resp = self.client.post('/api/orders/order-requests/', {
+            'customer': self.customer_b.pk,
+            'items': [{'product': self.product.pk, 'quantity': 1, 'sell_price': '10.00'}],
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 403)
+
+    def test_a_salesman_can_add_an_item_to_their_own_pending_order(self):
+        order = self._order(OrderRequest.Status.PENDING)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.post('/api/orders/order-items/', {
+            'order_request': order.pk, 'product': self.product.pk,
+            'quantity': 2, 'sell_price': '10.00',
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 201)
+
+    def test_a_salesman_cannot_add_an_item_to_someone_elses_order(self):
+        order = self._order(OrderRequest.Status.PENDING, salesman=self.other_salesman)
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.post('/api/orders/order-items/', {
+            'order_request': order.pk, 'product': self.product.pk,
+            'quantity': 2, 'sell_price': '10.00',
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 403)
+
+    def test_an_accountant_cannot_edit_order_items(self):
+        order = self._order(OrderRequest.Status.PENDING)
+        item = OrderItem.objects.create(order_request=order, product=self.product,
+                                        quantity=2, sell_price=Decimal('10.00'))
+        self.client.force_authenticate(user=self.accountant)
+
+        resp = self.client.patch(f'/api/orders/order-items/{item.pk}/',
+                                 {'quantity': 9}, format='json')
+
+        item.refresh_from_db()
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(item.quantity, 2)
+
+    def test_order_items_carry_the_product_name(self):
+        order = self._order(OrderRequest.Status.PENDING)
+        OrderItem.objects.create(order_request=order, product=self.product,
+                                 quantity=1, sell_price=Decimal('10.00'))
+        self.client.force_authenticate(user=self.manager)
+
+        row = self.client.get(f'/api/orders/order-requests/{order.pk}/').json()
+
+        self.assertEqual(row['items'][0]['product_name'], 'Paracetamol')
