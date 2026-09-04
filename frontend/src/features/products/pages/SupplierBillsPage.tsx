@@ -201,8 +201,8 @@ export const SupplierBillsPage = () => {
                                     state: { location: "billDetails", details: row.original.supplier_name ?? "" },
                                 })
                             }}
-                            size="xs" variants="ghost" iconOnly={true}
-                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />} />}
+                            size="xs" variants="ghost"
+                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />}>{t("details")}</Button>}
                     {hasPermission(user, "supplierBills", "delete")
                         &&
                         <Button
