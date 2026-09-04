@@ -10,7 +10,10 @@ class OrderRequest(models.Model):
         ('CUSTOMER', 'Customer'),
     ]
     origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)
-    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='order_requests')
+    # A customer is a business record, not a login - see customers.Customer.
+    # PROTECT because deleting a customer must never cascade away their
+    # order history.
+    customer = models.ForeignKey('customers.Customer', on_delete=models.PROTECT, related_name='order_requests')
     salesman = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='salesman_orders')
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)

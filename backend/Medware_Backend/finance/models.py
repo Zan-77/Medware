@@ -29,7 +29,7 @@ class CommissionRecord(models.Model):
 
 
 class CustomerBalance(models.Model):
-    customer = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='balance')
+    customer = models.OneToOneField('customers.Customer', on_delete=models.CASCADE, related_name='balance')
     outstanding_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_returns = models.DecimalField(max_digits=12, decimal_places=2, default=0)

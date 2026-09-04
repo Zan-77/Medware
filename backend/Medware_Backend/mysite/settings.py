@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     # refresh token stays valid until its natural expiry.
     'rest_framework_simplejwt.token_blacklist',
     'users',
+    'customers',
     'products',
     'orders',
     'inventory',

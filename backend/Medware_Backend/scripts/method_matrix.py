@@ -63,8 +63,10 @@ class MethodMatrixTest(TestCase):
         self.stock = StockEntry.objects.filter(item=self.item).first() or \
             StockEntry.objects.create(item=self.item, quantity=1)
 
+        from customers.models import Customer
+        self.customer_record = Customer.objects.create(name='Matrix customer', user=self.users['CUSTOMER'])
         self.order = OrderRequest.objects.create(
-            origin='CUSTOMER', customer=self.users['CUSTOMER'], salesman=self.users['SALESMAN'], status='PENDING')
+            origin='CUSTOMER', customer=self.customer_record, salesman=self.users['SALESMAN'], status='PENDING')
         self.orderitem = OrderItem.objects.create(
             order_request=self.order, product=self.product, quantity=1, sell_price='2.00')
         self.review = OrderReview.objects.create(order=self.order, manager=self.users['MANAGER'], decision='APPROVE')
@@ -82,7 +84,7 @@ class MethodMatrixTest(TestCase):
             order=self.order, customer=self.users['CUSTOMER'], amount='10.00', recorded_by=self.users['ACCOUNTANT'])
         self.commission = CommissionRecord.objects.create(
             order=self.order, salesman=self.users['SALESMAN'], percentage='5.00', earned_amount='1.00')
-        self.balance = CustomerBalance.objects.create(customer=self.users['CUSTOMER'])
+        self.balance = CustomerBalance.objects.create(customer=self.customer_record)
 
         self.auditlog = AuditLog.objects.create(user=self.users['MANAGER'], action='seed')
         self.transition = RequestTransition.objects.create(

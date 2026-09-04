@@ -38,7 +38,12 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
     }
 
     def get_queryset(self):
-        return scope_to_user(super().get_queryset(), self.request.user)
+        # OrderRequest.customer is now a Customer record; the path to the
+        # account that may read it is customer__user. ReturnRequest still
+        # points straight at User, which is why this is set per call site
+        # rather than changed in scope_to_user itself.
+        return scope_to_user(super().get_queryset(), self.request.user,
+                             customer_field='customer__user')
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
@@ -58,7 +63,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         return scope_to_user(
             super().get_queryset(),
             self.request.user,
-            customer_field='order_request__customer',
+            customer_field='order_request__customer__user',
             salesman_field='order_request__salesman',
         )
 

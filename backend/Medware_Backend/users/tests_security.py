@@ -106,13 +106,22 @@ class SecurityRegressionTests(TestCase):
 
     # --- F8: cross-tenant order access -------------------------------------
     def test_customer_cannot_see_another_customers_order(self):
-        other_order = OrderRequest.objects.create(
-            origin='CUSTOMER', customer=self.other_customer, status='PENDING')
+        from customers.models import Customer
+
+        # Both customers now hold a Customer record linked to their account,
+        # which is how a website login maps onto a customer.
+        mine = Customer.objects.create(name='My shop', user=self.customer)
+        theirs = Customer.objects.create(name='Their shop', user=self.other_customer)
+        my_order = OrderRequest.objects.create(origin='CUSTOMER', customer=mine, status='PENDING')
+        other_order = OrderRequest.objects.create(origin='CUSTOMER', customer=theirs, status='PENDING')
         self.client.force_authenticate(user=self.customer)
 
         listed = self.client.get('/api/orders/order-requests/')
         self.assertEqual(listed.status_code, 200)
         ids = [row['id'] for row in listed.json()]
+        # Positive and negative: seeing my own proves the filter is not simply
+        # returning nothing, which would make the assertion below vacuous.
+        self.assertIn(my_order.pk, ids)
         self.assertNotIn(other_order.pk, ids)
 
         detail = self.client.get(f'/api/orders/order-requests/{other_order.pk}/')
