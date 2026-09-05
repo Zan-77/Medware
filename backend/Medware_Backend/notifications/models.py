@@ -15,6 +15,9 @@ class Notification(models.Model):
         ORDER_SUBMITTED = 'ORDER_SUBMITTED', 'Order submitted'
         ORDER_APPROVED = 'ORDER_APPROVED', 'Order approved'
         ORDER_REJECTED = 'ORDER_REJECTED', 'Order rejected'
+        CUSTOMER_SUBMITTED = 'CUSTOMER_SUBMITTED', 'Customer submitted'
+        CUSTOMER_APPROVED = 'CUSTOMER_APPROVED', 'Customer approved'
+        CUSTOMER_REJECTED = 'CUSTOMER_REJECTED', 'Customer rejected'
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     kind = models.CharField(max_length=40, choices=Kind.choices)

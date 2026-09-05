@@ -11,6 +11,21 @@ class Customer(models.Model):
     becoming a second record.
     """
 
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending manager approval'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected by manager'
+
+    # A salesman's customer arrives as a request; a manager's is born approved.
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customers_created',
+    )
+    rejection_notes = models.TextField(blank=True)
     name = models.CharField(max_length=200)
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)

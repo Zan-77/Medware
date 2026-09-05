@@ -2,7 +2,9 @@ from django.db.models.deletion import ProtectedError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from audit.models import RequestTransition
 from customers.models import Customer
+from notifications.models import Notification
 from orders.models import OrderRequest
 from users.models import User
 
@@ -15,8 +17,6 @@ class CustomerModelTests(TestCase):
         self.assertIsNone(customer.user)
 
     def test_a_customer_can_be_linked_to_a_website_account_later(self):
-        """The website slice attaches a login to an existing record rather
-        than creating a second one."""
         customer = Customer.objects.create(name='Al Noor Pharmacy')
         account = User.objects.create_user(username='alnoor', password='pass', role=User.Role.CUSTOMER)
 
@@ -33,46 +33,127 @@ class CustomerModelTests(TestCase):
         with self.assertRaises(ProtectedError):
             customer.delete()
 
+    def test_a_new_customer_starts_pending(self):
+        self.assertEqual(Customer.objects.create(name='Dar Al Shifa').status,
+                         Customer.Status.PENDING)
 
-class CustomerApiTests(TestCase):
+
+class CustomerCreationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='cust_mgr', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='cust_slm', password='pass', role=User.Role.SALESMAN)
-        self.warehouse = User.objects.create_user(username='cust_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
-        Customer.objects.create(name='Al Noor Pharmacy', phone='0100000000')
+        self.manager = User.objects.create_user(username='cc_mgr', password='pass', role=User.Role.MANAGER)
+        self.other_manager = User.objects.create_user(username='cc_mgr2', password='pass', role=User.Role.MANAGER)
+        self.salesman = User.objects.create_user(username='cc_slm', password='pass', role=User.Role.SALESMAN)
+        self.warehouse = User.objects.create_user(username='cc_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
 
-    def test_salesman_can_list_customers(self):
-        """The order form's customer picker is a salesman-facing screen."""
+    def test_a_salesman_creates_a_customer_as_a_pending_request(self):
         self.client.force_authenticate(user=self.salesman)
-
-        resp = self.client.get('/api/customers/')
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.json()), 1)
-
-    def test_manager_can_create_a_customer(self):
-        self.client.force_authenticate(user=self.manager)
 
         resp = self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
 
         self.assertEqual(resp.status_code, 201)
-        self.assertTrue(Customer.objects.filter(name='Dar Al Shifa').exists())
+        customer = Customer.objects.get(pk=resp.json()['id'])
+        self.assertEqual(customer.status, Customer.Status.PENDING)
+        self.assertEqual(customer.created_by, self.salesman)
 
-    def test_salesman_cannot_create_a_customer(self):
-        """Until the e-commerce slice, customer records are entered by staff."""
+    def test_a_salesman_creating_a_customer_notifies_every_manager(self):
         self.client.force_authenticate(user=self.salesman)
+
+        self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
+
+        for manager in (self.manager, self.other_manager):
+            self.assertTrue(Notification.objects.filter(
+                recipient=manager, kind=Notification.Kind.CUSTOMER_SUBMITTED).exists())
+
+    def test_a_manager_creates_a_customer_already_approved(self):
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
+
+        customer = Customer.objects.get(pk=resp.json()['id'])
+        self.assertEqual(customer.status, Customer.Status.APPROVED)
+        self.assertEqual(customer.created_by, self.manager)
+
+    def test_a_manager_created_customer_does_not_notify_anyone(self):
+        """Nothing is waiting on it, so nobody needs telling."""
+        self.client.force_authenticate(user=self.manager)
+
+        self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
+
+        self.assertEqual(Notification.objects.count(), 0)
+
+    def test_creation_writes_an_audit_row(self):
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
+
+        self.assertTrue(RequestTransition.objects.filter(
+            source_model='Customer', source_id=str(resp.json()['id']),
+            to_status='PENDING').exists())
+
+    def test_a_warehouse_worker_cannot_create_a_customer(self):
+        self.client.force_authenticate(user=self.warehouse)
 
         resp = self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
 
         self.assertEqual(resp.status_code, 403)
 
-    def test_warehouse_worker_cannot_read_customers(self):
-        self.client.force_authenticate(user=self.warehouse)
+    def test_status_cannot_be_set_from_the_request_body(self):
+        """The regression guard: status moves only through the actions."""
+        self.client.force_authenticate(user=self.salesman)
 
-        resp = self.client.get('/api/customers/')
+        resp = self.client.post('/api/customers/',
+                                {'name': 'Dar Al Shifa', 'status': 'APPROVED'}, format='json')
 
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(Customer.objects.get(pk=resp.json()['id']).status,
+                         Customer.Status.PENDING)
+
+
+class CustomerScopingTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='cs_mgr', password='pass', role=User.Role.MANAGER)
+        self.salesman = User.objects.create_user(username='cs_slm', password='pass', role=User.Role.SALESMAN)
+        self.other_salesman = User.objects.create_user(username='cs_slm2', password='pass', role=User.Role.SALESMAN)
+
+        self.approved = Customer.objects.create(name='Approved Co', status=Customer.Status.APPROVED)
+        self.mine = Customer.objects.create(name='My Pending', status=Customer.Status.PENDING,
+                                            created_by=self.salesman)
+        self.theirs = Customer.objects.create(name='Their Pending', status=Customer.Status.PENDING,
+                                              created_by=self.other_salesman)
+
+    def test_a_manager_sees_every_customer(self):
+        self.client.force_authenticate(user=self.manager)
+
+        names = {row['name'] for row in self.client.get('/api/customers/').json()}
+
+        self.assertEqual(names, {'Approved Co', 'My Pending', 'Their Pending'})
+
+    def test_a_salesman_sees_approved_customers_and_only_their_own_pending(self):
+        self.client.force_authenticate(user=self.salesman)
+
+        names = {row['name'] for row in self.client.get('/api/customers/').json()}
+
+        self.assertEqual(names, {'Approved Co', 'My Pending'})
+
+    def test_the_status_filter_narrows_the_list(self):
+        self.client.force_authenticate(user=self.manager)
+
+        rows = self.client.get('/api/customers/?status=PENDING').json()
+
+        self.assertEqual({row['name'] for row in rows}, {'My Pending', 'Their Pending'})
+
+    def test_an_unknown_status_is_rejected(self):
+        self.client.force_authenticate(user=self.manager)
+
+        self.assertEqual(self.client.get('/api/customers/?status=NOPE').status_code, 400)
+
+    def test_the_list_carries_the_creator_name(self):
+        self.client.force_authenticate(user=self.manager)
+
+        rows = self.client.get('/api/customers/?status=PENDING').json()
+
+        self.assertEqual({row['created_by_name'] for row in rows}, {'cs_slm', 'cs_slm2'})
 
     def test_unauthenticated_is_401(self):
         self.assertEqual(APIClient().get('/api/customers/').status_code, 401)
