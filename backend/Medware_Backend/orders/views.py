@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from audit.models import RequestTransition
+from customers.models import Customer
+from customers.serializers import CustomerSerializer
 from mysite.filters import filter_by_query_params
 from notifications.models import Notification
 from notifications.services import managers, notify
@@ -357,55 +359,96 @@ class InboxView(APIView):
             items = self._salesman_updates(request)
         else:
             items = self._queue(request, self.QUEUE_STATUS_BY_ROLE[role])
+            if role == 'MANAGER':
+                items += self._pending_customers(request)
 
         return Response({'role': role, 'count': len(items), 'items': items})
 
     def _queue(self, request, status_value):
-        orders = OrderRequest.objects.filter(status=status_value) \
-            .select_related('customer', 'salesman').prefetch_related('items') \
-            .order_by('created_at')
+        orders = (OrderRequest.objects
+                  .filter(status=status_value)
+                  .select_related('customer', 'salesman')
+                  .prefetch_related('items')
+                  .order_by('created_at'))
         return [
             {
                 'kind': f'ORDER_{status_value}',
                 'order': OrderRequestSerializer(order, context={'request': request}).data,
+                'customer': None,
                 'message': '',
                 'notification_id': None,
             }
             for order in orders
         ]
 
+    def _pending_customers(self, request):
+        """Customer requests waiting on a manager - the same queue treatment as
+        pending orders, derived from status so it cannot drift."""
+        customers = (Customer.objects
+                     .filter(status=Customer.Status.PENDING)
+                     .select_related('created_by')
+                     .order_by('created_at'))
+        return [
+            {
+                'kind': 'CUSTOMER_PENDING',
+                'order': None,
+                'customer': CustomerSerializer(customer, context={'request': request}).data,
+                'message': '',
+                'notification_id': None,
+            }
+            for customer in customers
+        ]
+
     def _salesman_updates(self, request):
         unread = list(Notification.objects.filter(
             recipient=request.user,
-            kind=Notification.Kind.ORDER_REJECTED,
+            kind__in=[Notification.Kind.ORDER_REJECTED, Notification.Kind.CUSTOMER_REJECTED],
             read_at__isnull=True,
         ))
-        # `target_id` is a CharField and the model is documented as taking
-        # non-order targets in future, so a value that is not an order pk
-        # must skip its row rather than 500 the whole inbox.
-        target_pks_by_notification = {}
+
+        order_ids, customer_ids = [], []
         for notification in unread:
             try:
-                target_pks_by_notification[notification.pk] = int(notification.target_id)
+                target_pk = int(notification.target_id)
             except (TypeError, ValueError):
                 continue
+            if notification.kind == Notification.Kind.ORDER_REJECTED:
+                order_ids.append(target_pk)
+            else:
+                customer_ids.append(target_pk)
 
-        orders_by_pk = {
-            order.pk: order
-            for order in OrderRequest.objects.filter(pk__in=target_pks_by_notification.values())
-                .select_related('customer', 'salesman').prefetch_related('items')
-        }
+        orders = {o.pk: o for o in OrderRequest.objects.filter(pk__in=order_ids)
+                  .select_related('customer', 'salesman').prefetch_related('items')}
+        customers = {c.pk: c for c in Customer.objects.filter(pk__in=customer_ids)
+                     .select_related('created_by')}
 
         items = []
         for notification in unread:
-            target_pk = target_pks_by_notification.get(notification.pk)
-            order = orders_by_pk.get(target_pk)
-            if order is None:
+            try:
+                target_pk = int(notification.target_id)
+            except (TypeError, ValueError):
                 continue
-            items.append({
-                'kind': 'ORDER_REJECTED',
-                'order': OrderRequestSerializer(order, context={'request': request}).data,
-                'message': notification.message,
-                'notification_id': notification.pk,
-            })
+
+            if notification.kind == Notification.Kind.ORDER_REJECTED:
+                order = orders.get(target_pk)
+                if order is None:
+                    continue
+                items.append({
+                    'kind': 'ORDER_REJECTED',
+                    'order': OrderRequestSerializer(order, context={'request': request}).data,
+                    'customer': None,
+                    'message': notification.message,
+                    'notification_id': notification.pk,
+                })
+            else:
+                customer = customers.get(target_pk)
+                if customer is None:
+                    continue
+                items.append({
+                    'kind': 'CUSTOMER_REJECTED',
+                    'order': None,
+                    'customer': CustomerSerializer(customer, context={'request': request}).data,
+                    'message': notification.message,
+                    'notification_id': notification.pk,
+                })
         return items

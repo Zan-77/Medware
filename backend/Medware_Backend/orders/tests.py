@@ -85,7 +85,7 @@ class OrderTransitionTests(TestCase):
         self.salesman = User.objects.create_user(username='tr_slm', password='pass', role=User.Role.SALESMAN)
         self.manager = User.objects.create_user(username='tr_mgr', password='pass', role=User.Role.MANAGER)
         self.accountant = User.objects.create_user(username='tr_acc', password='pass', role=User.Role.ACCOUNTANT)
-        self.customer = Customer.objects.create(name='Al Noor Pharmacy')
+        self.customer = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
 
     def _order(self, status=OrderRequest.Status.PENDING):
@@ -313,7 +313,7 @@ class InboxTests(TestCase):
         self.manager = User.objects.create_user(username='ib_mgr', password='pass', role=User.Role.MANAGER)
         self.accountant = User.objects.create_user(username='ib_acc', password='pass', role=User.Role.ACCOUNTANT)
         self.warehouse = User.objects.create_user(username='ib_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
-        self.customer = Customer.objects.create(name='Al Noor Pharmacy')
+        self.customer = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
 
         self.pending = OrderRequest.objects.create(
             origin='SALESMAN', customer=self.customer, salesman=self.salesman,
@@ -459,8 +459,8 @@ class OrderMutationGuardTests(TestCase):
         self.other_salesman = User.objects.create_user(username='mg_slm2', password='pass', role=User.Role.SALESMAN)
         self.manager = User.objects.create_user(username='mg_mgr', password='pass', role=User.Role.MANAGER)
         self.accountant = User.objects.create_user(username='mg_acc', password='pass', role=User.Role.ACCOUNTANT)
-        self.customer_a = Customer.objects.create(name='Al Noor Pharmacy')
-        self.customer_b = Customer.objects.create(name='Dar Al Shifa')
+        self.customer_a = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
+        self.customer_b = Customer.objects.create(name='Dar Al Shifa', status=Customer.Status.APPROVED)
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
 
     def _order(self, status, salesman=None):
@@ -578,3 +578,95 @@ class OrderMutationGuardTests(TestCase):
         row = self.client.get(f'/api/orders/order-requests/{order.pk}/').json()
 
         self.assertEqual(row['items'][0]['product_name'], 'Paracetamol')
+
+
+from customers.models import Customer as CustomerModel
+
+
+class OrderRequiresApprovedCustomerTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.salesman = User.objects.create_user(username='ac_slm', password='pass', role=User.Role.SALESMAN)
+        self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
+        self.client.force_authenticate(user=self.salesman)
+
+    def _post(self, customer):
+        return self.client.post('/api/orders/order-requests/', {
+            'customer': customer.pk,
+            'items': [{'product': self.product.pk, 'quantity': 1, 'sell_price': '10.00'}],
+        }, format='json')
+
+    def test_an_order_for_an_approved_customer_is_accepted(self):
+        customer = CustomerModel.objects.create(name='Approved Co',
+                                                status=CustomerModel.Status.APPROVED)
+
+        self.assertEqual(self._post(customer).status_code, 201)
+
+    def test_an_order_for_a_pending_customer_is_refused(self):
+        """An order approved against a customer the company has not accepted
+        is a record nobody can act on."""
+        customer = CustomerModel.objects.create(name='Pending Co',
+                                                status=CustomerModel.Status.PENDING,
+                                                created_by=self.salesman)
+
+        resp = self._post(customer)
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('customer', resp.json())
+
+    def test_an_order_for_a_rejected_customer_is_refused(self):
+        customer = CustomerModel.objects.create(name='Rejected Co',
+                                                status=CustomerModel.Status.REJECTED,
+                                                created_by=self.salesman)
+
+        self.assertEqual(self._post(customer).status_code, 400)
+
+
+class InboxCustomerRowTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='ic_mgr', password='pass', role=User.Role.MANAGER)
+        self.salesman = User.objects.create_user(username='ic_slm', password='pass', role=User.Role.SALESMAN)
+
+    def test_the_manager_inbox_carries_pending_customers(self):
+        pending = CustomerModel.objects.create(name='Pending Co',
+                                               status=CustomerModel.Status.PENDING,
+                                               created_by=self.salesman)
+        CustomerModel.objects.create(name='Approved Co', status=CustomerModel.Status.APPROVED)
+        self.client.force_authenticate(user=self.manager)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        customer_rows = [i for i in body['items'] if i['kind'] == 'CUSTOMER_PENDING']
+        self.assertEqual(len(customer_rows), 1)
+        self.assertEqual(customer_rows[0]['customer']['id'], pending.pk)
+        self.assertIsNone(customer_rows[0]['order'])
+
+    def test_the_salesman_inbox_carries_their_unread_customer_rejections(self):
+        rejected = CustomerModel.objects.create(name='Rejected Co',
+                                                status=CustomerModel.Status.REJECTED,
+                                                created_by=self.salesman)
+        row = notify([self.salesman], Notification.Kind.CUSTOMER_REJECTED, rejected,
+                     message='Customer Rejected Co was rejected: duplicate')[0]
+        self.client.force_authenticate(user=self.salesman)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        self.assertEqual(body['count'], 1)
+        self.assertEqual(body['items'][0]['kind'], 'CUSTOMER_REJECTED')
+        self.assertEqual(body['items'][0]['notification_id'], row.pk)
+        self.assertEqual(body['items'][0]['customer']['id'], rejected.pk)
+
+    def test_order_rows_still_carry_a_null_customer_key(self):
+        customer = CustomerModel.objects.create(name='Approved Co',
+                                                status=CustomerModel.Status.APPROVED)
+        OrderRequest.objects.create(origin='SALESMAN', customer=customer,
+                                    salesman=self.salesman,
+                                    status=OrderRequest.Status.PENDING)
+        self.client.force_authenticate(user=self.manager)
+
+        body = self.client.get('/api/orders/inbox/').json()
+
+        order_rows = [i for i in body['items'] if i['kind'] == 'ORDER_PENDING']
+        self.assertEqual(len(order_rows), 1)
+        self.assertIsNone(order_rows[0]['customer'])

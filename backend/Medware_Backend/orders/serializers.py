@@ -29,6 +29,17 @@ class OrderRequestSerializer(serializers.ModelSerializer):
         # writable lets a salesman approve their own order with a PATCH.
         read_only_fields = ['status', 'origin', 'salesman', 'previous_balance', 'new_balance']
 
+    def validate_customer(self, value):
+        # An order approved against a customer the company has not accepted is
+        # a record nobody can act on. The manager sees the customer request in
+        # the same inbox, so the wait is short.
+        from customers.models import Customer
+
+        if value.status != Customer.Status.APPROVED:
+            raise serializers.ValidationError(
+                f'This customer is {value.status} and cannot have orders raised for them yet.')
+        return value
+
     def create(self, validated_data):
         items = validated_data.pop('items', [])
         order = OrderRequest.objects.create(**validated_data)
