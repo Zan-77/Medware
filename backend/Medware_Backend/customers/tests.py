@@ -98,6 +98,11 @@ class CustomerCreationTests(TestCase):
 
         self.assertEqual(resp.status_code, 403)
 
+    def test_a_warehouse_worker_cannot_read_customers(self):
+        self.client.force_authenticate(user=self.warehouse)
+
+        self.assertEqual(self.client.get('/api/customers/').status_code, 403)
+
     def test_status_cannot_be_set_from_the_request_body(self):
         """The regression guard: status moves only through the actions."""
         self.client.force_authenticate(user=self.salesman)
@@ -106,6 +111,21 @@ class CustomerCreationTests(TestCase):
                                 {'name': 'Dar Al Shifa', 'status': 'APPROVED'}, format='json')
 
         self.assertEqual(Customer.objects.get(pk=resp.json()['id']).status,
+                         Customer.Status.PENDING)
+
+    def test_status_cannot_be_changed_by_patching(self):
+        """The real read_only_fields guard. Unlike the create path - where
+        perform_create passes status= explicitly and would mask a writable
+        field - nothing here overrides the serializer, so this fails if
+        `status` ever leaves read_only_fields."""
+        self.client.force_authenticate(user=self.salesman)
+        created = self.client.post('/api/customers/', {'name': 'Dar Al Shifa'}, format='json')
+        customer_id = created.json()['id']
+
+        self.client.patch(f'/api/customers/{customer_id}/',
+                          {'status': 'APPROVED'}, format='json')
+
+        self.assertEqual(Customer.objects.get(pk=customer_id).status,
                          Customer.Status.PENDING)
 
 
