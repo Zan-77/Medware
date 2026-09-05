@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import User
 from orders.models import OrderRequest
-from audit.models import AuditLog
+from audit.models import AuditLog, RequestTransition
 from products.models import Product
 
 
@@ -336,3 +336,111 @@ class StaffRoleSetTests(TestCase):
         self.assertIs(user_serializers.STAFF_ROLES, STAFF_ROLES)
         self.assertEqual(STAFF_ROLES,
                          {'MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER'})
+
+
+class UserAdministrationTests(TestCase):
+    """The manager's surface for granting roles and approving accounts."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(
+            username='adm_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(
+            username='adm_slm', password='pass', role=User.Role.SALESMAN)
+
+    def test_a_manager_lists_every_account(self):
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.get('/api/users/manage/')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual({row['username'] for row in resp.json()},
+                         {'adm_mgr', 'adm_slm'})
+
+    def test_the_list_carries_the_role_and_verification_state(self):
+        self.client.force_authenticate(user=self.manager)
+
+        row = next(r for r in self.client.get('/api/users/manage/').json()
+                   if r['username'] == 'adm_slm')
+
+        self.assertEqual(row['role'], 'SALESMAN')
+        self.assertFalse(row['is_verified'])
+        self.assertIn('role_display', row)
+
+    def test_a_salesman_cannot_list_accounts(self):
+        self.salesman.is_verified = True
+        self.salesman.save(update_fields=['is_verified'])
+        self.client.force_authenticate(user=self.salesman)
+
+        self.assertEqual(self.client.get('/api/users/manage/').status_code, 403)
+
+    def test_a_manager_verifies_an_account_and_it_works_immediately(self):
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.patch(f'/api/users/manage/{self.salesman.pk}/',
+                                 {'is_verified': True}, format='json')
+
+        self.assertEqual(resp.status_code, 200)
+        self.salesman.refresh_from_db()
+        self.assertTrue(self.salesman.is_verified)
+
+        promoted = APIClient()
+        promoted.force_authenticate(user=self.salesman)
+        self.assertEqual(promoted.get('/api/products/products/').status_code, 200)
+
+    def test_a_manager_changes_a_role_and_it_is_audited(self):
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.patch(f'/api/users/manage/{self.salesman.pk}/',
+                                 {'role': 'ACCOUNTANT'}, format='json')
+
+        self.assertEqual(resp.status_code, 200)
+        self.salesman.refresh_from_db()
+        self.assertEqual(self.salesman.role, 'ACCOUNTANT')
+        transition = RequestTransition.objects.get(
+            source_model='User', source_id=str(self.salesman.pk))
+        self.assertIn('SALESMAN', transition.from_status)
+        self.assertIn('ACCOUNTANT', transition.to_status)
+        self.assertEqual(transition.actor, self.manager)
+
+    def test_a_manager_cannot_change_their_own_account(self):
+        """One careless click otherwise locks the company out."""
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.patch(f'/api/users/manage/{self.manager.pk}/',
+                                 {'role': 'SALESMAN'}, format='json')
+
+        self.manager.refresh_from_db()
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(self.manager.role, 'MANAGER')
+
+    def test_a_manager_cannot_modify_a_superuser(self):
+        root = User.objects.create_superuser(
+            username='adm_root', password='pass', email='r@example.com')
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.patch(f'/api/users/manage/{root.pk}/',
+                                 {'role': 'CUSTOMER'}, format='json')
+
+        root.refresh_from_db()
+        self.assertEqual(resp.status_code, 403)
+        self.assertTrue(root.is_superuser)
+
+    def test_username_and_password_are_not_writable_here(self):
+        self.client.force_authenticate(user=self.manager)
+
+        self.client.patch(f'/api/users/manage/{self.salesman.pk}/',
+                          {'username': 'renamed'}, format='json')
+
+        self.salesman.refresh_from_db()
+        self.assertEqual(self.salesman.username, 'adm_slm')
+
+    def test_an_unverified_manager_cannot_administer_users(self):
+        pending = User.objects.create_user(
+            username='adm_pending', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=pending)
+
+        self.assertEqual(self.client.get('/api/users/manage/').status_code, 403)
+
+    def test_unauthenticated_is_401(self):
+        self.assertEqual(APIClient().get('/api/users/manage/').status_code, 401)

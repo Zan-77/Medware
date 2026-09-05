@@ -8,6 +8,11 @@ router.register('manager', views.ManagerViewSet, basename='user-manager')
 router.register('accountant', views.AccountantViewSet, basename='user-accountant')
 router.register('salesman', views.SalesmanViewSet, basename='user-salesman')
 router.register('customer', views.CustomerViewSet, basename='user-customer')
+# Registered under `users/manage` rather than the bare `users` prefix: the
+# explicit users/me/, users/roles/ and users/access/ paths already occupy that
+# namespace, and a router detail route there would be an ambiguity waiting to
+# happen.
+router.register('users/manage', views.UserAdminViewSet, basename='user-admin')
 
 urlpatterns = [
     path('auth/register/', views.RegisterView.as_view(), name='auth-register'),

@@ -1,11 +1,14 @@
 from django.conf import settings
 from django.http import JsonResponse
-from rest_framework import status, viewsets, permissions
+from rest_framework import mixins, status, viewsets, permissions
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from audit.models import RequestTransition
 
 from .decorators import role_required
 from .models import User
@@ -14,6 +17,7 @@ from .serializers import (
     CookieTokenRefreshSerializer,
     EmailOrUsernameTokenObtainPairSerializer,
     RegisterSerializer,
+    UserAdminSerializer,
     UserSerializer,
     build_tokens_for_user,
 )
@@ -203,3 +207,49 @@ class SalesmanViewSet(RoleBaseViewSet):
 class CustomerViewSet(RoleBaseViewSet):
     permission_classes = [permissions.IsAuthenticated, IsCustomer]
     permission_message = 'Customer access granted via DRF.'
+
+
+class UserAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
+                       mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """Manager-only account administration: grant a role, approve an account.
+
+    No create and no destroy - accounts are made by registering, and deleting
+    one would cascade into the orders and customers that reference it.
+    """
+
+    queryset = User.objects.all().order_by('username')
+    serializer_class = UserAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsManager]
+
+    def perform_update(self, serializer):
+        target = serializer.instance
+        actor = self.request.user
+
+        # Both guards exist to stop one careless click locking the company out.
+        if target.pk == actor.pk:
+            raise PermissionDenied(
+                'You cannot change your own role or verification.')
+        if target.is_superuser:
+            raise PermissionDenied('A superuser account cannot be changed here.')
+
+        before_role, before_verified = target.role, target.is_verified
+        user = serializer.save()
+
+        if user.role == before_role and user.is_verified == before_verified:
+            return
+
+        changes = []
+        if user.role != before_role:
+            changes.append(f'role: {before_role} -> {user.role}')
+        if user.is_verified != before_verified:
+            changes.append(f'verified: {before_verified} -> {user.is_verified}')
+
+        RequestTransition.objects.create(
+            source_model='User',
+            source_id=str(user.pk),
+            from_status=f'role={before_role},verified={before_verified}',
+            to_status=f'role={user.role},verified={user.is_verified}',
+            actor=actor,
+            actor_role=getattr(actor, 'role', ''),
+            notes='; '.join(changes),
+        )

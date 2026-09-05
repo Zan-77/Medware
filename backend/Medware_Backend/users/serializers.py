@@ -5,24 +5,14 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from .permissions import STAFF_ROLES
 
-# Roles that carry staff privileges.
+# APPROVAL MODEL: anyone may register, but only a verified manager may hand out
+# a staff role directly, and a staff account holds no privileges until a manager
+# sets `is_verified`. Enforced in users/permissions.py, not only in the UI.
 #
-# APPROVAL MODEL (agreed design):
-#   Anyone may register with any role. Every account except a manager's then
-#   needs a manager to approve it by setting `is_verified = True`; until then
-#   the frontend treats the account as a guest regardless of its stored role.
-#
-#   While the approval flow is still being built, that gate is DISABLED - see
-#   RegisterSerializer below. Registration currently grants the requested role
-#   immediately, so a self-registered MANAGER really is a manager. Do not run
-#   this build anywhere public until the is_verified gate is switched on.
-PRIVILEGED_ROLES = {
-    User.Role.MANAGER,
-    User.Role.ACCOUNTANT,
-    User.Role.SALESMAN,
-    User.Role.WAREHOUSE_WORKER,
-}
+# STAFF_ROLES lives there too, so there is exactly one definition of which roles
+# are privileged - the copy that drifts is the one that becomes a hole.
 
 
 def build_tokens_for_user(user):
@@ -35,10 +25,10 @@ def build_tokens_for_user(user):
     refresh['first_name'] = user.first_name
     refresh['last_name'] = user.last_name
     refresh['email'] = user.email
-    # The frontend decodes this token to decide what to render. When the
-    # approval gate goes live it needs the flag here to show the guest view
-    # for an unverified account:
-    # refresh['is_verified'] = user.is_verified
+    # The frontend decodes this for its first render. It is a snapshot: the
+    # access token lives 15 minutes, so after a manager approves an account
+    # this claim lags. /api/users/me/ is the authoritative source.
+    refresh['is_verified'] = user.is_verified
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -112,30 +102,33 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password',
             'password2',
             'role',
-            # 'is_verified',   # <-- re-enable together with the gate below
+            'is_verified',
         ]
 
-    # --- manager approval gate (DISABLED during development) ---------------
-    # Re-enable to enforce the agreed model: anyone may request any role, but
-    # only a manager can hand out a staff role directly. Everyone else is
-    # created unverified and stays guest-equivalent in the UI until a manager
-    # flips is_verified. Uncomment this method, the 'is_verified' line in
-    # Meta.fields above, and the is_verified line in create() below.
-    #
-    # def validate_role(self, value):
-    #     """A staff role may only be granted directly by a manager."""
-    #     if value not in PRIVILEGED_ROLES:
-    #         return value
-    #     request = self.context.get('request')
-    #     actor = getattr(request, 'user', None)
-    #     if actor is not None and actor.is_authenticated and (
-    #         actor.is_superuser or actor.role == User.Role.MANAGER
-    #     ):
-    #         return value
-    #     raise serializers.ValidationError(
-    #         'You are not allowed to assign this role. Staff accounts must be '
-    #         'created by a manager.'
-    #     )
+    def validate_role(self, value):
+        """A staff role may only be granted directly by a verified manager.
+
+        Everyone else may register, but lands unverified and holds no
+        privileges until a manager approves the account.
+
+        The actor must be VERIFIED, not merely hold the manager role.
+        RegisterView is AllowAny, so an unverified manager stays authenticated
+        through it; checking the role alone would let them mint a MANAGER
+        account - which create() self-verifies - and bypass the whole gate.
+        """
+        if value not in STAFF_ROLES:
+            return value
+        request = self.context.get('request')
+        actor = getattr(request, 'user', None)
+        if actor is not None and actor.is_authenticated and (
+            actor.is_superuser
+            or (actor.role == User.Role.MANAGER and actor.is_verified)
+        ):
+            return value
+        raise serializers.ValidationError(
+            'You are not allowed to assign this role. Staff accounts must be '
+            'created by a manager.'
+        )
 
     def validate(self, data):
         if data['password'] != data['password2']:
@@ -152,11 +145,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         validated_data.setdefault('role', User.Role.CUSTOMER)
 
-        # With the approval gate on, every account except one created by a
-        # manager starts unverified and is guest-equivalent in the UI:
-        # validated_data['is_verified'] = (
-        #     validated_data.get('role') == User.Role.MANAGER
-        # )
+        # Only a verified manager can reach this with a staff role (see
+        # validate_role), so a manager-created manager is trusted. Everything
+        # else waits for approval.
+        validated_data['is_verified'] = (
+            validated_data.get('role') == User.Role.MANAGER
+        )
 
         return User.objects.create_user(**validated_data, password=password)
 
@@ -176,5 +170,23 @@ class UserSerializer(serializers.ModelSerializer):
             'role_display',
             'is_staff',
             'is_superuser',
-            # 'is_verified',   # <-- expose on /api/users/me/ with the gate
+            'is_verified',
+        ]
+
+
+class UserAdminSerializer(serializers.ModelSerializer):
+    """The manager's view of an account. Only `role` and `is_verified` move."""
+
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'role', 'role_display', 'is_verified',
+            'is_staff', 'is_superuser', 'date_joined',
+        ]
+        read_only_fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'role_display', 'is_staff', 'is_superuser', 'date_joined',
         ]
