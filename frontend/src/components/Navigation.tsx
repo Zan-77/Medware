@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import Dropdown from './Dropdown'
 import useOpenMenu from '../hooks/useOpenMenu'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logout } from '../features/auth'
 import { getUnreadNotifications } from '../features/orders/services/orders.service'
 import { setAuthHeader } from '../services/api'
@@ -40,6 +40,7 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
   const setIsAuthenticated = useBoundStore(state => state.authSlice.actions.setIsAuthenticated)
   const setIsGuest = useBoundStore(state => state.authSlice.actions.setIsGuest)
   const setUser = useBoundStore(state => state.authSlice.actions.setUser)
+  const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationKey: ["auth", "relogin"],
     mutationFn: logout,
@@ -50,6 +51,9 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
         navigate("/app/auth/login", { relative: "path" })
     },
     onSuccess: () => {
+      // Nothing cached belongs to whoever signs in next - and a stale ["me"]
+      // would let an unverified account past the approval screen.
+      queryClient.clear()
       setAuthHeader('')
       setIsGuest(true)
       setIsAuthenticated(false)

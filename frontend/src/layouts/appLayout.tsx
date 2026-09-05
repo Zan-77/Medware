@@ -23,7 +23,7 @@ export const appLayout = () => {
     // Authoritative: the JWT carries the same flag, but as a 15-minute-old
     // snapshot it would leave someone staring at this screen long after a
     // manager approved them.
-    const { data: me } = useQuery({ queryKey: ['me'], queryFn: getCurrentUser })
+    const { data: me, isLoading: isLoadingMe } = useQuery({ queryKey: ['me'], queryFn: getCurrentUser })
     const awaitingApproval = Boolean(
         me && !me.is_superuser && STAFF_ROLES.includes(me.role) && !me.is_verified
     )
@@ -34,7 +34,19 @@ export const appLayout = () => {
         else
             setIsOpen(true)
     },[])
-    
+
+    // Render nothing until we know: showing the app first and yanking it away
+    // once /users/me/ answers is worse than a blank moment, and an unverified
+    // account would briefly see a UI it has no access to.
+    if (isLoadingMe) return null
+
+    // The whole layout is replaced, not just the outlet - an account awaiting
+    // approval has no business seeing the navigation, and the nav header shows
+    // the account's name and its not-yet-granted role.
+    if (awaitingApproval) {
+        return <PendingApprovalPage username={me?.username} roleLabel={me?.role_display} />
+    }
+
     return (
         <div className='flex h-dvh box-border md:p-4'>
 
@@ -59,9 +71,7 @@ export const appLayout = () => {
                     <Text  weight='medium' className='select-none'>{location.state?.details}</Text>
                 </div>
                 <div>
-                    {awaitingApproval
-                        ? <PendingApprovalPage username={me?.username} roleLabel={me?.role_display} />
-                        : <Outlet />}
+                    <Outlet />
                 </div>
             </div>
         </div>

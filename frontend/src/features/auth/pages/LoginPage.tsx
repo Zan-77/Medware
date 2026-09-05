@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { login } from "../services/auth.service"
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from "react";
@@ -40,6 +40,8 @@ export const LoginPage = () => {
         clearErrors("root.server")
     }, [email, password])
 
+    const queryClient = useQueryClient()
+
     const onSubmit = (data: LoginFieldsValues) => {
         if (isPending) return
         mutate(data, {
@@ -49,6 +51,11 @@ export const LoginPage = () => {
             onSuccess: (data) => {
                 const accessPayload = decodeAccessToken(data.access)
                 if (accessPayload) {
+                    // The previous session's cache must not leak into this
+                    // one - the ["me"] entry decides whether the account is
+                    // verified, and a stale hit lets an unverified user
+                    // straight past the approval screen.
+                    queryClient.clear()
                     setAuthHeader(data.access)
                     setIsGuest(false)
                     setIsAuthenticated(true)
