@@ -1,3 +1,4 @@
+import type { Customer } from "../customers/types/customers"
 import type { InventoryCategories, InventoryItems, InventoryStockEntry, SupplierBilllLines, SupplierBillls } from "../inventory/types/inventory"
 import type { OrderRequest } from "../orders/types/orders"
 import type { Products, Suppliers } from "../products/types/products"
@@ -51,6 +52,14 @@ export type Permissions = {
         dataType: OrderRequest
         actions: Actions
     }
+    customers: {
+        dataType: Customer
+        actions: Actions
+    }
+    customerApproval: {
+        dataType: Customer
+        actions: Actions
+    }
 }
 
 const ROLES = {
@@ -62,6 +71,18 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customers: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customerApproval: {
             read: false,
             create: false,
             update: false,
@@ -123,6 +144,18 @@ const ROLES = {
             update: false,
             delete: false
         },
+        customers: {
+            read: true,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customerApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
         suppliers: {
             read: true,
             create: false,
@@ -174,6 +207,18 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customers: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customerApproval: {
             read: false,
             create: false,
             update: false,
@@ -235,6 +280,18 @@ const ROLES = {
             update: true,
             delete: false
         },
+        customers: {
+            read: true,
+            create: true,
+            update: true,
+            delete: true
+        },
+        customerApproval: {
+            read: true,
+            create: true,
+            update: true,
+            delete: false
+        },
         suppliers: {
             read: true,
             create: true,
@@ -291,6 +348,18 @@ const ROLES = {
             update: false,
             delete: false
         },
+        customers: {
+            read: true,
+            create: true,
+            update: true,
+            delete: false
+        },
+        customerApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
         suppliers: {
             read: true,
             create: false,
@@ -342,6 +411,18 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customers: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        customerApproval: {
             read: false,
             create: false,
             update: false,
