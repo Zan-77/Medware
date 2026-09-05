@@ -39,6 +39,7 @@ export const createAuthSlice: StateCreator<AuthSliceSate, [["zustand/immer", nev
             username: "",
             first_name: "",
             last_name: "",
+            is_verified: false,
         },
         isGuest: true,
         isAuthenticated: false,

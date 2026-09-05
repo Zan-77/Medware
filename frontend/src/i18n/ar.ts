@@ -132,6 +132,11 @@ export const ar = {
     inbound: "الوارد",
     outbound: "الصادر",
     comingSoon: "قريبًا",
+    Pending: {
+        title: "الحساب بانتظار الموافقة",
+        body: "تم إنشاء حسابك ويحتاج إلى موافقة المدير قبل استخدام النظام.",
+        recheck: "تحقق مرة أخرى"
+    },
     ACCOUNTANT: "محاسب",
     SALESMAN: "مندوب مبيعات",
     WAREHOUSE_WORKER: "عامل مستودع",

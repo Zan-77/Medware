@@ -7,11 +7,27 @@ import Button from '../components/Button'
 import useOpenMenu from '../hooks/useOpenMenu'
 import { useTranslation } from 'react-i18next'
 import { useLayoutEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { getCurrentUser } from '../features/auth/services/auth.service'
+import { PendingApprovalPage } from '../features/auth/pages/PendingApprovalPage'
+
+// Only staff roles need approval. A customer self-registers on the storefront
+// and is never held behind it.
+const STAFF_ROLES = ['MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER']
 
 export const appLayout = () => {
     const { isOpen, setIsOpen, ref:navRef } = useOpenMenu()
     const location =useLocation()
     const { t } = useTranslation()
+
+    // Authoritative: the JWT carries the same flag, but as a 15-minute-old
+    // snapshot it would leave someone staring at this screen long after a
+    // manager approved them.
+    const { data: me } = useQuery({ queryKey: ['me'], queryFn: getCurrentUser })
+    const awaitingApproval = Boolean(
+        me && !me.is_superuser && STAFF_ROLES.includes(me.role) && !me.is_verified
+    )
+
     useLayoutEffect(() => {
         if (window.innerWidth < 768)
             setIsOpen(false)
@@ -43,7 +59,9 @@ export const appLayout = () => {
                     <Text  weight='medium' className='select-none'>{location.state?.details}</Text>
                 </div>
                 <div>
-                    <Outlet />
+                    {awaitingApproval
+                        ? <PendingApprovalPage username={me?.username} roleLabel={me?.role_display} />
+                        : <Outlet />}
                 </div>
             </div>
         </div>

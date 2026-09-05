@@ -8,6 +8,9 @@ export interface User  {
     first_name:string
     last_name:string
     role:Roles
+    // Set from /api/users/me/, which is authoritative. The JWT carries the
+    // same flag but it is a 15-minute-old snapshot, so it lags approval.
+    is_verified?:boolean
     //is_staff:boolean
     //is_superuser:boolean
 }

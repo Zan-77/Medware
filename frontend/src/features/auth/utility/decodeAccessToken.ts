@@ -11,6 +11,7 @@ user_id: string
 first_name:string
 last_name:string
 email:string
+is_verified?:boolean
 }
 
 export const decodeAccessToken = (token: string): JwtPayload | null => {

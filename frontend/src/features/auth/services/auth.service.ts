@@ -25,6 +25,25 @@ export async function relogin(): Promise<AuthReturn> {
     return res.data
 }
 
+export interface CurrentUser {
+    id: string
+    username: string
+    email: string
+    role: string
+    role_display: string
+    is_verified: boolean
+    is_staff: boolean
+    is_superuser: boolean
+}
+
+// The token claim is a 15-minute-old snapshot, so after a manager approves an
+// account it lags. This endpoint answers from the row and is authoritative -
+// the backend authorises off the same value.
+export async function getCurrentUser(): Promise<CurrentUser> {
+    const res = await ax.get<CurrentUser>("/users/me/")
+    return res.data
+}
+
 export async function logout(): Promise<AuthReturn> {
     const res = await ax.post("/auth/logout/")
     return res.data
