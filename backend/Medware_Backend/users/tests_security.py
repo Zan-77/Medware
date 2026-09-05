@@ -28,30 +28,60 @@ class SecurityRegressionTests(TestCase):
             role=User.Role.CUSTOMER)
         self.manager = User.objects.create_user(
             username='sec_mgr', email='sec_mgr@example.com', password='pass1234',
-            role=User.Role.MANAGER)
+            role=User.Role.MANAGER, is_verified=True)
 
     # --- registration policy ------------------------------------------------
-    # Current (development) policy: anyone may register with any role. The
-    # manager-approval gate (is_verified) is commented out in
-    # users/serializers.py. This test PINS THE INSECURE DEV BEHAVIOUR so that
-    # switching the gate back on fails loudly here and reminds you to flip
-    # this test over to asserting 400.
-    def test_self_registration_with_staff_role_is_currently_allowed(self):
+    # The manager-approval gate is ON: anyone may register, but a staff role
+    # may only be granted by a verified manager, and every account except a
+    # manager-created one starts unverified and holds no privileges until a
+    # manager approves it.
+    def test_self_registration_with_a_staff_role_is_refused(self):
+        """A staff role may only be granted by a verified manager."""
         resp = self.client.post('/api/auth/register/', {
             'username': 'escalate', 'email': 'escalate@example.com',
             'first_name': 'E', 'last_name': 'S',
             'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
             'role': 'MANAGER',
         }, format='json')
-        self.assertEqual(
-            resp.status_code, 201,
-            'If this is now 400 the approval gate is back on - update this test.')
-        created = User.objects.get(username='escalate')
-        self.assertEqual(created.role, 'MANAGER')
-        self.assertFalse(
-            created.is_verified,
-            'New accounts must still default to unverified so the approval '
-            'flow has something to switch on.')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('role', resp.json())
+        self.assertFalse(User.objects.filter(username='escalate').exists())
+
+    def test_an_unverified_manager_cannot_create_a_staff_account(self):
+        """The gate's own bypass, if the actor check looked only at the role.
+
+        RegisterView is AllowAny, so an unverified manager stays authenticated
+        through it. Checking only `actor.role == MANAGER` would let them mint a
+        MANAGER account - which create() self-verifies - and walk straight
+        around the whole approval flow.
+        """
+        pending = User.objects.create_user(
+            username='sec_pending_mgr', email='pending@example.com',
+            password='pass1234', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=pending)
+
+        resp = self.client.post('/api/auth/register/', {
+            'username': 'minted', 'email': 'minted@example.com',
+            'first_name': 'M', 'last_name': 'I',
+            'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
+            'role': 'MANAGER',
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='minted').exists())
+
+    def test_a_manager_created_account_starts_unverified_unless_it_is_a_manager(self):
+        self.client.force_authenticate(user=self.manager)
+
+        self.client.post('/api/auth/register/', {
+            'username': 'newslm', 'email': 'newslm@example.com',
+            'first_name': 'N', 'last_name': 'S',
+            'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
+            'role': 'SALESMAN',
+        }, format='json')
+
+        self.assertFalse(User.objects.get(username='newslm').is_verified)
 
     def test_anonymous_can_still_register_as_customer(self):
         resp = self.client.post('/api/auth/register/', {
@@ -80,7 +110,7 @@ class SecurityRegressionTests(TestCase):
             'username': 'selfverify', 'email': 'selfverify@example.com',
             'first_name': 'S', 'last_name': 'V',
             'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
-            'role': 'MANAGER', 'is_verified': True,
+            'role': 'CUSTOMER', 'is_verified': True,
         }, format='json')
         self.assertEqual(resp.status_code, 201)
         self.assertFalse(User.objects.get(username='selfverify').is_verified)
