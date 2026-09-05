@@ -5,14 +5,13 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .permissions import STAFF_ROLES
 
 # APPROVAL MODEL: anyone may register, but only a verified manager may hand out
 # a staff role directly, and a staff account holds no privileges until a manager
 # sets `is_verified`. Enforced in users/permissions.py, not only in the UI.
 #
-# STAFF_ROLES lives there too, so there is exactly one definition of which roles
-# are privileged - the copy that drifts is the one that becomes a hole.
+# STAFF_ROLES lives in users/permissions.py - one definition of which roles are
+# privileged, next to the check that uses it.
 
 
 def build_tokens_for_user(user):
@@ -105,31 +104,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             'is_verified',
         ]
 
-    def validate_role(self, value):
-        """A staff role may only be granted directly by a verified manager.
-
-        Everyone else may register, but lands unverified and holds no
-        privileges until a manager approves the account.
-
-        The actor must be VERIFIED, not merely hold the manager role.
-        RegisterView is AllowAny, so an unverified manager stays authenticated
-        through it; checking the role alone would let them mint a MANAGER
-        account - which create() self-verifies - and bypass the whole gate.
-        """
-        if value not in STAFF_ROLES:
-            return value
-        request = self.context.get('request')
-        actor = getattr(request, 'user', None)
-        if actor is not None and actor.is_authenticated and (
-            actor.is_superuser
-            or (actor.role == User.Role.MANAGER and actor.is_verified)
-        ):
-            return value
-        raise serializers.ValidationError(
-            'You are not allowed to assign this role. Staff accounts must be '
-            'created by a manager.'
-        )
-
     def validate(self, data):
         if data['password'] != data['password2']:
             raise serializers.ValidationError({'password': "Password fields didn't match."})
@@ -145,11 +119,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         validated_data.setdefault('role', User.Role.CUSTOMER)
 
-        # Only a verified manager can reach this with a staff role (see
-        # validate_role), so a manager-created manager is trusted. Everything
-        # else waits for approval.
-        validated_data['is_verified'] = (
-            validated_data.get('role') == User.Role.MANAGER
+        # Anyone may REQUEST any role - registration never fails on the role,
+        # so the frontend can show "awaiting approval" instead of an error.
+        # What is gated is whether the account is verified, and a role does
+        # nothing at all until it is (users/permissions.py).
+        #
+        # Verification is conferred by the ACTOR, never by the requested role.
+        # Deriving it from the role instead would mean anyone self-registering
+        # as MANAGER was born verified - the entire gate, bypassed by a
+        # dropdown. And the actor must itself be verified: RegisterView is
+        # AllowAny, so an unverified manager stays authenticated through it.
+        actor = getattr(self.context.get('request'), 'user', None)
+        validated_data['is_verified'] = bool(
+            actor is not None
+            and actor.is_authenticated
+            and (
+                actor.is_superuser
+                or (actor.role == User.Role.MANAGER and actor.is_verified)
+            )
         )
 
         return User.objects.create_user(**validated_data, password=password)

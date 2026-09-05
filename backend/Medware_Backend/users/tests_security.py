@@ -31,12 +31,17 @@ class SecurityRegressionTests(TestCase):
             role=User.Role.MANAGER, is_verified=True)
 
     # --- registration policy ------------------------------------------------
-    # The manager-approval gate is ON: anyone may register, but a staff role
-    # may only be granted by a verified manager, and every account except a
-    # manager-created one starts unverified and holds no privileges until a
-    # manager approves it.
-    def test_self_registration_with_a_staff_role_is_refused(self):
-        """A staff role may only be granted by a verified manager."""
+    # The manager-approval gate is ON. Anyone may REGISTER requesting any role -
+    # signup never fails on the role, so the UI can show "awaiting approval"
+    # rather than an error. The role simply does nothing until a manager
+    # verifies the account. Verification is conferred by the ACTOR creating the
+    # account, never by the role requested.
+    def test_self_registration_with_a_staff_role_succeeds_but_is_unverified(self):
+        """Signup must not fail on the role - the UI shows "awaiting approval".
+
+        The role is inert until a manager verifies the account, so letting the
+        request through costs nothing and gives the person somewhere to land.
+        """
         resp = self.client.post('/api/auth/register/', {
             'username': 'escalate', 'email': 'escalate@example.com',
             'first_name': 'E', 'last_name': 'S',
@@ -44,34 +49,46 @@ class SecurityRegressionTests(TestCase):
             'role': 'MANAGER',
         }, format='json')
 
-        self.assertEqual(resp.status_code, 400)
-        self.assertIn('role', resp.json())
-        self.assertFalse(User.objects.filter(username='escalate').exists())
+        self.assertEqual(resp.status_code, 201)
+        created = User.objects.get(username='escalate')
+        self.assertEqual(created.role, 'MANAGER')
+        self.assertFalse(
+            created.is_verified,
+            'Self-registering as MANAGER must never confer verification - that '
+            'would bypass the entire gate with a dropdown.')
 
-    def test_an_unverified_manager_cannot_create_a_staff_account(self):
-        """The gate's own bypass, if the actor check looked only at the role.
+    def test_a_self_registered_staff_account_can_do_nothing_until_verified(self):
+        """The role being inert is what makes the permissive signup safe."""
+        self.client.post('/api/auth/register/', {
+            'username': 'inert', 'email': 'inert@example.com',
+            'first_name': 'I', 'last_name': 'N',
+            'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
+            'role': 'MANAGER',
+        }, format='json')
 
-        RegisterView is AllowAny, so an unverified manager stays authenticated
-        through it. Checking only `actor.role == MANAGER` would let them mint a
-        MANAGER account - which create() self-verifies - and walk straight
-        around the whole approval flow.
-        """
+        pending = APIClient()
+        pending.force_authenticate(user=User.objects.get(username='inert'))
+        self.assertEqual(pending.get('/api/products/products/').status_code, 403)
+
+    def test_an_unverified_manager_cannot_confer_verification(self):
+        """RegisterView is AllowAny, so an unverified manager stays
+        authenticated through it. If the actor check looked only at the role
+        they could mint a verified MANAGER and walk around the whole flow."""
         pending = User.objects.create_user(
             username='sec_pending_mgr', email='pending@example.com',
             password='pass1234', role=User.Role.MANAGER)
         self.client.force_authenticate(user=pending)
 
-        resp = self.client.post('/api/auth/register/', {
+        self.client.post('/api/auth/register/', {
             'username': 'minted', 'email': 'minted@example.com',
             'first_name': 'M', 'last_name': 'I',
             'password': 'Str0ng!Passw0rd', 'password2': 'Str0ng!Passw0rd',
             'role': 'MANAGER',
         }, format='json')
 
-        self.assertEqual(resp.status_code, 400)
-        self.assertFalse(User.objects.filter(username='minted').exists())
+        self.assertFalse(User.objects.get(username='minted').is_verified)
 
-    def test_a_manager_created_account_starts_unverified_unless_it_is_a_manager(self):
+    def test_a_verified_manager_creating_an_account_confers_verification(self):
         self.client.force_authenticate(user=self.manager)
 
         self.client.post('/api/auth/register/', {
@@ -81,7 +98,7 @@ class SecurityRegressionTests(TestCase):
             'role': 'SALESMAN',
         }, format='json')
 
-        self.assertFalse(User.objects.get(username='newslm').is_verified)
+        self.assertTrue(User.objects.get(username='newslm').is_verified)
 
     def test_anonymous_can_still_register_as_customer(self):
         resp = self.client.post('/api/auth/register/', {
@@ -329,13 +346,19 @@ class StaffVerificationGateTests(TestCase):
 class StaffRoleSetTests(TestCase):
     def test_the_staff_role_set_is_defined_once(self):
         """Two hand-maintained copies of "which roles are privileged" drift,
-        and the one that drifts silently is a security hole."""
+        and the one that drifts silently is a security hole.
+
+        The canonical set lives in permissions.py, beside the check that uses
+        it. serializers.py must not keep a rival list.
+        """
         from users import serializers as user_serializers
         from users.permissions import STAFF_ROLES
 
-        self.assertIs(user_serializers.STAFF_ROLES, STAFF_ROLES)
         self.assertEqual(STAFF_ROLES,
                          {'MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER'})
+        self.assertFalse(
+            hasattr(user_serializers, 'PRIVILEGED_ROLES'),
+            'serializers.py is keeping its own copy of the staff-role set.')
 
 
 class UserAdministrationTests(TestCase):
