@@ -1,8 +1,9 @@
 
 import { forwardRef } from 'react'
 import Button from './Button'
+import Text from './Text'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDown01Icon,  BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, RightToLeftListDashIcon, Trolley02Icon } from '@hugeicons/core-free-icons'
+import { ArrowDown01Icon, BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, RightToLeftListDashIcon, Trolley02Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import Dropdown from './Dropdown'
@@ -16,6 +17,21 @@ import { useBoundStore } from '../store/useBoundStore'
 interface NavigationProps {
   className?: string
 }
+
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <Text className='px-2 pt-3 pb-1 text-xs opacity-60 select-none'>{children}</Text>
+)
+
+// Home, Employees and Settings have no backend yet. They are rendered so the
+// shape of the app is visible, but they navigate nowhere - a nav entry that
+// leads to a dead route is the bug this codebase keeps having to fix.
+const ComingSoonEntry = ({ icon, label, hint }: { icon: React.ComponentProps<typeof HugeiconsIcon>["icon"]; label: string; hint: string }) => (
+  <div className='w-full flex items-center gap-x-2 px-2 py-1.5 rounded-lg opacity-40 cursor-not-allowed select-none'
+    aria-disabled='true' title={hint}>
+    <HugeiconsIcon size={22} icon={icon} />
+    <Text>{label}</Text>
+  </div>
+)
 
 const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, ref) => {
   const location = useLocation()
@@ -52,9 +68,6 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
   })
   const unreadCount = unreadNotifications?.length ?? 0
   const { isOpen: isOpenUserButton, setIsOpen: setIsOpenUserButton, ref: userButtonRef } = useOpenMenu()
-  const { isOpen: isOpenWareHouse, setIsOpen: setIsOpenWareHouse } = useOpenMenu()
-  const { isOpen: isOpenOrders, setIsOpen: setIsOpenOrders } = useOpenMenu()
-  const { isOpen: isOpenSuppliers, setIsOpen: setIsOpenSuppliers } = useOpenMenu()
   const { t } = useTranslation()
   const navigarte = useNavigate()
   
@@ -67,106 +80,84 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
             className='w-full justify-start'
               leftIcon={<div className='h-full aspect-square rounded-sm flex justify-center items-center text-dark-text-primary bg-amber-700'>{user.first_name[0]}</div>}
               rightIcon={<HugeiconsIcon className={` transition-all ease-in-out ${isOpenUserButton ? "rotate-0" : "rotate-180"}`} size={22} icon={ArrowDown01Icon} />}>
-             {user.first_name}
+             <span className='flex flex-col items-start leading-tight'>
+               <Text>{user.first_name}</Text>
+               <Text className='text-xs opacity-60'>{t(user.role)}</Text>
+             </span>
             </Button>
             <Dropdown absolute isOpen={isOpenUserButton}>
               <Button onClick={() => { mutation.mutate() }} className='w-full text-light-text-error-hover hover:text-light-text-error-hover dark:text-dark-text-error-hover dark:hover:text-dark-text-error-hover' size='sm' rightIcon={<HugeiconsIcon size={22} icon={Logout05Icon} />} variants='ghost'>{t('logout')}</Button>
             </Dropdown>
           </div>
         </div>
-        <Button active={location.pathname.includes("products")} size='sm' onClick={() => { navigarte("/app/products", { state: { location: "Products" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={BoxIcon} />} variants='ghost'>{t('Products')}</Button>
-        <div>
-          <Button size='sm'
-            onClick={() => { setIsOpenSuppliers(!isOpenSuppliers) }}
-            className={`w-full justify-start`}
-            leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
-            rightIcon={<HugeiconsIcon className={` transition-all ease-in-out ${isOpenSuppliers ? "rotate-0" : "rotate-180"}`} size={22} icon={ArrowDown01Icon} />}
-            variants='ghost'>{t('Supplier')}</Button>
-          <Dropdown isOpen={isOpenSuppliers}>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname === "/app/supplier"}
-              leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
-              onClick={() => { navigarte("/app/supplier", { state: { location: "Supplier" } }); }}
-            >
-              {t('suppliersList')}
-            </Button>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("supplier/bills")}
-              leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/supplier/bills", { state: { location: "supplierBills" } }); }}
-            >
-              {t('supplierBills')}
-            </Button>
-          </Dropdown>
-        </div>
-        <div>
-          <Button size='sm'
-            onClick={() => { setIsOpenWareHouse(!isOpenWareHouse) }}
-            className={`w-full justify-start`}
-            rightIcon={<HugeiconsIcon className={` transition-all ease-in-out ${isOpenWareHouse ? "rotate-0" : "rotate-180"}`} size={22} icon={ArrowDown01Icon} />}
-            variants='ghost'>{t('inventory')}</Button>
-          <Dropdown isOpen={isOpenWareHouse}>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("inventory/categories")}
-              leftIcon={<HugeiconsIcon size={22} icon={DashboardSquare01Icon} />}
-              onClick={() => { navigarte("/app/inventory/categories/", { state: { location: "inventory" } }); }}
-            >
-              {t('categories')}
-            </Button>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("inventory/items")}
-              leftIcon={<HugeiconsIcon size={22} icon={RightToLeftListDashIcon} />}
-              onClick={() => { navigarte("/app/inventory/items", { state: { location: "inventory" } }); }}
-            >
-              {t('items')}
-            </Button>
-          </Dropdown>
-        </div>
-        <div>
-          <Button size='sm'
-            onClick={() => { setIsOpenOrders(!isOpenOrders) }}
-            className={`w-full justify-start`}
-            rightIcon={<HugeiconsIcon className={` transition-all ease-in-out ${isOpenOrders ? "rotate-0" : "rotate-180"}`} size={22} icon={ArrowDown01Icon} />}
-            variants='ghost'>{t('Orders')}</Button>
-          <Dropdown isOpen={isOpenOrders}>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname === "/app/orders"}
-              leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
-              onClick={() => { navigarte("/app/orders", { state: { location: "orders" } }); }}
-            >
-              {t('orders')}
-            </Button>
-            <Button
-              size='sm'
-              className={`w-full justify-start`}
-              variants='ghost'
-              active={location.pathname.includes("/app/requests")}
-              leftIcon={<HugeiconsIcon size={22} icon={RightToLeftListDashIcon} />}
-              rightIcon={unreadCount > 0
-                ? <span className="min-w-5 px-1.5 rounded-full text-xs bg-error text-dark-text-primary">{unreadCount}</span>
-                : undefined}
-              onClick={() => { navigarte("/app/requests", { state: { location: "requests" } }); }}
-            >
-              {t('requests')}
-            </Button>
-          </Dropdown>
-        </div>
-        <Button active={location.pathname.includes("finance")} size='sm' onClick={() => { navigarte("/app/finance", { state: { location: "finance" } }); }} className={`w-full justify-start`} leftIcon={<HugeiconsIcon size={22} icon={Coupon01Icon} />} variants='ghost'>{t('finance')}</Button>
+        <ComingSoonEntry icon={DashboardSquare01Icon} label={t('home')} hint={t('comingSoon')} />
+
+        <Button
+          size='sm'
+          className={`w-full justify-start`}
+          variants='ghost'
+          active={location.pathname.includes("/app/requests")}
+          leftIcon={<HugeiconsIcon size={22} icon={RightToLeftListDashIcon} />}
+          rightIcon={unreadCount > 0
+            ? <span className="min-w-5 px-1.5 rounded-full text-xs bg-error text-dark-text-primary">{unreadCount}</span>
+            : undefined}
+          onClick={() => { navigarte("/app/requests", { state: { location: "requests" } }); }}
+        >
+          {t('requests')}
+        </Button>
+
+        <SectionLabel>{t('inventory')}</SectionLabel>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname.includes("inventory/categories")}
+          leftIcon={<HugeiconsIcon size={22} icon={DashboardSquare01Icon} />}
+          onClick={() => { navigarte("/app/inventory/categories/", { state: { location: "inventory" } }); }}>
+          {t('categories')}
+        </Button>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname.includes("inventory/items")}
+          leftIcon={<HugeiconsIcon size={22} icon={BoxIcon} />}
+          onClick={() => { navigarte("/app/inventory/items", { state: { location: "inventory" } }); }}>
+          {t('items')}
+        </Button>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname === "/app/products"}
+          leftIcon={<HugeiconsIcon size={22} icon={BoxIcon} />}
+          onClick={() => { navigarte("/app/products", { state: { location: "Products" } }); }}>
+          {t('Products')}
+        </Button>
+
+        <SectionLabel>{t('inbound')}</SectionLabel>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname === "/app/orders"}
+          leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
+          onClick={() => { navigarte("/app/orders", { state: { location: "orders" } }); }}>
+          {t('orders')}
+        </Button>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname.includes("/app/customers")}
+          leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
+          onClick={() => { navigarte("/app/customers", { state: { location: "customers" } }); }}>
+          {t('customers')}
+        </Button>
+
+        <SectionLabel>{t('outbound')}</SectionLabel>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname === "/app/supplier"}
+          leftIcon={<HugeiconsIcon size={22} icon={Trolley02Icon} />}
+          onClick={() => { navigarte("/app/supplier", { state: { location: "Supplier" } }); }}>
+          {t('suppliersList')}
+        </Button>
+        <Button size='sm' className={`w-full justify-start`} variants='ghost'
+          active={location.pathname.includes("supplier/bills")}
+          leftIcon={<HugeiconsIcon size={22} icon={Invoice03Icon} />}
+          onClick={() => { navigarte("/app/supplier/bills", { state: { location: "supplierBills" } }); }}>
+          {t('supplierBills')}
+        </Button>
+
+        <ComingSoonEntry icon={Trolley02Icon} label={t('employees')} hint={t('comingSoon')} />
+
+        <SectionLabel>{t('preferences')}</SectionLabel>
+        <ComingSoonEntry icon={Coupon01Icon} label={t('settings')} hint={t('comingSoon')} />
       </div>
     </div>
   )
