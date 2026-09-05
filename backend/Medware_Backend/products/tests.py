@@ -18,7 +18,7 @@ class ListFilterTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='prod_mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='prod_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.client.force_authenticate(user=self.manager)
 
         self.supplier_a = Supplier.objects.create(name='Alpha Supplies')

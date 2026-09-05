@@ -13,18 +13,21 @@ class UserRoleAccessTest(TestCase):
             email='manager@example.com',
             password='managerpass',
             role=self.User.Role.MANAGER,
+            is_verified=True,
         )
         self.accountant = self.User.objects.create_user(
             username='accountant',
             email='accountant@example.com',
             password='accountantpass',
             role=self.User.Role.ACCOUNTANT,
+            is_verified=True,
         )
         self.salesman = self.User.objects.create_user(
             username='salesman',
             email='salesman@example.com',
             password='salesmanpass',
             role=self.User.Role.SALESMAN,
+            is_verified=True,
         )
         self.customer = self.User.objects.create_user(
             username='customer',

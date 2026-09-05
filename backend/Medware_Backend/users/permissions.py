@@ -7,14 +7,39 @@ try:
 except ImportError:
     BasePermission = object
 
+# The single definition of which roles carry staff privileges. serializers.py
+# imports this rather than keeping its own copy - two hand-maintained lists of
+# "which roles are privileged" drift, and the one that drifts is a hole.
+STAFF_ROLES = {'MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER'}
+
+
+def staff_account_is_unverified(user):
+    """True when this account holds a staff role a manager has not approved.
+
+    Customers are exempt: the storefront lets them self-register, and holding
+    them behind manual approval would block it. Superusers bypass entirely.
+
+    Read from the row, never from the JWT claim - the access token lives 15
+    minutes, so a claim would leave someone locked out that long after a
+    manager approves them.
+    """
+    if getattr(user, 'is_superuser', False):
+        return False
+    return (
+        getattr(user, 'role', None) in STAFF_ROLES
+        and not getattr(user, 'is_verified', False)
+    )
+
+
 class HasRole(BasePermission):
     allowed_roles = []
 
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated
-            and request.user.role in self.allowed_roles
-        )
+        if not request.user.is_authenticated:
+            return False
+        if staff_account_is_unverified(request.user):
+            return False
+        return request.user.role in self.allowed_roles
 
 class IsManager(HasRole):
     allowed_roles = ['MANAGER']
@@ -55,6 +80,11 @@ class RoleMethodPermission(BasePermission):
 
         if getattr(request.user, 'is_superuser', False):
             return True
+
+        # A staff role does not take effect until a manager approves the
+        # account. Checked against the row, not the token claim.
+        if staff_account_is_unverified(request.user):
+            return False
 
         mapping = getattr(view, 'allowed_roles_by_method', None)
         if not mapping:

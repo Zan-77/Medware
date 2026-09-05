@@ -41,10 +41,10 @@ class CustomerModelTests(TestCase):
 class CustomerCreationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='cc_mgr', password='pass', role=User.Role.MANAGER)
-        self.other_manager = User.objects.create_user(username='cc_mgr2', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='cc_slm', password='pass', role=User.Role.SALESMAN)
-        self.warehouse = User.objects.create_user(username='cc_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
+        self.manager = User.objects.create_user(username='cc_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.other_manager = User.objects.create_user(username='cc_mgr2', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(username='cc_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.warehouse = User.objects.create_user(username='cc_wh', password='pass', role=User.Role.WAREHOUSE_WORKER, is_verified=True)
 
     def test_a_salesman_creates_a_customer_as_a_pending_request(self):
         self.client.force_authenticate(user=self.salesman)
@@ -132,9 +132,9 @@ class CustomerCreationTests(TestCase):
 class CustomerScopingTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='cs_mgr', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='cs_slm', password='pass', role=User.Role.SALESMAN)
-        self.other_salesman = User.objects.create_user(username='cs_slm2', password='pass', role=User.Role.SALESMAN)
+        self.manager = User.objects.create_user(username='cs_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(username='cs_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.other_salesman = User.objects.create_user(username='cs_slm2', password='pass', role=User.Role.SALESMAN, is_verified=True)
 
         self.approved = Customer.objects.create(name='Approved Co', status=Customer.Status.APPROVED)
         self.mine = Customer.objects.create(name='My Pending', status=Customer.Status.PENDING,
@@ -223,9 +223,9 @@ class CustomerScopingTests(TestCase):
 class CustomerTransitionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='ct_mgr', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='ct_slm', password='pass', role=User.Role.SALESMAN)
-        self.accountant = User.objects.create_user(username='ct_acc', password='pass', role=User.Role.ACCOUNTANT)
+        self.manager = User.objects.create_user(username='ct_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(username='ct_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.accountant = User.objects.create_user(username='ct_acc', password='pass', role=User.Role.ACCOUNTANT, is_verified=True)
 
     def _pending(self):
         return Customer.objects.create(name='Dar Al Shifa', status=Customer.Status.PENDING,

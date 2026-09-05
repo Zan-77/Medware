@@ -224,3 +224,85 @@ class SecurityRegressionTests(TestCase):
         replayed = APIClient().post(
             '/api/auth/token/refresh/', {'refresh': original_refresh}, format='json')
         self.assertEqual(replayed.status_code, 401)
+
+
+class StaffVerificationGateTests(TestCase):
+    """A staff role only takes effect once a manager has approved the account.
+
+    Gating only the UI would leave an unverified manager with full API access
+    via curl, so the check lives in the permission classes.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.unverified = User.objects.create_user(
+            username='gate_slm', password='pass', role=User.Role.SALESMAN)
+        self.verified = User.objects.create_user(
+            username='gate_slm2', password='pass', role=User.Role.SALESMAN,
+            is_verified=True)
+        self.customer = User.objects.create_user(
+            username='gate_cust', password='pass', role=User.Role.CUSTOMER)
+
+    def test_an_unverified_staff_account_is_refused(self):
+        self.client.force_authenticate(user=self.unverified)
+
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 403)
+
+    def test_a_verified_staff_account_is_allowed(self):
+        self.client.force_authenticate(user=self.verified)
+
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 200)
+
+    def test_an_unverified_customer_is_unaffected(self):
+        """The storefront lets customers self-register; holding them behind
+        manual approval would block it."""
+        self.client.force_authenticate(user=self.customer)
+
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 200)
+
+    def test_a_superuser_bypasses_the_check(self):
+        root = User.objects.create_superuser(
+            username='gate_root', password='pass', email='root@example.com')
+        self.client.force_authenticate(user=root)
+
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 200)
+
+    def test_an_unverified_staff_account_can_still_read_its_own_profile(self):
+        """Enough for the UI to render 'awaiting approval' and to notice the
+        moment approval lands."""
+        self.client.force_authenticate(user=self.unverified)
+
+        resp = self.client.get('/api/users/me/')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json()['is_verified'])
+
+    def test_an_unverified_staff_account_is_refused_by_the_role_check_views(self):
+        """HasRole gates the /access/ endpoints and the role viewsets."""
+        manager = User.objects.create_user(
+            username='gate_mgr', password='pass', role=User.Role.MANAGER)
+        self.client.force_authenticate(user=manager)
+
+        self.assertEqual(self.client.get('/api/users/access/manager/').status_code, 403)
+
+    def test_verifying_an_account_takes_effect_immediately(self):
+        """Authorisation reads the row, not the 15-minute token claim."""
+        self.client.force_authenticate(user=self.unverified)
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 403)
+
+        self.unverified.is_verified = True
+        self.unverified.save(update_fields=['is_verified'])
+
+        self.assertEqual(self.client.get('/api/products/products/').status_code, 200)
+
+
+class StaffRoleSetTests(TestCase):
+    def test_the_staff_role_set_is_defined_once(self):
+        """Two hand-maintained copies of "which roles are privileged" drift,
+        and the one that drifts silently is a security hole."""
+        from users import serializers as user_serializers
+        from users.permissions import STAFF_ROLES
+
+        self.assertIs(user_serializers.STAFF_ROLES, STAFF_ROLES)
+        self.assertEqual(STAFF_ROLES,
+                         {'MANAGER', 'ACCOUNTANT', 'SALESMAN', 'WAREHOUSE_WORKER'})

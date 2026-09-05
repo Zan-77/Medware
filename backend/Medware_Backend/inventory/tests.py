@@ -9,10 +9,10 @@ class InventoryPermissionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         # create users with different roles
-        self.manager = User.objects.create_user(username='mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.guest = User.objects.create_user(username='gst', password='pass', role=User.Role.GUEST)
-        self.salesman = User.objects.create_user(username='slm', password='pass', role=User.Role.SALESMAN)
-        self.warehouse = User.objects.create_user(username='wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
+        self.salesman = User.objects.create_user(username='slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.warehouse = User.objects.create_user(username='wh', password='pass', role=User.Role.WAREHOUSE_WORKER, is_verified=True)
         self.list_url = '/api/inventory/categories/'
 
     def test_manager_can_create_category(self):
@@ -98,7 +98,7 @@ class ListFilterTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='filter_mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='filter_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.client.force_authenticate(user=self.manager)
 
         self.supplier_a = Supplier.objects.create(name='Alpha Supplies')
@@ -122,6 +122,12 @@ class ListFilterTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         ids = [row['id'] for row in resp.json()]
         self.assertEqual(ids, [self.line_a.pk])
+
+    def test_bill_lines_are_narrowed_to_the_requested_supplier(self):
+        resp = self.client.get(f'/api/inventory/bill-lines/?supplier={self.supplier_b.pk}')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([row['id'] for row in resp.json()], [self.line_b.pk])
 
     def test_bill_lines_without_a_filter_still_return_everything(self):
         resp = self.client.get('/api/inventory/bill-lines/')
@@ -174,7 +180,7 @@ class ReadableNameFieldTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='name_mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='name_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.client.force_authenticate(user=self.manager)
 
         self.supplier = Supplier.objects.create(name='Alpha Supplies')
@@ -216,7 +222,7 @@ class DecimalRepresentationTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='dec_mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='dec_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.client.force_authenticate(user=self.manager)
 
         supplier = Supplier.objects.create(name='Alpha Supplies')

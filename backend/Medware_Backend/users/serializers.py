@@ -5,24 +5,14 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from .permissions import STAFF_ROLES
 
-# Roles that carry staff privileges.
+# APPROVAL MODEL: anyone may register, but only a verified manager may hand out
+# a staff role directly, and a staff account holds no privileges until a manager
+# sets `is_verified`. Enforced in users/permissions.py, not only in the UI.
 #
-# APPROVAL MODEL (agreed design):
-#   Anyone may register with any role. Every account except a manager's then
-#   needs a manager to approve it by setting `is_verified = True`; until then
-#   the frontend treats the account as a guest regardless of its stored role.
-#
-#   While the approval flow is still being built, that gate is DISABLED - see
-#   RegisterSerializer below. Registration currently grants the requested role
-#   immediately, so a self-registered MANAGER really is a manager. Do not run
-#   this build anywhere public until the is_verified gate is switched on.
-PRIVILEGED_ROLES = {
-    User.Role.MANAGER,
-    User.Role.ACCOUNTANT,
-    User.Role.SALESMAN,
-    User.Role.WAREHOUSE_WORKER,
-}
+# STAFF_ROLES lives there too, so there is exactly one definition of which roles
+# are privileged - the copy that drifts is the one that becomes a hole.
 
 
 def build_tokens_for_user(user):
@@ -176,5 +166,5 @@ class UserSerializer(serializers.ModelSerializer):
             'role_display',
             'is_staff',
             'is_superuser',
-            # 'is_verified',   # <-- expose on /api/users/me/ with the gate
+            'is_verified',
         ]

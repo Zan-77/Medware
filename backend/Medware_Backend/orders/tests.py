@@ -27,7 +27,7 @@ from users.models import User
 class OrderStatusFieldTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='st_slm', password='pass', role=User.Role.SALESMAN)
+        self.salesman = User.objects.create_user(username='st_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy')
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
         self.order = OrderRequest.objects.create(
@@ -82,9 +82,9 @@ from orders.models import OrderReview
 class OrderTransitionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='tr_slm', password='pass', role=User.Role.SALESMAN)
-        self.manager = User.objects.create_user(username='tr_mgr', password='pass', role=User.Role.MANAGER)
-        self.accountant = User.objects.create_user(username='tr_acc', password='pass', role=User.Role.ACCOUNTANT)
+        self.salesman = User.objects.create_user(username='tr_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.manager = User.objects.create_user(username='tr_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.accountant = User.objects.create_user(username='tr_acc', password='pass', role=User.Role.ACCOUNTANT, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
 
@@ -226,8 +226,8 @@ class OrderTransitionTests(TestCase):
 class OrderMutationLockTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='lk_slm', password='pass', role=User.Role.SALESMAN)
-        self.manager = User.objects.create_user(username='lk_mgr', password='pass', role=User.Role.MANAGER)
+        self.salesman = User.objects.create_user(username='lk_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.manager = User.objects.create_user(username='lk_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy')
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
 
@@ -308,11 +308,11 @@ from notifications.services import notify
 class InboxTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='ib_slm', password='pass', role=User.Role.SALESMAN)
-        self.other_salesman = User.objects.create_user(username='ib_slm2', password='pass', role=User.Role.SALESMAN)
-        self.manager = User.objects.create_user(username='ib_mgr', password='pass', role=User.Role.MANAGER)
-        self.accountant = User.objects.create_user(username='ib_acc', password='pass', role=User.Role.ACCOUNTANT)
-        self.warehouse = User.objects.create_user(username='ib_wh', password='pass', role=User.Role.WAREHOUSE_WORKER)
+        self.salesman = User.objects.create_user(username='ib_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.other_salesman = User.objects.create_user(username='ib_slm2', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.manager = User.objects.create_user(username='ib_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.accountant = User.objects.create_user(username='ib_acc', password='pass', role=User.Role.ACCOUNTANT, is_verified=True)
+        self.warehouse = User.objects.create_user(username='ib_wh', password='pass', role=User.Role.WAREHOUSE_WORKER, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
 
         self.pending = OrderRequest.objects.create(
@@ -409,7 +409,7 @@ class OrderListFilterTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='fl_mgr', password='pass', role=User.Role.MANAGER)
+        self.manager = User.objects.create_user(username='fl_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
         self.client.force_authenticate(user=self.manager)
 
         self.customer_a = Customer.objects.create(name='Al Noor Pharmacy')
@@ -455,10 +455,10 @@ class OrderMutationGuardTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='mg_slm', password='pass', role=User.Role.SALESMAN)
-        self.other_salesman = User.objects.create_user(username='mg_slm2', password='pass', role=User.Role.SALESMAN)
-        self.manager = User.objects.create_user(username='mg_mgr', password='pass', role=User.Role.MANAGER)
-        self.accountant = User.objects.create_user(username='mg_acc', password='pass', role=User.Role.ACCOUNTANT)
+        self.salesman = User.objects.create_user(username='mg_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.other_salesman = User.objects.create_user(username='mg_slm2', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.manager = User.objects.create_user(username='mg_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.accountant = User.objects.create_user(username='mg_acc', password='pass', role=User.Role.ACCOUNTANT, is_verified=True)
         self.customer_a = Customer.objects.create(name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
         self.customer_b = Customer.objects.create(name='Dar Al Shifa', status=Customer.Status.APPROVED)
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
@@ -586,7 +586,7 @@ from customers.models import Customer as CustomerModel
 class OrderRequiresApprovedCustomerTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='ac_slm', password='pass', role=User.Role.SALESMAN)
+        self.salesman = User.objects.create_user(username='ac_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
         self.product = Product.objects.create(name='Paracetamol', retail_price='10.00')
         self.client.force_authenticate(user=self.salesman)
 
@@ -625,8 +625,8 @@ class OrderRequiresApprovedCustomerTests(TestCase):
 class InboxCustomerRowTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.manager = User.objects.create_user(username='ic_mgr', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='ic_slm', password='pass', role=User.Role.SALESMAN)
+        self.manager = User.objects.create_user(username='ic_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(username='ic_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
 
     def test_the_manager_inbox_carries_pending_customers(self):
         pending = CustomerModel.objects.create(name='Pending Co',

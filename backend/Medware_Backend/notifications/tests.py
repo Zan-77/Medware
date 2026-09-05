@@ -10,9 +10,9 @@ from users.models import User
 
 class NotifyServiceTests(TestCase):
     def setUp(self):
-        self.manager_a = User.objects.create_user(username='nt_mgr_a', password='pass', role=User.Role.MANAGER)
-        self.manager_b = User.objects.create_user(username='nt_mgr_b', password='pass', role=User.Role.MANAGER)
-        self.salesman = User.objects.create_user(username='nt_slm', password='pass', role=User.Role.SALESMAN)
+        self.manager_a = User.objects.create_user(username='nt_mgr_a', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.manager_b = User.objects.create_user(username='nt_mgr_b', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.salesman = User.objects.create_user(username='nt_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy')
         self.order = OrderRequest.objects.create(origin='SALESMAN', customer=self.customer, salesman=self.salesman)
 
@@ -42,8 +42,8 @@ class NotifyServiceTests(TestCase):
 class NotificationApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.salesman = User.objects.create_user(username='na_slm', password='pass', role=User.Role.SALESMAN)
-        self.other = User.objects.create_user(username='na_other', password='pass', role=User.Role.SALESMAN)
+        self.salesman = User.objects.create_user(username='na_slm', password='pass', role=User.Role.SALESMAN, is_verified=True)
+        self.other = User.objects.create_user(username='na_other', password='pass', role=User.Role.SALESMAN, is_verified=True)
         self.customer = Customer.objects.create(name='Al Noor Pharmacy')
         self.order = OrderRequest.objects.create(origin='SALESMAN', customer=self.customer, salesman=self.salesman)
         self.mine = notify([self.salesman], Notification.Kind.ORDER_REJECTED, self.order, message='Too expensive')[0]
