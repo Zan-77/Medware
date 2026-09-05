@@ -178,6 +178,47 @@ class CustomerScopingTests(TestCase):
     def test_unauthenticated_is_401(self):
         self.assertEqual(APIClient().get('/api/customers/').status_code, 401)
 
+    def test_a_salesman_cannot_edit_another_salesmans_customer(self):
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/customers/{self.theirs.pk}/',
+                                 {'name': 'Hijacked'}, format='json')
+
+        self.theirs.refresh_from_db()
+        self.assertIn(resp.status_code, (403, 404))
+        self.assertEqual(self.theirs.name, 'Their Pending')
+
+    def test_a_salesman_cannot_edit_an_approved_customer(self):
+        """Editing after a manager approved it changes what was approved."""
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/customers/{self.approved.pk}/',
+                                 {'name': 'Renamed'}, format='json')
+
+        self.approved.refresh_from_db()
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(self.approved.name, 'Approved Co')
+
+    def test_a_salesman_can_edit_their_own_pending_customer(self):
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.patch(f'/api/customers/{self.mine.pk}/',
+                                 {'name': 'Corrected Name'}, format='json')
+
+        self.mine.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self.mine.name, 'Corrected Name')
+
+    def test_a_manager_can_edit_any_customer(self):
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.patch(f'/api/customers/{self.theirs.pk}/',
+                                 {'name': 'Manager Edit'}, format='json')
+
+        self.theirs.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self.theirs.name, 'Manager Edit')
+
 
 class CustomerTransitionTests(TestCase):
     def setUp(self):

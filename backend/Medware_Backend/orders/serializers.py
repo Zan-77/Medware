@@ -37,7 +37,7 @@ class OrderRequestSerializer(serializers.ModelSerializer):
 
         if value.status != Customer.Status.APPROVED:
             raise serializers.ValidationError(
-                f'This customer is {value.status} and cannot have orders raised for them yet.')
+                'This customer cannot have orders raised for them yet.')
         return value
 
     def create(self, validated_data):

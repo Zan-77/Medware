@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import Q
 from rest_framework import permissions, status as http_status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from audit.models import RequestTransition
@@ -16,6 +16,12 @@ from .serializers import CustomerSerializer
 
 # Roles that see every customer regardless of who created it.
 CUSTOMER_WIDE_ROLES = ('MANAGER', 'ACCOUNTANT')
+
+
+class Conflict(APIException):
+    """409 - the request is valid but the target is in the wrong state."""
+    status_code = http_status.HTTP_409_CONFLICT
+    default_detail = 'This record is in a state that does not allow the change.'
 
 
 def _record_customer_transition(customer, from_status, actor, notes=''):
@@ -76,6 +82,20 @@ class CustomerViewSet(viewsets.ModelViewSet):
             if not is_manager:
                 notify(managers(), Notification.Kind.CUSTOMER_SUBMITTED, customer,
                        message=f'New customer {customer.name} awaiting approval.')
+
+    def perform_update(self, serializer):
+        # A salesman may correct their own request while it is still pending.
+        # Anyone else's record, or one a manager has already decided on, is not
+        # theirs to rewrite - editing after approval changes what was approved.
+        customer = serializer.instance
+        user = self.request.user
+        if getattr(user, 'role', '') == 'SALESMAN':
+            if customer.status != Customer.Status.PENDING:
+                raise Conflict(
+                    f'This customer is {customer.status} and can no longer be edited.')
+            if customer.created_by_id != user.id:
+                raise PermissionDenied('You may only edit customers you created.')
+        serializer.save()
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
