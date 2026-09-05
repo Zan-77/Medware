@@ -1,5 +1,5 @@
 import ax from "../../../services/api"
-import type { AppNotification, Customer, OrderInbox, OrderRequest } from "../types/orders"
+import type { AppNotification, OrderInbox, OrderRequest } from "../types/orders"
 
 const ordersUrl = "/orders/order-requests/"
 
@@ -49,10 +49,5 @@ export const getUnreadNotifications = async (): Promise<AppNotification[]> => {
 
 export const markNotificationRead = async (id: number) => {
 	const res = await ax.post(`/notifications/${id}/read/`)
-	return res.data
-}
-
-export const getCustomers = async (): Promise<Customer[]> => {
-	const res = await ax.get<Customer[]>("/customers/")
 	return res.data
 }

@@ -12,7 +12,8 @@ import Form from "../../../components/Form"
 import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
 import Text from "../../../components/Text"
 import { getProducts } from "../../products/services/products.service"
-import { getCustomers, postOrder } from "../services/orders.service"
+import { getCustomers } from "../../customers/services/customers.service"
+import { postOrder } from "../services/orders.service"
 
 type OrderFormFields = {
     customer: string
@@ -26,7 +27,13 @@ export const OrderCreatePage = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
 
-    const { data: customers = [] } = useQuery({ queryKey: ["customers"], queryFn: getCustomers })
+    const { data: customers = [] } = useQuery({
+        queryKey: ["customers", "APPROVED"],
+        // Only approved customers can have orders raised for them - the
+        // backend refuses the rest with a 400, so offering them in the picker
+        // would just be a trap.
+        queryFn: () => getCustomers("APPROVED"),
+    })
     // getProducts is typed as returning a single Products by mistake in the
     // products service; the endpoint returns a list, so normalise here.
     const { data: products } = useQuery({ queryKey: ["productsList"], queryFn: getProducts })

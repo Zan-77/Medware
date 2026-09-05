@@ -53,13 +53,3 @@ export interface AppNotification {
     created_at: string
     read_at: string | null
 }
-
-export interface Customer {
-    id: string
-    name: string
-    phone: string
-    address: string
-    notes: string
-    user: string | number | null
-    created_at: string
-}
