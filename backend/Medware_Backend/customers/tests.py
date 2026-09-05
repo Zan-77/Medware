@@ -177,3 +177,92 @@ class CustomerScopingTests(TestCase):
 
     def test_unauthenticated_is_401(self):
         self.assertEqual(APIClient().get('/api/customers/').status_code, 401)
+
+
+class CustomerTransitionTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(username='ct_mgr', password='pass', role=User.Role.MANAGER)
+        self.salesman = User.objects.create_user(username='ct_slm', password='pass', role=User.Role.SALESMAN)
+        self.accountant = User.objects.create_user(username='ct_acc', password='pass', role=User.Role.ACCOUNTANT)
+
+    def _pending(self):
+        return Customer.objects.create(name='Dar Al Shifa', status=Customer.Status.PENDING,
+                                       created_by=self.salesman)
+
+    def test_a_manager_approves_a_pending_customer(self):
+        customer = self._pending()
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post(f'/api/customers/{customer.pk}/approve/')
+
+        customer.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(customer.status, Customer.Status.APPROVED)
+        self.assertTrue(RequestTransition.objects.filter(
+            source_model='Customer', source_id=str(customer.pk),
+            from_status='PENDING', to_status='APPROVED').exists())
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.salesman, kind=Notification.Kind.CUSTOMER_APPROVED).exists())
+
+    def test_a_salesman_cannot_approve(self):
+        """RoleMethodPermission allows SALESMAN to POST here, so the action
+        must check the role itself."""
+        customer = self._pending()
+        self.client.force_authenticate(user=self.salesman)
+
+        resp = self.client.post(f'/api/customers/{customer.pk}/approve/')
+
+        customer.refresh_from_db()
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(customer.status, Customer.Status.PENDING)
+
+    def test_an_accountant_cannot_approve(self):
+        customer = self._pending()
+        self.client.force_authenticate(user=self.accountant)
+
+        self.assertEqual(
+            self.client.post(f'/api/customers/{customer.pk}/approve/').status_code, 403)
+
+    def test_approving_an_already_approved_customer_is_a_conflict(self):
+        customer = Customer.objects.create(name='Done', status=Customer.Status.APPROVED)
+        self.client.force_authenticate(user=self.manager)
+
+        self.assertEqual(
+            self.client.post(f'/api/customers/{customer.pk}/approve/').status_code, 409)
+
+    def test_rejecting_without_notes_is_refused(self):
+        customer = self._pending()
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post(f'/api/customers/{customer.pk}/reject/',
+                                {'notes': '   '}, format='json')
+
+        customer.refresh_from_db()
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(customer.status, Customer.Status.PENDING)
+
+    def test_rejecting_records_and_notifies_the_reason(self):
+        customer = self._pending()
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post(f'/api/customers/{customer.pk}/reject/',
+                                {'notes': 'Duplicate of an existing account'}, format='json')
+
+        customer.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(customer.status, Customer.Status.REJECTED)
+        self.assertEqual(customer.rejection_notes, 'Duplicate of an existing account')
+        notification = Notification.objects.get(
+            recipient=self.salesman, kind=Notification.Kind.CUSTOMER_REJECTED)
+        self.assertIn('Duplicate of an existing account', notification.message)
+
+    def test_a_customer_created_without_a_creator_still_rejects_cleanly(self):
+        """`created_by` is SET_NULL, so the notify list can be empty."""
+        customer = Customer.objects.create(name='Orphan', status=Customer.Status.PENDING)
+        self.client.force_authenticate(user=self.manager)
+
+        resp = self.client.post(f'/api/customers/{customer.pk}/reject/',
+                                {'notes': 'No owner'}, format='json')
+
+        self.assertEqual(resp.status_code, 200)

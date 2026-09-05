@@ -1,7 +1,9 @@
 from django.db import transaction
 from django.db.models import Q
-from rest_framework import permissions, viewsets
-from rest_framework.exceptions import ValidationError
+from rest_framework import permissions, status as http_status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.response import Response
 
 from audit.models import RequestTransition
 from mysite.filters import filter_by_query_params
@@ -74,3 +76,58 @@ class CustomerViewSet(viewsets.ModelViewSet):
             if not is_manager:
                 notify(managers(), Notification.Kind.CUSTOMER_SUBMITTED, customer,
                        message=f'New customer {customer.name} awaiting approval.')
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        # RoleMethodPermission checks the HTTP method, and POST is open to
+        # SALESMAN on this viewset - so the role is checked here explicitly.
+        if getattr(request.user, 'role', '') != 'MANAGER':
+            raise PermissionDenied('Only a manager may approve a customer.')
+
+        with transaction.atomic():
+            customer = Customer.objects.select_for_update().get(pk=self.get_object().pk)
+            if customer.status != Customer.Status.PENDING:
+                return Response(
+                    {'detail': f'A customer in status {customer.status} cannot be approved.'},
+                    status=http_status.HTTP_409_CONFLICT,
+                )
+            from_status = customer.status
+            customer.status = Customer.Status.APPROVED
+            customer.save(update_fields=['status'])
+            _record_customer_transition(customer, from_status, request.user)
+            notify(
+                [customer.created_by] if customer.created_by else [],
+                Notification.Kind.CUSTOMER_APPROVED,
+                customer,
+                message=f'Customer {customer.name} was approved.',
+            )
+        return Response(self.get_serializer(customer).data)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if getattr(request.user, 'role', '') != 'MANAGER':
+            raise PermissionDenied('Only a manager may reject a customer.')
+
+        notes = (request.data.get('notes') or '').strip()
+        if not notes:
+            raise ValidationError({'notes': 'A rejection reason is required.'})
+
+        with transaction.atomic():
+            customer = Customer.objects.select_for_update().get(pk=self.get_object().pk)
+            if customer.status != Customer.Status.PENDING:
+                return Response(
+                    {'detail': f'A customer in status {customer.status} cannot be rejected.'},
+                    status=http_status.HTTP_409_CONFLICT,
+                )
+            from_status = customer.status
+            customer.status = Customer.Status.REJECTED
+            customer.rejection_notes = notes
+            customer.save(update_fields=['status', 'rejection_notes'])
+            _record_customer_transition(customer, from_status, request.user, notes=notes)
+            notify(
+                [customer.created_by] if customer.created_by else [],
+                Notification.Kind.CUSTOMER_REJECTED,
+                customer,
+                message=f'Customer {customer.name} was rejected: {notes}',
+            )
+        return Response(self.get_serializer(customer).data)
