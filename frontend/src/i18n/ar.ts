@@ -132,6 +132,19 @@ export const ar = {
     inbound: "الوارد",
     outbound: "الصادر",
     comingSoon: "قريبًا",
+    approvals: "طلبات التسجيل",
+    Approvals: {
+        approve: "موافقة",
+        revoke: "إلغاء الموافقة",
+        verified: "موثّق",
+        awaiting: "بانتظار الموافقة",
+        pendingOnly: "بانتظار الموافقة",
+        allAccounts: "كل الحسابات",
+        empty: "لا توجد حسابات بانتظار الموافقة",
+        loading: "جارِ التحميل...",
+        updateSuccess: "تم تحديث الحساب",
+        serverError: "لا يمكن تعديل هذا الحساب."
+    },
     Pending: {
         title: "الحساب بانتظار الموافقة",
         body: "تم إنشاء حسابك ويحتاج إلى موافقة المدير قبل استخدام النظام.",

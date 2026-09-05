@@ -106,6 +106,19 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
           {t('requests')}
         </Button>
 
+        {user.role === 'MANAGER' && (
+          <Button
+            size='sm'
+            className={`w-full justify-start`}
+            variants='ghost'
+            active={location.pathname.includes("/app/approvals")}
+            leftIcon={<HugeiconsIcon size={22} icon={DashboardSquare01Icon} />}
+            onClick={() => { navigarte("/app/approvals", { state: { location: "approvals" } }); }}
+          >
+            {t('approvals')}
+          </Button>
+        )}
+
         <SectionLabel>{t('inventory')}</SectionLabel>
         <Button size='sm' className={`w-full justify-start`} variants='ghost'
           active={location.pathname.includes("inventory/categories")}
