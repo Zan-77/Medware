@@ -106,6 +106,14 @@ export const CustomersPage = () => {
         create.mutate(values, { onError, onSuccess: () => onDone(t("Customers_.createSuccess")) })
     }
 
+    // Mirrors the server rule: a manager may edit anything, a salesman only
+    // their own record and only while it is still pending.
+    const canEdit = (row: Customer) =>
+        hasPermission(user, "customerApproval", "update") ||
+        (hasPermission(user, "customers", "update") &&
+            String(row.created_by ?? "") === String(user.id) &&
+            row.status === "PENDING")
+
     const columns: Array<ColumnDef<TableFeatures, Customer>> = [
         {
             id: "actions",
@@ -133,7 +141,7 @@ export const CustomersPage = () => {
                             onClick={() => { setDeleteTarget(row.original); setIsOpenDeleteModel(true) }}
                             size="xs" variants="ghost" iconOnly
                             leftIcon={<HugeiconsIcon size={18} icon={Trash} />} />}
-                    {hasPermission(user, "customers", "update") &&
+                    {canEdit(row.original) &&
                         <Button
                             className="dark:text-accent-light text-accent-extraDark dark:hover:text-accent-extraLight hover:text-accent-dark"
                             onClick={() => {

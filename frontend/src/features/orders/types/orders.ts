@@ -2,6 +2,8 @@
 // names foreign keys after the model field (`customer`, `product`), never with
 // an `Id` suffix, and read-only labels arrive as `*_name`.
 
+import type { Customer } from "../../customers/types/customers"
+
 export type OrderStatus = "PENDING" | "APPROVED" | "REJECTED" | "FINALIZED"
 
 export interface OrderItem {
@@ -33,7 +35,11 @@ export interface OrderRequest {
 
 export interface OrderInboxItem {
     kind: string
-    order: OrderRequest
+    // Exactly one of these is populated: order rows carry `order`, customer
+    // approval rows carry `customer`. The backend sends both keys with the
+    // unused one null.
+    order: OrderRequest | null
+    customer: Customer | null
     message: string
     notification_id: number | null
 }

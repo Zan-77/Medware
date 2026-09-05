@@ -29,26 +29,38 @@ export const RequestsPage = () => {
 
     return (
         <div className="space-y-3">
-            {data.items.map((item) => (
-                <div key={`${item.kind}-${item.order.id}-${item.notification_id ?? "q"}`}
-                    className="flex items-center justify-between gap-x-4 p-4 rounded-xl border border-light-border-secondary dark:border-dark-border-tertiary">
-                    <div>
-                        <Text>{item.order.customer_name} — {t("orderTotal")}: {item.order.total}</Text>
-                        {item.message && <Text>{item.message}</Text>}
-                    </div>
-                    <div className="flex gap-x-2">
-                        <Button size="xs" variants="ghost"
-                            onClick={() => navigate(`/app/orders/${item.order.id}/`, {
-                                state: { location: "orders", details: item.order.customer_name ?? "" },
-                            })}>{t("details")}</Button>
-                        {item.notification_id !== null &&
+            {data.items.map((item) => {
+                const title = item.order
+                    ? `${item.order.customer_name ?? ""} — ${t("orderTotal")}: ${item.order.total}`
+                    : `${t("customer")}: ${item.customer?.name ?? ""}`
+                // Customer rows are actioned on the customers page; order rows
+                // open the order itself.
+                const target = item.order
+                    ? `/app/orders/${item.order.id}/`
+                    : "/app/customers"
+                const locationKey = item.order ? "orders" : "customers"
+
+                return (
+                    <div key={`${item.kind}-${item.order?.id ?? item.customer?.id ?? ""}-${item.notification_id ?? "q"}`}
+                        className="flex items-center justify-between gap-x-4 p-4 rounded-xl border border-light-border-secondary dark:border-dark-border-tertiary">
+                        <div>
+                            <Text>{title}</Text>
+                            {item.message && <Text>{item.message}</Text>}
+                        </div>
+                        <div className="flex gap-x-2">
                             <Button size="xs" variants="ghost"
-                                onClick={() => dismiss.mutate(item.notification_id as number)}>
-                                {t("Suppliers.confirm")}
-                            </Button>}
+                                onClick={() => navigate(target, { state: { location: locationKey } })}>
+                                {t("details")}
+                            </Button>
+                            {item.notification_id !== null &&
+                                <Button size="xs" variants="ghost"
+                                    onClick={() => dismiss.mutate(item.notification_id as number)}>
+                                    {t("Suppliers.confirm")}
+                                </Button>}
+                        </div>
                     </div>
-                </div>
-            ))}
+                )
+            })}
         </div>
     )
 }
