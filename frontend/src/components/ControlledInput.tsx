@@ -61,7 +61,7 @@ const ExternallyControlledInput = <TFieldValues extends FieldValues>({ className
                 state={resolvedState}
                 type={type}
                 buttonIcon={buttonIcon}
-                legend={legend ?? t(String(props.name))}
+                legend={legend ?? t(String(props.name).split(".").pop() ?? String(props.name))}
             />
         </div>
     )
@@ -81,7 +81,7 @@ const FormControlledInput = <TFieldValues extends FieldValues>({ className, auto
 
     return (
         <div className={baseControlledInputStyle({ state: resolvedState, className })}>
-            <Input autoComplete={autoComplete} onClick={onClick} placeholder={placeholder} {...field} state={resolvedState} type={type} buttonIcon={buttonIcon} legend={legend ?? t(String(name))} />
+            <Input autoComplete={autoComplete} onClick={onClick} placeholder={placeholder} {...field} state={resolvedState} type={type} buttonIcon={buttonIcon} legend={legend ?? t(String(name).split(".").pop() ?? String(name))} />
             <Text color={resolvedState} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>
         </div>
     )

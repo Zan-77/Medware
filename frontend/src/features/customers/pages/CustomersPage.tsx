@@ -178,13 +178,7 @@ export const CustomersPage = () => {
             cell: ({ row }) => t(`CustomerStatus.${row.original.status}`),
             filterFn: filterFn_includesString,
         },
-        {
-            meta: { filterVariants: "value" }, id: "created_by", enableSorting: true,
-            header: t("createdBy"),
-            accessorFn: (row) => row.created_by_name ?? "",
-            cell: ({ row }) => row.original.created_by_name ?? "",
-            filterFn: filterFn_includesString,
-        },
+      
         {
             meta: { filterVariants: "range" }, id: "id", enableGrouping: false,
             enableSorting: true, header: t("id"), accessorKey: "id",

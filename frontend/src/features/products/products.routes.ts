@@ -15,18 +15,19 @@ export const peoductsRoutes: RouteObject[] = [
         path: "supplier",
         Component: SupplierPage,
     },
-    // Static segments outrank dynamic ones in React Router's ranking, so
-    // `supplier/bills` wins over `supplier/:supplierId` for /app/supplier/bills.
-    // Keep it listed first anyway so the intent is obvious to a reader.
     {
         path: "supplier/bills",
         Component: SupplierBillsPage,
     },
     {
-        path: "supplier/bills/:billId",
-        Component: SupplierBillLinesPage,
+        path: "supplier/:supplierId/bills",
+        Component: SupplierBillsPage,
     },
     {
+        path: "supplier/:supplierId/bills/:billId",
+        Component: SupplierBillLinesPage,
+    },
+        {
         path: "supplier/:supplierId",
         Component: SupplierDetails
     }

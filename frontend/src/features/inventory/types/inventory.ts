@@ -15,6 +15,16 @@ export interface InventoryItems {
     retail_price: number | null
     image_url: string
     quantity: number
+    expiry_dates: string[]
+}
+
+export type InventoryItemInput = {
+    category: string | number
+    name: string
+    sku: string | null
+    whole_price: number | null
+    retail_price: number | null
+    image_url: string
 }
 
 export interface InventoryCategories {

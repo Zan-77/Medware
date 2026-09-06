@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CheckmarkCircle01Icon, Edit, Plus, Trash } from "@hugeicons/core-free-icons"
+import { CheckmarkCircle01Icon, Edit, Plus, Trash, ViewIcon } from "@hugeicons/core-free-icons"
 import Button from "../../../components/Button"
 import useOpenMenu from "../../../hooks/useOpenMenu"
 import Form from "../../../components/Form"
@@ -18,7 +18,7 @@ import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import { Link } from "react-router"
+import { useNavigate } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
@@ -31,6 +31,7 @@ const defaultProductValues: NewSupplierFieldsValueState = {
 }
 
 export const SupplierPage = () => {
+    const navigate = useNavigate()
     //store
     const user = useBoundStore(state => state.authSlice.user)
     //menu state
@@ -145,6 +146,18 @@ export const SupplierPage = () => {
             header: t("actions"),
             cell: ({ row }) => (
                 <div className="flex justify-center gap-x-2">
+                  {  hasPermission(user, "supplierBillLines", "read")
+                        &&
+                        <Button
+                            className="dark:text-accent-medium text-accent-dark dark:hover:text-accent-extraLight hover:text-accent-dark"
+                            onClick={() => {
+                                navigate(`/app/supplier/${row.original.id}/bills/`, {
+                                    state: { location: "billDetails", details: row.original.id ?? "" },
+                                })
+                            }}
+                            size="xs" variants="ghost"
+                            iconOnly={true}
+                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />}></Button>}
                     {hasPermission(user, "suppliers", "delete")
                         &&
                         <Button
@@ -199,12 +212,7 @@ export const SupplierPage = () => {
             header: t("id"),
             accessorKey: "id",
             //aggregationFn:"count",
-            //footer: ({ column }) => column.getAggregationValue<string>().toLocaleString(),
-            cell: ({ row }) => {
-                // The supplier id opens that supplier's bills, filtered by the
-                // `?supplier=` query the bills page reads.
-                return hasPermission(user, "supplierBills", "read") ? <Link className="dark:text-accent-medium text-accent-dark" to={`/app/supplier/bills?supplier=${row.original.id}`} state={{ location: "supplierBills", details: row.original.name }}>{row.original.id}</Link> : row.original.id
-            },
+            //footer: ({ column }) => column.getAggregationValue<string>().toLocaleString(),    
             filterFn: filterFn_inNumberRange
         },
         /*{

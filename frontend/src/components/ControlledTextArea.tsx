@@ -49,7 +49,7 @@ const ControlledTextArea = <TFieldValues extends FieldValues>({
                 onFocus={onFocus}
                 placeholder={placeholder}
                 rows={rows}
-                legend={t(String(props.name))}
+                legend={t(String(props.name).split(".").pop() ?? String(props.name))}
                 state={state}
                 autoResize={autoResize}
             />

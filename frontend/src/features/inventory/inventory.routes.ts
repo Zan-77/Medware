@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router";
 import { redirect } from "react-router";
-import InventoryItemsDetails from "./pages/InventoryItemsDetails";
 import { InventoryCategoriesPage } from "./pages/InventoryCategoriesPage";
+import InventoryItemsDetails from "./pages/InventoryItemsDetails";
 
 export const inventoryRoutes: RouteObject[] = [
 

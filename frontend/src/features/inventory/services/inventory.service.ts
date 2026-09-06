@@ -1,6 +1,6 @@
 
 import ax from "../../../services/api"
-import type { InventoryCategories, InventoryItems, SupplierBilllLines } from "../types/inventory"
+import type { InventoryCategories, InventoryItemInput, InventoryItems, SupplierBilllLines } from "../types/inventory"
 import type { SupplierBillls } from "../types/inventory"
 
 const inventoryCategoriesUrl = "/inventory/categories/"
@@ -34,6 +34,21 @@ export const getInventoryItems = async (categoryId?: string): Promise<InventoryI
 	return res.data
 }
 
+export const postInventoryItem = async (data: InventoryItemInput) => {
+	const res = await ax.post(inventoryItemsUrl, data)
+	return res
+}
+
+export const putInventoryItem = async (id: string, data: InventoryItemInput) => {
+	const res = await ax.put(`${inventoryItemsUrl}${id}/`, data)
+	return res
+}
+
+export const deleteInventoryItem = async (id: string) => {
+	const res = await ax.delete(`${inventoryItemsUrl}${id}/`)
+	return res
+}
+
 const inventoryBillsUrl = "/inventory/bills/"
 
 // `supplierId` maps to the `?supplier=` filter on SupplierBillViewSet, which is
@@ -44,6 +59,7 @@ export const getInventoryBills = async (supplierId?: string): Promise<SupplierBi
 	})
 	return res.data
 }
+
 
 export const getInventoryBillById = async (id: string): Promise<SupplierBillls> => {
 	const res = await ax.get<SupplierBillls>(`${inventoryBillsUrl}${id}/`)

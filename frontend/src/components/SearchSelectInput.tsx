@@ -93,7 +93,10 @@ const SearchSelectInput = ({
                             key={option.value}
                             type="button"
                             variants="ghost"
-                            onClick={() => handleSelect(option)}
+                            onMouseDown={(event) => {
+                                event.preventDefault()
+                                handleSelect(option)
+                            }}
                         >
                             {option.label}
                         </Button>

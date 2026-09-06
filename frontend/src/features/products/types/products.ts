@@ -5,6 +5,8 @@ export type Products = {
     retail_price:number | null
     name:string
     image_url:string
+    category_id?:string | number | null
+    category_name?:string
 }
 
 

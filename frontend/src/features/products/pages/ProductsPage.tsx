@@ -148,6 +148,11 @@ export const ProductsPage = () => {
             accessorKey: "name",
         },
         {
+            header: t("category"),
+            accessorKey: "category_name",
+            cell: ({ getValue }) => getValue<string>() ?? "Uncategorized",
+        },
+        {
             header: t("id"),
             accessorKey: "id",
         },

@@ -75,6 +75,7 @@ interface ButtonProps extends ButtonVariants {
     className?: string
     type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"]
     onClick?: React.MouseEventHandler<HTMLButtonElement>
+    onMouseDown?: React.MouseEventHandler<HTMLButtonElement>
     ref?: any
 }
 
@@ -85,10 +86,10 @@ interface ButtonProps extends ButtonVariants {
  * `md` and `lg` sizing, optional left/right icons, and an `iconOnly`
  * mode for square icon buttons.
  */
-const Button = ({ children, type, className, leftIcon, rightIcon, ref, onClick, ...variants }: ButtonProps) => {
+const Button = ({ children, type, className, leftIcon, rightIcon, ref, onClick, onMouseDown, ...variants }: ButtonProps) => {
 
     return (
-        <button ref={ref} type={type} className={baseButtonStyle({ ...variants, className })} onClick={onClick}>
+        <button ref={ref} type={type} className={baseButtonStyle({ ...variants, className })} onClick={onClick} onMouseDown={onMouseDown}>
             {leftIcon}
             {children}
             {rightIcon}

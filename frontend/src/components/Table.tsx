@@ -125,7 +125,7 @@ export const Table = <D extends RowData>(
 
 
     return (
-        <div className="relative xl:h-[72vh] 2xl:h-[80vh] max-md:max-h-[72vh] overflow-auto w-full" ref={tableContainerRef}>
+        <div className="relative min-h-full max-h-[80vh] max-md:max-h-[72vh] overflow-auto rounded-2xl w-full" ref={tableContainerRef}>
             <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="sticky top-0 z-10 *:border-t *:border-l *:border-r *:dark:border-dark-border-primary-hover *:border-light-background-primary *:rounded-t-2xl">
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -211,7 +211,7 @@ export const Table = <D extends RowData>(
                         )
                     })}
                 </tbody>
-                <tfoot className="sticky bottom-0 z-10 *:border-b *:border-l *:border-r *:dark:border-dark-border-primary-hover *:drop-shadow-2xl *:border-light-background-primary *:rounded-b-2xl">
+                <tfoot className="sticky bottom-0 z-10 *:dark:border-dark-border-primary-hover *:drop-shadow-2xl *:border-light-background-primary *:rounded-b-2xl">
                     {table.getFooterGroups().map((footerGroup) => (
                         <tr className="flex w-full" key={footerGroup.id}>
                             {footerGroup.headers.map((header) => (

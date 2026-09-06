@@ -47,7 +47,7 @@ const Input = ({ legend, type, buttonIcon, autoComplete, className, fieldset = t
             <legend className="px-2 ml-2 rtl:mr-2 select-none"><Text color={rest.state}>{legend}</Text></legend>
             <div className="relative">
                 <input autoComplete={autoComplete} {...rest} type={type} className="w-full rtl:pl-6 ltr:pr-6 h-8 outline-none pb-2 px-4" />
-                {buttonIcon && <Button type="button" onClick={onClick} variants="ghost" size="sm" className="absolute top-1/2 -translate-y-1/2 left-2" iconOnly>{buttonIcon}</Button>}
+                {buttonIcon && <Button type="button" onClick={onClick} variants="ghost" size="sm" className="absolute -top-1\  left-2" iconOnly>{buttonIcon}</Button>}
             </div>
         </fieldset> :
             <div className={baseInputStyle({ ...rest, className })}>

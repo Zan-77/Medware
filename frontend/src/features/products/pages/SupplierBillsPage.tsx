@@ -3,7 +3,9 @@ import { CheckmarkCircle01Icon, Edit, Plus, Trash, ViewIcon } from "@hugeicons/c
 import Button from "../../../components/Button"
 import useOpenMenu from "../../../hooks/useOpenMenu"
 import Form from "../../../components/Form"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm, useWatch } from "react-hook-form"
+import { useRef } from "react"
+import type { Control, UseFormSetValue } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import Model from "../../../components/Model"
@@ -14,15 +16,16 @@ import Toast from "../../../components/Toast"
 import Text from "../../../components/Text"
 import { hasPermission } from "../../auth"
 import { useBoundStore } from "../../../store/useBoundStore"
-import { useNavigate, useSearchParams } from "react-router"
+import { useNavigate, useParams, useSearchParams } from "react-router"
 import TableFilter from "../../../components/TableFilter"
 import TableSettings from "../../../components/TableSettings"
 import DebouncedInput from "../../../components/DebouncedInput"
 import { ControlledDateInput } from "../../../components/DateInput"
+import ControlledInput from "../../../components/ControlledInput"
 import { ControlledSearchSelectInput } from "../../../components/SearchSelectInput"
 import { getSuppliers } from "../services/products.service"
-import { getInventoryBills, postInventoryBill, putInventoryBill, deleteInventoryBill } from "../../inventory/services/inventory.service"
-import type { SupplierBillls } from "../../inventory/types/inventory"
+import { getInventoryBills, postInventoryBill, postSupplierBillLine, putInventoryBill, deleteInventoryBill, getInventoryCategories, getInventoryItems } from "../../inventory/services/inventory.service"
+import type { InventoryCategories, InventoryItems, SupplierBilllLines, SupplierBillls } from "../../inventory/types/inventory"
 import ControlledTextArea from "../../../components/ControlledTextArea"
 
 // Form fields, not the API shape: the inputs hold strings and
@@ -32,6 +35,33 @@ type NewSupplierFieldsValueState = {
     managerId: string
     date: string
     notes: string
+    categories: NewBillCategoryFields[]
+}
+
+type NewBillLineFields = {
+    item: string
+    quantity: string
+    expiry_date: string
+    unit_price: string
+}
+
+type NewBillCategoryFields = {
+    category: string
+    discount: string
+    items: NewBillLineFields[]
+}
+
+const defaultBillLineValues: NewBillLineFields = {
+    item: "",
+    quantity: "",
+    expiry_date: "",
+    unit_price: "",
+}
+
+const defaultBillCategoryValues: NewBillCategoryFields = {
+    category: "",
+    discount: "",
+    items: [{ ...defaultBillLineValues }],
 }
 
 const defaultProductValues: NewSupplierFieldsValueState = {
@@ -39,6 +69,100 @@ const defaultProductValues: NewSupplierFieldsValueState = {
     managerId: "",
     date: "",
     notes: "",
+    categories: [{ ...defaultBillCategoryValues }],
+}
+
+type CategoryItemsProps = {
+    control: Control<NewSupplierFieldsValueState>
+    setValue: UseFormSetValue<NewSupplierFieldsValueState>
+    categoryIndex: number
+    inventoryItems: InventoryItems[]
+}
+
+const CategoryItems = ({ control, setValue, categoryIndex, inventoryItems }: CategoryItemsProps) => {
+    const { t } = useTranslation()
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `categories.${categoryIndex}.items` as const,
+    })
+    const selectedCategory = useWatch({
+        control,
+        name: `categories.${categoryIndex}.category` as const,
+    })
+    const previousCategory = useRef<string | undefined>(undefined)
+    const itemOptions = inventoryItems
+        .filter((item) => selectedCategory && String(item.category) === String(selectedCategory))
+        .map((item) => ({
+            value: String(item.id),
+            label: item.name,
+        }))
+
+    useEffect(() => {
+        if (previousCategory.current !== undefined && previousCategory.current !== selectedCategory) {
+            fields.forEach((_, itemIndex) => {
+                setValue(`categories.${categoryIndex}.items.${itemIndex}.item`, "")
+            })
+        }
+        previousCategory.current = selectedCategory
+    }, [categoryIndex, fields, selectedCategory, setValue])
+
+    return (
+        <div className="space-y-2">
+            {fields.map((field, itemIndex) => (
+                <div key={field.id} className="grid grid-cols-2 gap-x-6 items-start">
+                    <ControlledSearchSelectInput<NewSupplierFieldsValueState>
+                        control={control}
+                        name={`categories.${categoryIndex}.items.${itemIndex}.item`}
+                        label={t("item")}
+                        rules={{
+                            required: { message: t("InventoryBillLinesMessages.itemRequired"), value: true },
+                        }}
+                        options={itemOptions}
+                        placeholder={t("search") + "..."}
+                    />
+                    <ControlledInput<NewSupplierFieldsValueState>
+                        name={`categories.${categoryIndex}.items.${itemIndex}.quantity`}
+                        type="number"
+                        control={control}
+                        rules={{
+                            required: { message: t("InventoryBillLinesMessages.quantityRequired"), value: true },
+                            min: { message: t("InventoryBillLinesMessages.quantityMin"), value: 1 },
+                        }}
+                    />
+                    <ControlledDateInput<NewSupplierFieldsValueState>
+                        control={control}
+                        name={`categories.${categoryIndex}.items.${itemIndex}.expiry_date`}
+                    />
+                    <ControlledInput<NewSupplierFieldsValueState>
+                        name={`categories.${categoryIndex}.items.${itemIndex}.unit_price`}
+                        type="number"
+                        control={control}
+                        rules={{ min: { message: t("InventoryBillLinesMessages.priceMin"), value: 0 } }}
+                    />
+                    {fields.length > 1 && (
+                        <Button
+                            type="button"
+                            variants="ghost"
+                            size="sm"
+                            onClick={() => remove(itemIndex)}
+                            leftIcon={<HugeiconsIcon size={16} icon={Trash} />}
+                        >
+                            {t("Suppliers.cancel")}
+                        </Button>
+                    )}
+                </div>
+            ))}
+            <Button
+                type="button"
+                variants="border"
+                size="sm"
+                onClick={() => append({ ...defaultBillLineValues })}
+                leftIcon={<HugeiconsIcon size={16} icon={Plus} />}
+            >
+                {t("addItem")}
+            </Button>
+        </div>
+    )
 }
 
 export const SupplierBillsPage = () => {
@@ -63,8 +187,9 @@ export const SupplierBillsPage = () => {
     // id link on the suppliers table opens. The parameter is part of the query
     // key so switching suppliers refetches instead of showing the previous set.
     const [searchParams] = useSearchParams()
+    const { supplierId } = useParams<{ supplierId: string }>()
     const navigate = useNavigate()
-    const supplierFilter = searchParams.get("supplier") ?? undefined
+    const supplierFilter = searchParams.get("supplier") ?? supplierId ?? undefined
     const { data } = useQuery({
         queryKey: ["inventoryBills", supplierFilter ?? null],
         queryFn: () => getInventoryBills(supplierFilter)
@@ -73,6 +198,18 @@ export const SupplierBillsPage = () => {
         queryKey: ["suppliersList"],
         queryFn: getSuppliers,
     })
+    const { data: categories = [] } = useQuery<InventoryCategories[]>({
+        queryKey: ["inventoryCategories"],
+        queryFn: getInventoryCategories,
+    })
+    const { data: items = [] } = useQuery<InventoryItems[]>({
+        queryKey: ["inventoryItems"],
+        queryFn: () => getInventoryItems(),
+    })
+    const categoryOptions = categories.map((category) => ({
+        value: String(category.id),
+        label: category.name,
+    }))
     const supplierOptions = suppliers.map((supplier) => ({
         value: String(supplier.id),
         label: supplier.name,
@@ -87,7 +224,7 @@ export const SupplierBillsPage = () => {
     )
     const queryClient = useQueryClient()
 
-    const { mutate: addSupplier } = useMutation({
+    const addSupplier = useMutation({
         mutationKey: ["inventoryBills", "new"],
         mutationFn: postInventoryBill
     })
@@ -102,13 +239,15 @@ export const SupplierBillsPage = () => {
         mutationFn: (id: string) => deleteInventoryBill(id),
     })
 
-    const { control, handleSubmit, reset, setError, clearErrors, formState: { errors } } = useForm<NewSupplierFieldsValueState>({
+    const { control, handleSubmit, reset, setValue, setError, clearErrors, formState: { errors } } = useForm<NewSupplierFieldsValueState>({
         defaultValues: {
             ...defaultProductValues,
+            supplierId: supplierId ?? "",
             managerId: user?.id ?? "",
         },
         mode: "all"
     })
+    const { fields, append, remove } = useFieldArray({ control, name: "categories" })
     const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<null | SupplierBillls>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -120,6 +259,16 @@ export const SupplierBillsPage = () => {
         manager: data.managerId || user?.id || null,
         date: data.date,
         notes: data.notes ?? "",
+    })
+
+    const toBillLinePayload = (fields: NewBillLineFields, category: string, discount: string, billId: string): Omit<SupplierBilllLines, "id"> => ({
+        bill: Number(billId),
+        item: fields.item ? Number(fields.item) : null,
+        category: category ? Number(category) : null,
+        quantity: Number(fields.quantity),
+        expiry_date: fields.expiry_date || null,
+        unit_price: fields.unit_price === "" ? null : Number(fields.unit_price),
+        discount: discount === "" ? null : Number(discount),
     })
 
     useEffect(() => {
@@ -142,6 +291,10 @@ export const SupplierBillsPage = () => {
 
     const onSubmit = (data: NewSupplierFieldsValueState) => {
         clearErrors("root.server")
+        if (!data.supplierId) {
+            setError("root.server", { type: "validation", message: t("SuppliersMessages.nameRequired") })
+            return
+        }
         const payload = toSupplierBillPayload(data)
 
         if (editingSupplierId) {
@@ -163,15 +316,18 @@ export const SupplierBillsPage = () => {
             return
         }
 
-        addSupplier(payload, {
-
-            onError(error) {
-                console.log(error);
-                setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
-            },
-            onSuccess() {
+        addSupplier.mutateAsync(payload)
+            .then(async (response) => {
+                const billId = String(response.data.id)
+                const lineRequests = data.categories.flatMap((category) =>
+                    category.items.map((item) =>
+                        postSupplierBillLine(toBillLinePayload(item, category.category, category.discount, billId))
+                    )
+                )
+                await Promise.all(lineRequests)
                 reset({
                     ...defaultProductValues,
+                    supplierId: supplierId ?? "",
                     managerId: user?.id ?? "",
                 })
                 clearErrors()
@@ -179,8 +335,11 @@ export const SupplierBillsPage = () => {
                 setSuccessMessage(t("InventoryBillsMessages.createSuccess"))
                 setIsOpenToast(true)
                 queryClient.invalidateQueries({ queryKey: ["inventoryBills"] })
-            },
-        })
+            })
+            .catch((error) => {
+                console.log(error)
+                setError("root.server", { type: "server", message: t("InventoryBillsMessages.serverError") })
+            })
     }
     const columns: Array<ColumnDef<TableFeatures, SupplierBillls>> = [
         {
@@ -197,12 +356,13 @@ export const SupplierBillsPage = () => {
                         <Button
                             className="dark:text-accent-medium text-accent-dark dark:hover:text-accent-extraLight hover:text-accent-dark"
                             onClick={() => {
-                                navigate(`/app/supplier/bills/${row.original.id}/`, {
+                                navigate(`/app/supplier/${row.original.supplier}/bills/${row.original.id}`, {
                                     state: { location: "billDetails", details: row.original.supplier_name ?? "" },
                                 })
                             }}
                             size="xs" variants="ghost"
-                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />}>{t("details")}</Button>}
+                            iconOnly={true}
+                            leftIcon={<HugeiconsIcon size={18} icon={ViewIcon} />}></Button>}
                     {hasPermission(user, "supplierBills", "delete")
                         &&
                         <Button
@@ -280,6 +440,7 @@ export const SupplierBillsPage = () => {
     return (
         <div>
             <Model title={t("InventoryBills.newBill")} isOpen={isOpenAddModel} onClick={() => setIsOpenAddModel(false)} ref={AddModelRef}>
+                <div className="min-h-40 max-h-[70vh] overflow-y-auto pr-2">
                 <Form ServerError={errors.root?.server} onSubmit={handleSubmit(onSubmit)} Buttons={<Button type="submit">{t("InventoryBills.addBill")}</Button>}>
                     <div className="grid grid-cols-2 gap-x-6">
                         <ControlledSearchSelectInput<NewSupplierFieldsValueState>
@@ -287,13 +448,11 @@ export const SupplierBillsPage = () => {
                             name="supplierId"
                             label={t("supplier")}
                             rules={{
-                                shouldUnregister: true,
                                 required: { message: t("SuppliersMessages.nameRequired"), value: true },
                             }}
                             options={supplierOptions}
                             placeholder={t("search") + "..."}
                         />
-
                         <ControlledDateInput<NewSupplierFieldsValueState>
                             control={control}
                             name="date"
@@ -302,6 +461,58 @@ export const SupplierBillsPage = () => {
                                 required: { message: t("SuppliersMessages.nameRequired"), value: true },
                             }}
                         />
+                    </div>
+                    <div className="mt-6 space-y-3">
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="space-y-3 border-b pb-4">
+                                <Text className="font-semibold">{t("category")} {index + 1}</Text>
+                                <div className="grid grid-cols-2 gap-x-6 items-start">
+                                    <ControlledSearchSelectInput<NewSupplierFieldsValueState>
+                                        control={control}
+                                        name={`categories.${index}.category`}
+                                        label={t("category")}
+                                        rules={{
+                                            required: { message: t("InventoryBillLinesMessages.categoryRequired"), value: true },
+                                        }}
+                                        options={categoryOptions}
+                                        placeholder={t("search") + "..."}
+                                    />
+                                    <ControlledInput<NewSupplierFieldsValueState>
+                                        name={`categories.${index}.discount`}
+                                        legend={t("discount")}
+                                        type="number"
+                                        control={control}
+                                        rules={{ min: { message: t("InventoryBillLinesMessages.priceMin"), value: 0 } }}
+                                    />
+                                </div>
+                                <CategoryItems
+                                    control={control}
+                                    setValue={setValue}
+                                    categoryIndex={index}
+                                    inventoryItems={items}
+                                />
+                                {fields.length > 1 && (
+                                    <Button
+                                        type="button"
+                                        variants="ghost"
+                                        size="sm"
+                                        onClick={() => remove(index)}
+                                        leftIcon={<HugeiconsIcon size={16} icon={Trash} />}
+                                    >
+                                        {t("Suppliers.cancel")}
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
+                        <Button
+                            type="button"
+                            variants="border"
+                            size="sm"
+                            onClick={() => append({ ...defaultBillCategoryValues, items: [{ ...defaultBillLineValues }] })}
+                            leftIcon={<HugeiconsIcon size={16} icon={Plus} />}
+                        >
+                            أضف فئة
+                        </Button>
                     </div>
                     <ControlledTextArea<NewSupplierFieldsValueState>
                         rules={{
@@ -313,6 +524,7 @@ export const SupplierBillsPage = () => {
                     />
 
                 </Form>
+                </div>
             </Model>
             <Model title={t("InventoryBills.deleteTitle")} isOpen={isOpenDeleteModel} onClick={() => setIsOpenDeleteModel(false)} ref={DeleteModelRef}>
                 <div className="p-4">

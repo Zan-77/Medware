@@ -100,7 +100,7 @@ export const ControlledDateInput = <TFieldValues extends FieldValues>({ name, co
                 {...field}
                 value={field.value ?? ""}
                 onChange={(value) => field.onChange(value)}
-                legend={t(String(name))}
+                legend={t(String(name).split(".").pop() ?? String(name))}
                 className={state === "error" ? "border-light-border-error dark:border-dark-border-error" : ""}
             />
             <Text color={state} className="ml-4.5 rtl:mr-4.5 select-none">{renderedError}</Text>

@@ -25,7 +25,7 @@ interface SelectInputProps extends SelectVariants, Omit<SelectHTMLAttributes<HTM
   className?: string
 }
 
-const SelectInput = ({ legend, className, ...rest }: SelectInputProps) => {
+const SelectInput = ({ legend, className, onFocus, onBlur, onClick, ...rest }: SelectInputProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -37,9 +37,18 @@ const SelectInput = ({ legend, className, ...rest }: SelectInputProps) => {
       <div className='relative'>
         <select
           {...rest}
-          onFocus={() => setIsOpen(true)}
-          onBlur={() => setIsOpen(false)}
-          onClick={() => setIsOpen(prev => !prev)}
+          onFocus={(event) => {
+            setIsOpen(true)
+            onFocus?.(event)
+          }}
+          onBlur={(event) => {
+            setIsOpen(false)
+            onBlur?.(event)
+          }}
+          onClick={(event) => {
+            setIsOpen(true)
+            onClick?.(event)
+          }}
           className='w-full rtl:pl-6 ltr:pr-6 h-8  outline-none bg-transparent appearance-none cursor-pointer py-1 px-4'
         >
           {rest.children}

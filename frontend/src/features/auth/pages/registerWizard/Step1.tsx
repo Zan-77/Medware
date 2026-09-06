@@ -64,6 +64,10 @@ export const Step1 = () => {
               <Text muted={true}>{t("register.step1.dpa")}</Text>
               <Link to="/tos">{t("register.step1.dpaLink")}</Link>
             </div>
+            <div className="text-center">
+              <Text muted={true}>{t("register.step1.login")}</Text>
+              <Link to={inApp ? "/app/auth/login" : "/store/auth/login"}>{t("register.step1.loginLink")}</Link>
+            </div>
           </div>
           {!inApp && <div className="*:mx-px text-center">
             <Text muted={true}>{t("register.step1.registerBusiness")}</Text>

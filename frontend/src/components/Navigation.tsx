@@ -1,9 +1,9 @@
 
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import Button from './Button'
 import Text from './Text'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDown01Icon, BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, RightToLeftListDashIcon, Trolley02Icon } from '@hugeicons/core-free-icons'
+import { ArrowDown01Icon, BoxIcon, Coupon01Icon, DashboardSquare01Icon, Invoice03Icon, Logout05Icon, Money01Icon, Moon02Icon, RightToLeftListDashIcon, Sun03Icon, Trolley02Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import Dropdown from './Dropdown'
@@ -13,6 +13,7 @@ import { logout } from '../features/auth'
 import { getUnreadNotifications } from '../features/orders/services/orders.service'
 import { setAuthHeader } from '../services/api'
 import { useBoundStore } from '../store/useBoundStore'
+import { hasPermission } from '../features/auth'
 
 interface NavigationProps {
   className?: string
@@ -74,6 +75,22 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
   const { isOpen: isOpenUserButton, setIsOpen: setIsOpenUserButton, ref: userButtonRef } = useOpenMenu()
   const { t } = useTranslation()
   const navigarte = useNavigate()
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
+
+  useEffect(() => {
+    const syncTheme = () => setIsDarkMode(document.documentElement.classList.contains('dark'))
+    const observer = new MutationObserver(syncTheme)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  const toggleTheme = () => {
+    const html = document.documentElement
+    const nextIsDarkMode = !html.classList.contains('dark')
+    html.classList.toggle('dark', nextIsDarkMode)
+    html.classList.toggle('light', !nextIsDarkMode)
+    setIsDarkMode(nextIsDarkMode)
+  }
   
   return (
     <div ref={ref} className={className}>
@@ -93,6 +110,15 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
               <Button onClick={() => { mutation.mutate() }} className='w-full text-light-text-error-hover hover:text-light-text-error-hover dark:text-dark-text-error-hover dark:hover:text-dark-text-error-hover' size='sm' rightIcon={<HugeiconsIcon size={22} icon={Logout05Icon} />} variants='ghost'>{t('logout')}</Button>
             </Dropdown>
           </div>
+          <Button
+            type='button'
+            size='sm'
+            variants='ghost'
+            iconOnly
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={toggleTheme}
+            leftIcon={<HugeiconsIcon size={20} icon={isDarkMode ? Sun03Icon : Moon02Icon} />}
+          />
         </div>
         <ComingSoonEntry icon={DashboardSquare01Icon} label={t('home')} hint={t('comingSoon')} />
 
@@ -170,6 +196,16 @@ const Navigation = forwardRef<HTMLDivElement, NavigationProps>(({ className }, r
           onClick={() => { navigarte("/app/supplier/bills", { state: { location: "supplierBills" } }); }}>
           {t('supplierBills')}
         </Button>
+
+        {hasPermission(user, 'finance', 'read') && <>
+          <SectionLabel>{t('finance')}</SectionLabel>
+          <Button size='sm' className={`w-full justify-start`} variants='ghost'
+            active={location.pathname.includes("/app/finance")}
+            leftIcon={<HugeiconsIcon size={22} icon={Money01Icon} />}
+            onClick={() => { navigarte("/app/finance", { state: { location: "finance" } }); }}>
+            {t('customerAccounts')}
+          </Button>
+        </>}
 
         <ComingSoonEntry icon={Trolley02Icon} label={t('employees')} hint={t('comingSoon')} />
 
