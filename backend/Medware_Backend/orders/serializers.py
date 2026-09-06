@@ -14,7 +14,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderRequestSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, required=False)
     customer_name = serializers.CharField(source='customer.name', read_only=True, default=None)
-    salesman_name = serializers.CharField(source='salesman.username', read_only=True, default=None)
+    salesman_name = serializers.SerializerMethodField()
     total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
@@ -28,6 +28,19 @@ class OrderRequestSerializer(serializers.ModelSerializer):
         # `salesman` are derived from the requesting user. Leaving any of them
         # writable lets a salesman approve their own order with a PATCH.
         read_only_fields = ['status', 'origin', 'salesman', 'previous_balance', 'new_balance']
+
+    def get_salesman_name(self, order):
+        """The person's name, not their username.
+
+        Usernames in this system are generated UUIDs, so rendering one shows a
+        manager reviewing an order something like
+        `78a96c7c-70d5-42c8-9412-...` where a name belongs. Falls back to the
+        username only when no name is recorded at all.
+        """
+        salesman = order.salesman
+        if salesman is None:
+            return None
+        return salesman.get_full_name() or salesman.username
 
     def validate_customer(self, value):
         # An order approved against a customer the company has not accepted is

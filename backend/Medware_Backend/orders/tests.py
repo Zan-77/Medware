@@ -670,3 +670,52 @@ class InboxCustomerRowTests(TestCase):
         order_rows = [i for i in body['items'] if i['kind'] == 'ORDER_PENDING']
         self.assertEqual(len(order_rows), 1)
         self.assertIsNone(order_rows[0]['customer'])
+
+
+class SalesmanNameTests(TestCase):
+    """The review screen must show a name, not a username.
+
+    Usernames here are generated UUIDs, so a manager deciding on an order was
+    shown `78a96c7c-70d5-42c8-9412-...` where the salesman's name belongs.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = User.objects.create_user(
+            username='sn_mgr', password='pass', role=User.Role.MANAGER, is_verified=True)
+        self.customer = Customer.objects.create(
+            name='Al Noor Pharmacy', status=Customer.Status.APPROVED)
+        self.client.force_authenticate(user=self.manager)
+
+    def _order_for(self, salesman):
+        return OrderRequest.objects.create(
+            origin='SALESMAN', customer=self.customer, salesman=salesman)
+
+    def test_the_salesman_name_is_the_persons_name(self):
+        salesman = User.objects.create_user(
+            username='0f0a1b2c-3d4e-5f60-7182-93a4b5c6d7e8', password='pass',
+            role=User.Role.SALESMAN, is_verified=True,
+            first_name='Yazan', last_name='Hadbeh')
+        order = self._order_for(salesman)
+
+        row = self.client.get(f'/api/orders/order-requests/{order.pk}/').json()
+
+        self.assertEqual(row['salesman_name'], 'Yazan Hadbeh')
+
+    def test_it_falls_back_to_the_username_when_no_name_is_recorded(self):
+        salesman = User.objects.create_user(
+            username='no_name_slm', password='pass',
+            role=User.Role.SALESMAN, is_verified=True)
+        order = self._order_for(salesman)
+
+        row = self.client.get(f'/api/orders/order-requests/{order.pk}/').json()
+
+        self.assertEqual(row['salesman_name'], 'no_name_slm')
+
+    def test_an_order_with_no_salesman_still_serialises(self):
+        """`salesman` is SET_NULL - a manager-raised order has none."""
+        order = self._order_for(None)
+
+        row = self.client.get(f'/api/orders/order-requests/{order.pk}/').json()
+
+        self.assertIsNone(row['salesman_name'])
