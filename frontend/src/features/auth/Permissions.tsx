@@ -1,4 +1,5 @@
 import type { Customer } from "../customers/types/customers"
+import type { CustomerAccount } from "../finance/types/finance"
 import type { InventoryCategories, InventoryItems, InventoryStockEntry, SupplierBilllLines, SupplierBillls } from "../inventory/types/inventory"
 import type { OrderRequest } from "../orders/types/orders"
 import type { Products, Suppliers } from "../products/types/products"
@@ -60,6 +61,12 @@ export type Permissions = {
         dataType: Customer
         actions: Actions
     }
+    // Balances are derived and a voucher is the only write, so `create` gates
+    // raising one and `read` gates seeing the finance panel at all.
+    finance: {
+        dataType: CustomerAccount
+        actions: Actions
+    }
 }
 
 const ROLES = {
@@ -71,6 +78,12 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        finance: {
             read: false,
             create: false,
             update: false,
@@ -144,6 +157,12 @@ const ROLES = {
             update: false,
             delete: false
         },
+        finance: {
+            read: true,
+            create: true,
+            update: false,
+            delete: false
+        },
         customers: {
             read: true,
             create: false,
@@ -207,6 +226,12 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        finance: {
             read: false,
             create: false,
             update: false,
@@ -280,6 +305,12 @@ const ROLES = {
             update: true,
             delete: false
         },
+        finance: {
+            read: true,
+            create: true,
+            update: false,
+            delete: false
+        },
         customers: {
             read: true,
             create: true,
@@ -348,6 +379,12 @@ const ROLES = {
             update: false,
             delete: false
         },
+        finance: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
         customers: {
             read: true,
             create: true,
@@ -411,6 +448,12 @@ const ROLES = {
             delete: false
         },
         orderApproval: {
+            read: false,
+            create: false,
+            update: false,
+            delete: false
+        },
+        finance: {
             read: false,
             create: false,
             update: false,

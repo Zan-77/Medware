@@ -7,6 +7,7 @@ import { peoductsRoutes } from "./features/products";
 import { ordersRoutes } from "./features/orders";
 import { approvalsRoutes } from "./features/approvals";
 import { customersRoutes } from "./features/customers";
+import { financeRoutes } from "./features/finance";
 
 export const router = createBrowserRouter([
     {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
                     ...peoductsRoutes,
                     ...ordersRoutes,
                     ...customersRoutes,
+                    ...financeRoutes,
                     ...approvalsRoutes
                 ]
             },
