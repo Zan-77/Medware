@@ -80,7 +80,12 @@ class SupplierBillLineViewSet(viewsets.ModelViewSet):
         # lines, not every line ever recorded.
         return filter_by_query_params(
             super().get_queryset(), self.request,
-            {'bill': 'bill_id', 'item': 'item_id', 'category': 'category_id'},
+            {
+                'bill': 'bill_id',
+                'supplier': 'bill__supplier_id',
+                'item': 'item_id',
+                'category': 'category_id',
+            },
         )
 
 

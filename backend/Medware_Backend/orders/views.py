@@ -13,7 +13,7 @@ from customers.models import Customer
 from customers.serializers import CustomerSerializer
 from mysite.filters import filter_by_query_params
 from notifications.models import Notification
-from notifications.services import managers, notify
+from notifications.services import managers, notify, resolve
 
 from .models import OrderRequest, OrderItem, OrderReview, OrderFinalization, PackagingTask, ReturnRequest, ReturnAssessment, ReturnApproval
 from .serializers import (
@@ -73,6 +73,9 @@ def _approve(order, manager):
 
     OrderReview.objects.create(order=order, manager=manager, decision='APPROVE', notes='')
     _record_transition(order, from_status, manager)
+    # The review request is answered - without this the manager's unread badge
+    # keeps counting an order that is no longer waiting on anyone.
+    resolve(Notification.Kind.ORDER_SUBMITTED, order)
     notify(
         [order.salesman] if order.salesman else [],
         Notification.Kind.ORDER_APPROVED,
@@ -193,6 +196,7 @@ class OrderRequestViewSet(viewsets.ModelViewSet):
             OrderReview.objects.create(order=order, manager=request.user,
                                        decision='DECLINE', notes=notes)
             _record_transition(order, from_status, request.user, notes=notes)
+            resolve(Notification.Kind.ORDER_SUBMITTED, order)
             notify(
                 [order.salesman] if order.salesman else [],
                 Notification.Kind.ORDER_REJECTED,
@@ -399,20 +403,39 @@ class InboxView(APIView):
             for customer in customers
         ]
 
+    # Every notification kind a salesman can receive must appear in one of
+    # these two tuples. A kind that is missing still counts toward the unread
+    # badge while showing on no page that can clear it, so the badge sticks at
+    # a number the salesman has no way to work off - which is how approvals
+    # behaved before they were listed here.
+    ORDER_UPDATE_KINDS = (
+        Notification.Kind.ORDER_APPROVED,
+        Notification.Kind.ORDER_REJECTED,
+    )
+    CUSTOMER_UPDATE_KINDS = (
+        Notification.Kind.CUSTOMER_APPROVED,
+        Notification.Kind.CUSTOMER_REJECTED,
+    )
+
     def _salesman_updates(self, request):
         unread = list(Notification.objects.filter(
             recipient=request.user,
-            kind__in=[Notification.Kind.ORDER_REJECTED, Notification.Kind.CUSTOMER_REJECTED],
+            kind__in=self.ORDER_UPDATE_KINDS + self.CUSTOMER_UPDATE_KINDS,
             read_at__isnull=True,
         ))
 
+        def target_pk_of(notification):
+            try:
+                return int(notification.target_id)
+            except (TypeError, ValueError):
+                return None
+
         order_ids, customer_ids = [], []
         for notification in unread:
-            try:
-                target_pk = int(notification.target_id)
-            except (TypeError, ValueError):
+            target_pk = target_pk_of(notification)
+            if target_pk is None:
                 continue
-            if notification.kind == Notification.Kind.ORDER_REJECTED:
+            if notification.kind in self.ORDER_UPDATE_KINDS:
                 order_ids.append(target_pk)
             else:
                 customer_ids.append(target_pk)
@@ -424,17 +447,16 @@ class InboxView(APIView):
 
         items = []
         for notification in unread:
-            try:
-                target_pk = int(notification.target_id)
-            except (TypeError, ValueError):
+            target_pk = target_pk_of(notification)
+            if target_pk is None:
                 continue
 
-            if notification.kind == Notification.Kind.ORDER_REJECTED:
+            if notification.kind in self.ORDER_UPDATE_KINDS:
                 order = orders.get(target_pk)
                 if order is None:
                     continue
                 items.append({
-                    'kind': 'ORDER_REJECTED',
+                    'kind': notification.kind,
                     'order': OrderRequestSerializer(order, context={'request': request}).data,
                     'customer': None,
                     'message': notification.message,
@@ -445,7 +467,7 @@ class InboxView(APIView):
                 if customer is None:
                     continue
                 items.append({
-                    'kind': 'CUSTOMER_REJECTED',
+                    'kind': notification.kind,
                     'order': None,
                     'customer': CustomerSerializer(customer, context={'request': request}).data,
                     'message': notification.message,

@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from audit.models import RequestTransition
 from mysite.filters import filter_by_query_params
 from notifications.models import Notification
-from notifications.services import managers, notify
+from notifications.services import managers, notify, resolve
 from users.permissions import RoleMethodPermission
 
 from .models import Customer
@@ -115,6 +115,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
             customer.status = Customer.Status.APPROVED
             customer.save(update_fields=['status'])
             _record_customer_transition(customer, from_status, request.user)
+            # The manager's request row is answered; leaving it unread keeps
+            # the badge counting a decision that has been made.
+            resolve(Notification.Kind.CUSTOMER_SUBMITTED, customer)
             notify(
                 [customer.created_by] if customer.created_by else [],
                 Notification.Kind.CUSTOMER_APPROVED,
@@ -144,6 +147,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
             customer.rejection_notes = notes
             customer.save(update_fields=['status', 'rejection_notes'])
             _record_customer_transition(customer, from_status, request.user, notes=notes)
+            resolve(Notification.Kind.CUSTOMER_SUBMITTED, customer)
             notify(
                 [customer.created_by] if customer.created_by else [],
                 Notification.Kind.CUSTOMER_REJECTED,

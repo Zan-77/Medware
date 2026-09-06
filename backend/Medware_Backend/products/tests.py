@@ -34,6 +34,13 @@ class ListFilterTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual([row['id'] for row in resp.json()], [self.supplier_a.pk])
 
+    def test_products_include_their_inventory_category(self):
+        response = self.client.get('/api/products/products/')
+
+        self.assertEqual(response.status_code, 200)
+        product = next(row for row in response.json() if row['id'] == self.product.pk)
+        self.assertEqual(product['category_name'], 'Uncategorized')
+
     def test_product_suppliers_are_narrowed_to_the_requested_supplier(self):
         resp = self.client.get(f'/api/products/product-suppliers/?supplier={self.supplier_b.pk}')
 

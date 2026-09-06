@@ -69,6 +69,43 @@ class InventoryPermissionTests(TestCase):
         item.refresh_from_db()
         self.assertEqual(item.quantity, 25)
 
+    def test_supplier_bill_line_assigns_item_to_its_category(self):
+        product = Product.objects.create(name='Gloves')
+        item = InventoryItem.objects.get(product=product)
+        supplier = Supplier.objects.create(name='Acme Medical')
+        category = InventoryCategory.objects.create(name='Protective Equipment')
+        bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
+
+        SupplierBillLine.objects.create(
+            bill=bill,
+            item=item,
+            quantity=5,
+            category=category,
+        )
+
+        item.refresh_from_db()
+        self.assertEqual(item.category_id, category.pk)
+
+    def test_inventory_item_exposes_supplier_bill_expiry_dates(self):
+        product = Product.objects.create(name='Reagents')
+        item = InventoryItem.objects.get(product=product)
+        supplier = Supplier.objects.create(name='Acme Medical')
+        bill = SupplierBill.objects.create(supplier=supplier, manager=self.manager, date='2026-08-28')
+
+        SupplierBillLine.objects.create(
+            bill=bill,
+            item=item,
+            quantity=5,
+            category=item.category,
+            expiry_date='2027-01-15',
+        )
+
+        self.client.force_authenticate(user=self.manager)
+        response = self.client.get(f'/api/inventory/items/?product={product.pk}')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()[0]['expiry_dates'], ['2027-01-15'])
+
     def test_supplier_bill_line_updates_and_removes_quantity(self):
         product = Product.objects.create(name='Bandages')
         item = InventoryItem.objects.get(product=product)

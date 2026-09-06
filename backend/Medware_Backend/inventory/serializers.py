@@ -11,10 +11,19 @@ class InventoryCategorySerializer(serializers.ModelSerializer):
 class InventoryItemSerializer(serializers.ModelSerializer):
     product = serializers.PrimaryKeyRelatedField(read_only=True)
     quantity = serializers.IntegerField(read_only=True)
+    expiry_dates = serializers.SerializerMethodField()
 
     class Meta:
         model = InventoryItem
         fields = '__all__'
+
+    def get_expiry_dates(self, instance):
+        return list(
+            instance.supplierbillline_set
+            .filter(expiry_date__isnull=False)
+            .order_by('expiry_date')
+            .values_list('expiry_date', flat=True)
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
