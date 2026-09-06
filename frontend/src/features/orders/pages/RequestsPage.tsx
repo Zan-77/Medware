@@ -22,6 +22,7 @@ export const RequestsPage = () => {
         mutationFn: markNotificationRead,
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ["ordersInbox"] })
+            queryClient.invalidateQueries({ queryKey: ["unreadNotifications"] })
         },
     })
 

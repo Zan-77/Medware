@@ -56,7 +56,13 @@ export const CustomersPage = () => {
 
     const rejectForm = useForm<RejectFields>({ defaultValues: { notes: "" }, mode: "all" })
 
-    const invalidate = () => queryClient.invalidateQueries({ queryKey: ["customers"] })
+    // The badge and the Requests page are driven by the same decision, so
+    // an approval that refreshes only this table leaves a stale count behind.
+    const invalidate = () => {
+        queryClient.invalidateQueries({ queryKey: ["customers"] })
+        queryClient.invalidateQueries({ queryKey: ["ordersInbox"] })
+        queryClient.invalidateQueries({ queryKey: ["unreadNotifications"] })
+    }
 
     const create = useMutation({ mutationFn: postCustomer })
     const update = useMutation({

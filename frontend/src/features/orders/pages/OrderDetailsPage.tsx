@@ -49,6 +49,8 @@ export const OrderDetailsPage = () => {
             setSuccessMessage(t("Orders_.approveSuccess"))
             setIsOpenToast(true)
             queryClient.invalidateQueries({ queryKey: ["orders"] })
+            queryClient.invalidateQueries({ queryKey: ["ordersInbox"] })
+            queryClient.invalidateQueries({ queryKey: ["unreadNotifications"] })
         },
         onError() {
             // 409 when another manager already decided this order. Without
@@ -66,6 +68,8 @@ export const OrderDetailsPage = () => {
             setSuccessMessage(t("Orders_.rejectSuccess"))
             setIsOpenToast(true)
             queryClient.invalidateQueries({ queryKey: ["orders"] })
+            queryClient.invalidateQueries({ queryKey: ["ordersInbox"] })
+            queryClient.invalidateQueries({ queryKey: ["unreadNotifications"] })
         },
         onError() {
             setError("root.server", { type: "server", message: t("Orders_.serverError") })
