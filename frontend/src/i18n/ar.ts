@@ -151,7 +151,6 @@ export const ar = {
         noOrders: "لا توجد طلبات معتمدة",
         noVouchers: "لا توجد سندات قبض",
         noCustomers: "لا يوجد عملاء",
-        noSalesmanYet: "لا يوجد مندوب بعد",
         pickCustomerFirst: "اختر العميل أولًا",
         numberRequired: "رقم السند مطلوب.",
         dateRequired: "تاريخ السند مطلوب.",

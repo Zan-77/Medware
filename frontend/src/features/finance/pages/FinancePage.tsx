@@ -195,7 +195,7 @@ export const FinancePage = () => {
                         <Text muted>{t("salesman")}</Text>
                         <Text>
                             {selectedCustomer
-                                ? selectedAccount?.salesman_name ?? t("Finance.noSalesmanYet")
+                                ? selectedAccount?.salesman_name ?? t("none")
                                 : t("Finance.pickCustomerFirst")}
                         </Text>
                     </div>
