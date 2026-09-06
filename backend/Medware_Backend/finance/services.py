@@ -73,30 +73,42 @@ def salesman_display(user):
     return user.get_full_name() or user.username
 
 
-def latest_salesman_names(customer_ids):
-    """{customer_id: salesman name} taken from each customer's newest order.
+def _newest_billable_order(customer_ids):
+    """Each customer's most recent order *that the balance is made of*.
 
-    The salesman on a customer's account is whoever raised their order, so
-    there is no salesman until a first order exists. One query, ordered so the
-    newest order per customer is the first row seen for that customer.
+    Billable only, for two reasons. A voucher pays down the balance, and the
+    balance comes from these orders alone - crediting it to a salesman whose
+    order is still pending attributes the payment to work nobody has approved.
+    And orders with no salesman are kept rather than skipped: a manager-raised
+    order genuinely has none, so reaching past it to an older order invents a
+    salesman the payment had nothing to do with.
+
+    One query, ordered so the newest order per customer is that customer's
+    first row.
     """
-    names = {}
+    seen = {}
     orders = (OrderRequest.objects
-              .filter(customer_id__in=list(customer_ids), salesman__isnull=False)
+              .filter(customer_id__in=list(customer_ids), status__in=BILLABLE_STATUSES)
               .select_related('salesman')
-              .order_by('customer_id', '-created_at'))
+              # -id breaks ties: two orders raised in the same instant would
+              # otherwise pick a salesman at the database's discretion.
+              .order_by('customer_id', '-created_at', '-id'))
     for order in orders:
-        names.setdefault(order.customer_id, salesman_display(order.salesman))
-    return names
+        seen.setdefault(order.customer_id, order)
+    return seen
+
+
+def latest_salesman_names(customer_ids):
+    """{customer_id: salesman name} - None where the newest order had none."""
+    return {
+        customer_id: salesman_display(order.salesman)
+        for customer_id, order in _newest_billable_order(customer_ids).items()
+    }
 
 
 def salesman_for_customer(customer):
     """The user record itself, for stamping onto a new voucher."""
-    order = (OrderRequest.objects
-             .filter(customer=customer, salesman__isnull=False)
-             .select_related('salesman')
-             .order_by('-created_at')
-             .first())
+    order = _newest_billable_order([customer.pk]).get(customer.pk)
     return order.salesman if order else None
 
 

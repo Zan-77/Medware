@@ -159,12 +159,32 @@ class SalesmanNameTests(FinanceAccountTestCase):
         self.assertEqual(self.row()['salesman_name'], 'Sara Nassar')
 
     def test_a_manager_raised_order_leaves_the_salesman_unset(self):
-        """Manager orders carry no salesman, so they must not blank out the
-        name a real order established."""
+        """A manager's order genuinely has no salesman. Reaching past it to an
+        older order would name someone the newest order had nothing to do
+        with."""
         self.order()
         self.order(salesman=None)
 
-        self.assertEqual(self.row()['salesman_name'], 'Rami Haddad')
+        self.assertIsNone(self.row()['salesman_name'])
+
+    def test_a_pending_order_does_not_supply_the_salesman(self):
+        """The bug this closes: a customer whose balance came from a manager's
+        order showed the salesman of a *pending* order instead. Nothing in the
+        balance belonged to that salesman."""
+        self.order(salesman=None)
+        self.order(status_value=OrderRequest.Status.PENDING)
+
+        self.assertIsNone(self.row()['salesman_name'])
+
+    def test_a_rejected_order_does_not_supply_the_salesman(self):
+        self.order(status_value=OrderRequest.Status.REJECTED)
+
+        self.assertIsNone(self.row()['salesman_name'])
+
+    def test_a_customer_with_only_a_pending_order_has_no_salesman(self):
+        self.order(status_value=OrderRequest.Status.PENDING)
+
+        self.assertIsNone(self.row()['salesman_name'])
 
 
 class StatementTests(FinanceAccountTestCase):
@@ -242,6 +262,23 @@ class VoucherCreateTests(FinanceAccountTestCase):
 
         self.assertEqual(response.data['salesman'], self.salesman.pk)
         self.assertEqual(response.data['salesman_name'], 'Rami Haddad')
+
+    def test_a_pending_order_does_not_put_a_salesman_on_the_voucher(self):
+        """The reported bug, at the point it actually mattered: the voucher
+        was stamped with the salesman of an order that was not being paid."""
+        self.order(salesman=None)
+        self.order(status_value=OrderRequest.Status.PENDING)
+
+        response = self.client.post(self.url, self.payload())
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertIsNone(response.data['salesman'])
+        self.assertIsNone(response.data['salesman_name'])
+
+    def test_a_customer_with_no_billable_orders_gets_no_salesman(self):
+        response = self.client.post(self.url, self.payload())
+
+        self.assertIsNone(response.data['salesman'])
 
     def test_a_salesman_named_in_the_request_body_is_ignored(self):
         self.order()
